@@ -23,6 +23,8 @@ jobs:
       run: sudo apt-get install libudev-dev
     - name: Build
       run: cargo build --verbose
+    - name: Install Clippy
+      run: rustup component add clippy
     - name: Check
       uses: actions-rs/clippy-check@v1.0.7
       with:
