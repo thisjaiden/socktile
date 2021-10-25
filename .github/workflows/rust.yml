@@ -12,7 +12,8 @@ env:
 jobs:
   build:
 
-    runs-on: [ ubuntu-latest, macos-11, windows-latest ]
+    runs-on: ubuntu-latest
+    # macos-11, windows-latest ]
 
     steps:
     - uses: actions/checkout@v2
