@@ -10,11 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build-nix:
     runs-on: ubuntu-latest
-    # macos-11, windows-latest ]
-
     steps:
     - uses: actions/checkout@v2
     - name: Install libasound2
@@ -32,5 +29,40 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: target/debug/socktile.*
+        path: target/debug/socktile
         retention-days: 90
+  build-macos:
+    runs-on: macos-11
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Install Clippy
+      run: rustup component add clippy
+    - name: Check
+      uses: actions-rs/clippy-check@v1.0.7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        path: target/debug/socktile.app
+        retention-days: 90
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Install Clippy
+      run: rustup component add clippy
+    - name: Check
+      uses: actions-rs/clippy-check@v1.0.7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        path: target/debug/socktile.exe
+        retention-days: 90
+
