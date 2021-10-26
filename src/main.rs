@@ -32,6 +32,7 @@ fn main() {
         .add_system(systems::create_user.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::AssetHandles::init())
+        .insert_resource(resources::TextBox::init())
         .run();
 }
 

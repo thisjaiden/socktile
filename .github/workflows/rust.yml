@@ -32,9 +32,11 @@ jobs:
         path: target/debug/socktile
         retention-days: 90
   build-macos:
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Update XCode
+      run: sudo xcode-select --install
     - name: Build
       run: cargo build --verbose
     - name: Install Clippy

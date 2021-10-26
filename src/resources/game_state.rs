@@ -13,6 +13,6 @@ pub enum GameState {
 
 impl GameState {
     pub fn change_state(&mut self, state: GameState) {
-        *self = state.clone();
+        *self = state;
     }
 }

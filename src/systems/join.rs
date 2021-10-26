@@ -25,8 +25,8 @@ pub fn join(
                 startup(recv_clone, send_clone);
             });
         }
-        let mut entity_ids = vec![];
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
+        let entity_ids = vec![
+        commands.spawn_bundle(Text2dBundle {
             text: Text::with_section(
                 "\u{f790}",
                 TextStyle {
@@ -41,7 +41,8 @@ pub fn join(
             ),
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
-        }).insert(CursorMarker {}).id());
+        }).insert(CursorMarker {}).id()];
+        
         let send_cln = send.clone();
         let mut send_access = send_cln.lock().unwrap();
         send_access.push(Packet::RequestProfile(my_user.unwrap()));

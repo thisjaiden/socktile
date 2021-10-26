@@ -21,17 +21,32 @@ impl JoinManager {
             profile: None
         }
     }
-    pub fn grab_in(self) -> Arc<Mutex<Vec<Packet>>> {
-        return self.net_in.clone();
+    pub fn grab_in(&mut self) -> Arc<Mutex<Vec<Packet>>> {
+        self.net_in.clone()
     }
-    pub fn grab_out(self) -> Arc<Mutex<Vec<Packet>>> {
-        return self.net_out.clone();
+    pub fn grab_out(&mut self) -> Arc<Mutex<Vec<Packet>>> {
+        self.net_out.clone()
     }
-    pub fn grab_profile(self) -> Option<Profile> {
-        return self.profile.clone();
+    pub fn grab_profile(&mut self) -> Option<Profile> {
+        self.profile.clone()
     }
     pub fn network_step(&mut self) {
-
+        let input = self.grab_in();
+        let mut input_access = input.lock().unwrap();
+        let recieved_packets = input_access.clone();
+        input_access.clear();
+        drop(input_access);
+        drop(input);
+        for packet in recieved_packets {
+            match packet {
+                Packet::GiveProfile(profile) => {
+                    self.profile = Some(profile);
+                }
+                p => {
+                    println!("Unexpected packet {:?} during Join!", p);
+                }
+            }
+        }
     }
     pub fn disassemble(&mut self, commands: &mut Commands) {
         for entity in &self.entity_ids {

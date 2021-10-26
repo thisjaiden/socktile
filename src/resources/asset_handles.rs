@@ -46,8 +46,7 @@ impl AssetHandles {
         panic!("Font not found! ({})", ref_text);
     }
     pub fn prod_handle(&mut self, server: AssetServer) -> bool {
-        let mut i = 0;
-        for handle in self.texture_handle.clone() {
+        for (i, handle) in self.texture_handle.clone().into_iter().enumerate() {
             match server.get_load_state(handle) {
                 bevy::asset::LoadState::Loaded => {
                     self.texture_loaded[i] = true;
@@ -56,38 +55,30 @@ impl AssetHandles {
                     self.texture_loaded[i] = false;
                 }
             }
-            i += 1;
         }
-        let mut i = 0;
-        for handle in self.font_handle.clone() {
+        for (i, handle) in self.font_handle.clone().into_iter().enumerate() {
             match server.get_load_state(handle) {
                 bevy::asset::LoadState::Loaded => {
                     //println!("Prodded font is loaded.");
                     self.font_loaded[i] = true;
                 }
                 _ => {
-                    //println!("Prodded font is unloaded.");
                     self.font_loaded[i] = false;
                 }
             }
-            i += 1;
         }
         let mut waiting_on_load = false;
-        i = 0;
         for loadstate in self.texture_loaded.clone() {
             if !loadstate {
                 waiting_on_load = true;
             }
-            i += 1;
         }
-        i = 0;
         for loadstate in self.font_loaded.clone() {
             if !loadstate {
                 waiting_on_load = true;
             }
-            i += 1;
         }
-        return waiting_on_load;
+        waiting_on_load
     }
     pub fn init() -> Self {
         Self {

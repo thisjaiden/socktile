@@ -26,7 +26,7 @@ pub enum Packet {
 
 impl Packet {
     pub fn from_read<R: std::io::Read>(read: &mut R) -> Packet {
-        return bincode::deserialize_from(read).unwrap_or(Packet::FailedDeserialize);
+        bincode::deserialize_from(read).unwrap_or(Packet::FailedDeserialize)
     }
     pub fn to_write<W: std::io::Write>(write: &mut W, packet: Packet) {
         write.write_all(&bincode::serialize(&packet).unwrap()).unwrap();

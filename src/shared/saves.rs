@@ -7,14 +7,14 @@ pub fn save_folder() -> PathBuf {
     let mut dir = std::env::current_dir().unwrap();
     dir.push("saves");
     std::fs::create_dir_all(dir.clone()).unwrap();
-    return dir;
+    dir
 }
 
 pub fn profile_folder() -> PathBuf {
     let mut dir = std::env::current_dir().unwrap();
     dir.push("users");
     std::fs::create_dir_all(dir.clone()).unwrap();
-    return dir;
+    dir
 }
 
 pub fn user() -> Option<User> {
@@ -23,11 +23,11 @@ pub fn user() -> Option<User> {
     let dta = std::fs::read(dir);
     match dta {
         Ok(data) => {
-            return bincode::deserialize(&data).expect("Encountered a courrupted user.")
+            bincode::deserialize(&data).expect("Encountered a courrupted user.")
         }
         Err(_) => {
             println!("Unable to find me.bic, assuming there is no user profile.");
-            return None;
+            None
         }
     }
 }
@@ -42,12 +42,12 @@ pub fn users() -> Vec<Profile> {
             );
         }
     }
-    return saved_users;
+    saved_users
 }
 
 pub fn saves() -> Vec<SaveGame> {
     let mut saved_games = vec![];
-    for file in std::fs::read_dir(save_folder()).expect("Unable to access saves.").into_iter() {
+    for file in std::fs::read_dir(save_folder()).expect("Unable to access saves.") {
         let wrkabl = file.unwrap().path();
         if wrkabl.extension().unwrap() == "bic" {
             saved_games.push(
@@ -55,7 +55,7 @@ pub fn saves() -> Vec<SaveGame> {
             );
         }
     }
-    return saved_games;
+    saved_games
 }
 
 pub fn save(save: SaveGame) {

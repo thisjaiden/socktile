@@ -9,9 +9,8 @@ pub fn startup() -> ! {
     let recv = Arc::new(Mutex::new(vec![]));
     let send = Arc::new(Mutex::new(vec![]));
     let recv_clone = recv.clone();
-    let send_clone = send.clone();
     std::thread::spawn(move || {
-        initiate_host(recv_clone, send_clone);
+        initiate_host(recv_clone, send);
     });
     let mut timer = std::time::Instant::now();
     let mut saves = saves();
