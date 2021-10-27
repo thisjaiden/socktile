@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::shared::{netty::Packet, saves::Profile};
+use crate::shared::{netty::Packet, saves::{Profile, save_user}};
 
 #[derive(Clone, Debug)]
 pub struct JoinManager {
@@ -41,6 +41,10 @@ impl JoinManager {
             match packet {
                 Packet::GiveProfile(profile) => {
                     self.profile = Some(profile);
+                }
+                Packet::CreatedProfile(profile) => {
+                    self.profile = Some(profile.clone());
+                    save_user(profile.user);
                 }
                 p => {
                     println!("Unexpected packet {:?} during Join!", p);

@@ -8,3 +8,7 @@ mod settings_manager;
 pub use settings_manager::SettingsManager;
 mod join_manager;
 pub use join_manager::JoinManager;
+mod create_user_manager;
+pub use create_user_manager::CreateUserManager;
+mod text_box;
+pub use text_box::TextBox;

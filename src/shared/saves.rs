@@ -17,13 +17,17 @@ pub fn profile_folder() -> PathBuf {
     dir
 }
 
-pub fn user() -> Option<User> {
+pub fn user_location() -> PathBuf {
     let mut dir = std::env::current_dir().unwrap();
     dir.push("me.bic");
-    let dta = std::fs::read(dir);
+    dir
+}
+
+pub fn user() -> Option<User> {
+    let dta = std::fs::read(user_location());
     match dta {
         Ok(data) => {
-            bincode::deserialize(&data).expect("Encountered a courrupted user.")
+            Some(bincode::deserialize(&data).expect("Encountered a courrupted user."))
         }
         Err(_) => {
             println!("Unable to find me.bic, assuming there is no user profile.");
@@ -61,6 +65,11 @@ pub fn saves() -> Vec<SaveGame> {
 pub fn save(save: SaveGame) {
     let enc = bincode::serialize(&save).unwrap();
     std::fs::write(save.path, enc).unwrap();
+}
+
+pub fn save_user(user: User) {
+    let enc = bincode::serialize(&user).unwrap();
+    std::fs::write(user_location(), enc).unwrap();
 }
 
 #[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]

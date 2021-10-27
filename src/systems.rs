@@ -13,5 +13,6 @@ pub use join::join_ui;
 pub use join::join_network;
 mod create_user;
 pub use create_user::create_user;
+pub use create_user::create_user_ui;
 mod text_box;
 pub use text_box::text_box;

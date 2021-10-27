@@ -36,16 +36,17 @@ impl Packet {
 pub fn initiate_slave(remote: &str, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) -> ! {
     let mut con = std::net::TcpStream::connect(remote).unwrap();
     loop {
-        let pkt = Packet::from_read(&mut con);
-        let mut recv_access = recv_buffer.lock().unwrap();
-        recv_access.push(pkt);
-        drop(recv_access);
         let mut send_access = send_buffer.lock().unwrap();
         for packet in send_access.iter() {
+            println!("Writing {:?} to network.", packet);
             Packet::to_write(&mut con, packet.clone());
         }
         send_access.clear();
         drop(send_access);
+        let pkt = Packet::from_read(&mut con);
+        let mut recv_access = recv_buffer.lock().unwrap();
+        recv_access.push(pkt);
+        drop(recv_access);
     }
 }
 

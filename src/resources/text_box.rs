@@ -24,10 +24,10 @@ impl TextBox {
         }
         if input.just_pressed(KeyCode::Apostrophe) {
             if is_caps {
-                self.buffer += "~";
+                self.buffer += "\"";
             }
             else {
-                self.buffer += "`";
+                self.buffer += "'";
             }
         }
         if input.just_pressed(KeyCode::Key1) {
@@ -128,7 +128,9 @@ impl TextBox {
         }
         if input.just_pressed(KeyCode::Back) {
             if !self.buffer.is_empty() {
-                self.buffer.remove(self.buffer.len());
+                let mut chars = self.buffer.chars();
+                chars.next_back();
+                self.buffer = String::from(chars.as_str());
             }
         }
         if input.just_pressed(KeyCode::Q) {
@@ -282,6 +284,92 @@ impl TextBox {
             else {
                 self.buffer += "h";
             }
+        }
+        if input.just_pressed(KeyCode::J) {
+            if is_caps {
+                self.buffer += "J";
+            }
+            else {
+                self.buffer += "j";
+            }
+        }
+        if input.just_pressed(KeyCode::K) {
+            if is_caps {
+                self.buffer += "K";
+            }
+            else {
+                self.buffer += "k";
+            }
+        }
+        if input.just_pressed(KeyCode::L) {
+            if is_caps {
+                self.buffer += "L";
+            }
+            else {
+                self.buffer += "l";
+            }
+        }
+        if input.just_pressed(KeyCode::Z) {
+            if is_caps {
+                self.buffer += "Z";
+            }
+            else {
+                self.buffer += "z";
+            }
+        }
+        if input.just_pressed(KeyCode::X) {
+            if is_caps {
+                self.buffer += "X";
+            }
+            else {
+                self.buffer += "x";
+            }
+        }
+        if input.just_pressed(KeyCode::C) {
+            if is_caps {
+                self.buffer += "C";
+            }
+            else {
+                self.buffer += "c";
+            }
+        }
+        if input.just_pressed(KeyCode::V) {
+            if is_caps {
+                self.buffer += "V";
+            }
+            else {
+                self.buffer += "v";
+            }
+        }
+        if input.just_pressed(KeyCode::B) {
+            if is_caps {
+                self.buffer += "B";
+            }
+            else {
+                self.buffer += "b";
+            }
+        }
+        if input.just_pressed(KeyCode::N) {
+            if is_caps {
+                self.buffer += "N";
+            }
+            else {
+                self.buffer += "n";
+            }
+        }
+        if input.just_pressed(KeyCode::M) {
+            if is_caps {
+                self.buffer += "M";
+            }
+            else {
+                self.buffer += "m";
+            }
+        }
+        if input.just_pressed(KeyCode::Space) {
+            self.buffer += " ";
+        }
+        if input.just_pressed(KeyCode::Return) {
+            self.buffer += "\n";
         }
     }
 }
