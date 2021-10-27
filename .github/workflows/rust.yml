@@ -30,7 +30,8 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         path: target/debug/socktile
-        retention-days: 90
+        name: nix_build
+        retention-days: 1
   build-macos:
     runs-on: macos-latest
     steps:
@@ -48,8 +49,9 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: target/debug/socktile.app
-        retention-days: 90
+        path: target/debug/socktile
+        name: macos_build
+        retention-days: 1
   build-windows:
     runs-on: windows-latest
     steps:
@@ -66,5 +68,5 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         path: target/debug/socktile.exe
-        retention-days: 90
-
+        name: windows_build
+        retention-days: 1

@@ -30,6 +30,7 @@ fn main() {
         .add_system(systems::join_ui.system())
         .add_system(systems::join_network.system())
         .add_system(systems::create_user.system())
+        .add_system(systems::text_box.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
