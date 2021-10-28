@@ -1,4 +1,3 @@
-use bevy::input::mouse::MouseButtonInput;
 use bevy::prelude::*;
 use crate::{components::CursorMarker, resources::GameState};
 use crate::layers::CURSOR;

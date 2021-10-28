@@ -6,7 +6,6 @@ use crate::{client::core::startup, components::{CreateUserManager, CursorMarker,
 
 pub fn join(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut state: ResMut<GameState>,
     mut handles: ResMut<AssetHandles>,
     old_manager: Query<&mut CreateUserManager>,
@@ -69,8 +68,6 @@ pub fn join_ui(
 }
 
 pub fn join_network(
-    mut commands: Commands,
-    state: Res<GameState>,
     query_manager: Query<&mut JoinManager>,
 ) {
     query_manager.for_each_mut(|mut manager| {

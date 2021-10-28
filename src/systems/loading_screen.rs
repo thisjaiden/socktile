@@ -10,7 +10,6 @@ pub fn loading_screen(
     mut state: ResMut<GameState>,
     server: Res<AssetServer>,
     mut windows: ResMut<Windows>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut handles: ResMut<AssetHandles>
 ) {
     if state.eq(&GameState::LoadingScreen) {

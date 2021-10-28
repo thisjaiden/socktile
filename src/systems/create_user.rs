@@ -69,6 +69,7 @@ pub fn create_user(
 }
 
 pub fn create_user_ui(
+    mut commands: Commands,
     mut tb: ResMut<TextBox>,
     manager: Query<&mut CreateUserManager>,
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
@@ -99,6 +100,7 @@ pub fn create_user_ui(
                             tag: 0
                         });
                         state.change_state(GameState::Join);
+                        state_man.disassemble(&mut commands);
                     });
                 }
             }
