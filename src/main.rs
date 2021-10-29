@@ -13,7 +13,7 @@ const GGS_BUILD: bool = false;
 
 fn main() {
     if DEV_BUILD {
-        println!("THIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.");
+        println!("\x1B[30;47mTHIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.\x1B[0m");
     }
     if GGS_BUILD {
         println!("THIS IS A GLOBAL GAME SERVER BUILD. DO NOT DISTRIBUTE. DO NOT RUN FROM THE WRONG LOCATION.");

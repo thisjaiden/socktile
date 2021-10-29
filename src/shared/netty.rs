@@ -14,6 +14,9 @@ pub enum Packet {
     /// Server responds with a profile for the user.
     /// (Profile)
     GiveProfile(Profile),
+    /// Server responds with no profile. (Does not exist/Not found)
+    /// (No Data)
+    NoProfile,
     /// Create a profile on the remote server.
     /// (User)
     CreateProfile(User),
