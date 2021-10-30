@@ -62,9 +62,25 @@ pub fn join(
 }
 
 pub fn join_ui(
-
+    mut commands: Commands,
+    mut state: ResMut<GameState>,
+    manager: Query<&mut JoinManager>,
 ) {
-
+    if state.eq(&GameState::Join) {
+        manager.for_each_mut(|mut man| {
+            if man.has_profile() {
+                if !man.has_ui() {
+                    let prof = man.grab_profile().unwrap();
+                    for game in prof.created_games {
+                        man.add_eid(commands.spawn_bundle(Text2dBundle {
+                            ..Default::default()
+                        }).insert().id());
+                    }
+                    man.set_ui_state(true);
+                }
+            }
+        });
+    }
 }
 
 pub fn join_network(

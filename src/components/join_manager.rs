@@ -9,7 +9,8 @@ pub struct JoinManager {
     entity_ids: Vec<Entity>,
     net_in: Arc<Mutex<Vec<Packet>>>,
     net_out: Arc<Mutex<Vec<Packet>>>,
-    profile: Option<Profile>
+    profile: Option<Profile>,
+    has_ui: bool
 }
 
 impl JoinManager {
@@ -18,7 +19,8 @@ impl JoinManager {
             entity_ids,
             net_in,
             net_out,
-            profile: None
+            profile: None,
+            has_ui: false
         }
     }
     pub fn grab_in(&mut self) -> Arc<Mutex<Vec<Packet>>> {
@@ -29,6 +31,18 @@ impl JoinManager {
     }
     pub fn grab_profile(&mut self) -> Option<Profile> {
         self.profile.clone()
+    }
+    pub fn has_profile(&mut self) -> bool {
+        self.profile.is_some()
+    }
+    pub fn has_ui(&mut self) -> bool {
+        self.has_ui
+    }
+    pub fn set_ui_state(&mut self, state: bool) {
+        self.has_ui = state;
+    }
+    pub fn add_eid(&mut self, eid: Entity) {
+        self.entity_ids.push(eid);
     }
     pub fn network_step(&mut self) {
         let input = self.grab_in();
