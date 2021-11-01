@@ -12,3 +12,5 @@ mod create_user_manager;
 pub use create_user_manager::CreateUserManager;
 mod text_box;
 pub use text_box::TextBox;
+mod join_choice;
+pub use join_choice::JoinChoice;

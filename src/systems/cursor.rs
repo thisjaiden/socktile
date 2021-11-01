@@ -12,8 +12,8 @@ pub fn cursor(
             let p_window = windows.get_primary().unwrap();
             let cursor_pos = p_window.cursor_position();
             if let Some(position) = cursor_pos {
-                transform.translation.x = position.x - (p_window.width() * p_window.scale_factor() as f32 / 2.0) - 7.0;
-                transform.translation.y = position.y - (p_window.height() * p_window.scale_factor() as f32 / 2.0) + 5.0;
+                transform.translation.x = (position.x * 2.0) - (p_window.width() / 2.0) - 7.0;
+                transform.translation.y = (position.y * 2.0) - (p_window.height() / 2.0) + 5.0;
                 transform.translation.z = CURSOR;
             }
         }

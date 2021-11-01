@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, JoinManager}, layers::CURSOR, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
+use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, JoinChoice, JoinManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
 
 pub fn join(
     mut commands: Commands,
@@ -61,26 +61,86 @@ pub fn join(
     }
 }
 
-pub fn join_ui(
+pub fn join_ui_create(
     mut commands: Commands,
-    mut state: ResMut<GameState>,
+    mut handles: ResMut<AssetHandles>,
+    state: Res<GameState>,
     manager: Query<&mut JoinManager>,
 ) {
     if state.eq(&GameState::Join) {
+        let mut list_location = 0;
         manager.for_each_mut(|mut man| {
             if man.has_profile() {
                 if !man.has_ui() {
                     let prof = man.grab_profile().unwrap();
                     for game in prof.created_games {
                         man.add_eid(commands.spawn_bundle(Text2dBundle {
+                            text: Text::with_section(
+                                game.clone().public_name,
+                                TextStyle {
+                                    font: handles.get_font("KreativeSquare.ttf"),
+                                    font_size: 50.0,
+                                    color: Color::BLACK
+                                },
+                                TextAlignment {
+                                    vertical: VerticalAlign::Top,
+                                    horizontal: HorizontalAlign::Left
+                                }
+                            ),
+                            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                             ..Default::default()
-                        }).insert().id());
+                        }).insert(JoinChoice::new(list_location, game, false)).id());
+                        list_location += 1;
+                    }
+                    for game in prof.joined_games {
+                        man.add_eid(commands.spawn_bundle(Text2dBundle {
+                            text: Text::with_section(
+                                game.clone().public_name,
+                                TextStyle {
+                                    font: handles.get_font("KreativeSquare.ttf"),
+                                    font_size: 50.0,
+                                    color: Color::BLACK
+                                },
+                                TextAlignment {
+                                    vertical: VerticalAlign::Top,
+                                    horizontal: HorizontalAlign::Left
+                                }
+                            ),
+                            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                            ..Default::default()
+                        }).insert(JoinChoice::new(list_location, game, false)).id());
+                        list_location += 1;
+                    }
+                    for game in prof.invited_games {
+                        man.add_eid(commands.spawn_bundle(Text2dBundle {
+                            text: Text::with_section(
+                                game.clone().public_name,
+                                TextStyle {
+                                    font: handles.get_font("KreativeSquare.ttf"),
+                                    font_size: 50.0,
+                                    color: Color::BLACK
+                                },
+                                TextAlignment {
+                                    vertical: VerticalAlign::Top,
+                                    horizontal: HorizontalAlign::Left
+                                }
+                            ),
+                            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                            ..Default::default()
+                        }).insert(JoinChoice::new(list_location, game, true)).id());
+                        list_location += 1;
                     }
                     man.set_ui_state(true);
                 }
             }
         });
     }
+}
+
+pub fn join_ui_update(
+
+) {
+
 }
 
 pub fn join_network(
