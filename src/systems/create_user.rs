@@ -10,7 +10,7 @@ pub fn create_user(
     state: Res<GameState>,
     mut handles: ResMut<AssetHandles>,
 ) {
-    if state.eq(&GameState::CreateUser) && state.is_changed() {
+    if (state.eq(&GameState::CreateUser) || state.eq(&GameState::CreateUserB)) && state.is_changed() {
         tb.clear_buffer();
         let eids = vec![
             commands.spawn_bundle(Text2dBundle {
@@ -64,7 +64,12 @@ pub fn create_user(
         ];
         let recv = Arc::new(Mutex::new(vec![]));
         let send = Arc::new(Mutex::new(vec![]));
-        commands.spawn().insert(CreateUserManager::new(eids, recv, send));
+        if state.eq(&GameState::CreateUser) {
+            commands.spawn().insert(CreateUserManager::new(eids, recv, send));
+        }
+        else {
+            commands.spawn().insert(CreateUserManager::new_b(eids, recv, send));
+        }
     }
 }
 
@@ -75,7 +80,7 @@ pub fn create_user_ui(
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
     mut state: ResMut<GameState>,
 ) {
-    if state.eq(&GameState::CreateUser) {
+    if state.eq(&GameState::CreateUser) || state.eq(&GameState::CreateUserB) {
         tb_q.for_each_mut(|mut text| {
             text.sections[0].value = tb.grab_buffer() + "#0000";
             if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
@@ -99,7 +104,7 @@ pub fn create_user_ui(
                             username: mode,
                             tag: 0
                         });
-                        state.change_state(GameState::Join);
+                        state.change_state(state_man.grab_previous_state());
                         state_man.disassemble(&mut commands);
                     });
                 }

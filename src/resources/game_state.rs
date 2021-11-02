@@ -5,7 +5,8 @@ pub enum GameState {
     Settings,
     Join,
     CreateUser,
-    NewPage,
+    CreateUserB,
+    New,
     NewCutscene,
     BaseWorld
 }

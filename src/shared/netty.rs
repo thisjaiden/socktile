@@ -36,6 +36,16 @@ impl Packet {
     }
 }
 
+pub fn remote_exists() -> bool {
+    if online::sync::check(Some(5)).is_ok() {
+        true
+    }
+    else {
+        println!("No internet connection avalable.");
+        false
+    }
+}
+
 pub fn initiate_slave(remote: &str, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) -> ! {
     let mut con = std::net::TcpStream::connect(remote).unwrap();
     loop {

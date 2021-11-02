@@ -141,7 +141,7 @@ pub fn title_screen_buttons(
                     for entity in query_final.iter() {
                         commands.entity(entity).despawn();
                     }
-                    state.change_state(GameState::NewPage);
+                    state.change_state(GameState::New);
                 }
                 else if
                     location.translation.x > SETTINGS_BUTTON_LOC.0 &&

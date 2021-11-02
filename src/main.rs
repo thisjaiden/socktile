@@ -13,10 +13,10 @@ const GGS_BUILD: bool = false;
 
 fn main() {
     if DEV_BUILD {
-        println!("\x1B[30;47mTHIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.\x1B[0m");
+        println!("\x1B[40;91mTHIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.\x1B[0m");
     }
     if GGS_BUILD {
-        println!("THIS IS A GLOBAL GAME SERVER BUILD. DO NOT DISTRIBUTE. DO NOT RUN FROM THE WRONG LOCATION.");
+        println!("\x1B[40;91mTHIS IS A GLOBAL GAME SERVER BUILD. DO NOT DISTRIBUTE. DO NOT RUN FROM THE WRONG LOCATION.\x1B[0m");
         server::core::startup();
     }
     App::build()
@@ -33,6 +33,7 @@ fn main() {
         .add_system(systems::create_user.system())
         .add_system(systems::create_user_ui.system())
         .add_system(systems::text_box.system())
+        .add_system(systems::new.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
