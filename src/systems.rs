@@ -19,3 +19,7 @@ mod text_box;
 pub use text_box::text_box;
 mod new;
 pub use new::new;
+pub use new::new_ui;
+pub use new::new_exit;
+mod play;
+pub use play::*;

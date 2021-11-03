@@ -14,3 +14,5 @@ mod text_box;
 pub use text_box::TextBox;
 mod join_choice;
 pub use join_choice::JoinChoice;
+mod new_manager;
+pub use new_manager::NewManager;

@@ -34,6 +34,8 @@ fn main() {
         .add_system(systems::create_user_ui.system())
         .add_system(systems::text_box.system())
         .add_system(systems::new.system())
+        .add_system(systems::new_ui.system())
+        .add_system(systems::new_exit.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())

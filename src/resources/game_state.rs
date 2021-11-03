@@ -7,8 +7,7 @@ pub enum GameState {
     CreateUser,
     CreateUserB,
     New,
-    NewCutscene,
-    BaseWorld
+    Play
 }
 
 impl GameState {

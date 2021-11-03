@@ -1,11 +1,13 @@
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
-use super::{saves::{Profile, User}};
+use crate::components::GamePosition;
+
+use super::{saves::{Profile, SaveGame, User}, world::World};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Deserialize, Serialize, Debug)]
+#[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
-    /// Data was recieved but unable to be deserialized.
+    /// Data was recieved but unable to be deseriZalized.
     /// (No Data)
     FailedDeserialize,
     /// Request a profile from the remote server.
@@ -25,6 +27,22 @@ pub enum Packet {
     /// profile. Take this into account.
     /// (Profile)
     CreatedProfile(Profile),
+    /// Create a world on the remote server.
+    /// (World Name)
+    CreateWorld(String),
+    /// Confirm creation of a world.
+    /// (World Details)
+    CreatedWorld(SaveGame),
+    /// Request to join a world.
+    /// (World Name)
+    JoinWorld(String),
+    /// Mainly used when joining a world. A complete structure of all data. This is a lot, don't
+    /// just send this whenever.
+    /// (Talk UUID, World)
+    FullWorldData(u128, World),
+    /// Requests moving a player to a new position in a world.
+    /// (Talk UUID, Position)
+    RequestMove(u128, GamePosition)
 }
 
 impl Packet {

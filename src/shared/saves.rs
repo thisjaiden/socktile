@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 
-use super::listing::GameListing;
+use super::{listing::GameListing, world::World};
 
 pub fn save_folder() -> PathBuf {
     let mut dir = std::env::current_dir().unwrap();
@@ -79,21 +79,16 @@ pub fn save_profile(profile: Profile) {
     std::fs::write(path, enc).unwrap();
 }
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct SaveGame {
     pub name: String,
     pub version: String,
-    pub data: SaveableData,
-    pub path: PathBuf
-}
-
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct SaveableData {
+    pub data: World,
+    pub path: PathBuf,
     pub whitelist: Option<Vec<User>>,
     pub blacklist: Vec<User>,
     pub played_before: Vec<User>,
     pub owner: User,
-
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
