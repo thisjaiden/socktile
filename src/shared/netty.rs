@@ -31,15 +31,15 @@ pub enum Packet {
     /// (World Name)
     CreateWorld(String),
     /// Confirm creation of a world.
-    /// (World Details)
-    CreatedWorld(SaveGame),
+    /// (Internal World Name)
+    CreatedWorld(String),
     /// Request to join a world.
-    /// (World Name)
-    JoinWorld(String),
+    /// (Internal World Name, User)
+    JoinWorld(String, User),
     /// Mainly used when joining a world. A complete structure of all data. This is a lot, don't
     /// just send this whenever.
-    /// (Talk UUID, World)
-    FullWorldData(u128, World),
+    /// (World)
+    FullWorldData(World),
     /// Requests moving a player to a new position in a world.
     /// (Talk UUID, Position)
     RequestMove(u128, GamePosition)

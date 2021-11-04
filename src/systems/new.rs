@@ -99,7 +99,7 @@ pub fn new_ui(
     mut tb: ResMut<TextBox>,
     manager: Query<&mut NewManager>,
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
-    mut state: ResMut<GameState>,
+    state: Res<GameState>,
 ) {
     if state.eq(&GameState::New) {
         tb_q.for_each_mut(|mut text| {
@@ -111,13 +111,16 @@ pub fn new_ui(
                 text.sections[0].style.color = Color::BLACK;
                 if tb.grab_buffer().contains('\n') {
                     manager.for_each_mut(|mut state_man| {
-                        let out = state_man.grab_out();
-                        let mut mode = tb.grab_buffer();
-                        mode = String::from(mode.trim_end());
-                        mode = String::from(mode.trim_end_matches("\n"));
-                        let mut out = out.lock().unwrap();
-                        out.push(Packet::CreateWorld(mode.clone()));
-                        drop(out);
+                        if !state_man.is_waiting() {
+                            let out = state_man.grab_out();
+                            let mut mode = tb.grab_buffer();
+                            mode = String::from(mode.trim_end());
+                            mode = String::from(mode.trim_end_matches("\n"));
+                            let mut out = out.lock().unwrap();
+                            out.push(Packet::CreateWorld(mode.clone()));
+                            drop(out);
+                            state_man.net_mode();
+                        }
                     });
                 }
             }
@@ -126,7 +129,21 @@ pub fn new_ui(
 }
 
 pub fn new_exit(
-
+    manager: Query<&mut NewManager>,
+    mut state: ResMut<GameState>,
 ) {
+    manager.for_each_mut(|mut manager| {
+        if manager.swap_time() {
+            // TODO
+            state.change_state(GameState::Play);
+        }
+    });
+}
 
+pub fn new_network(
+    query_manager: Query<&mut NewManager>,
+) {
+    query_manager.for_each_mut(|mut manager| {
+        manager.network_step();
+    });
 }

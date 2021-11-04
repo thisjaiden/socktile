@@ -21,5 +21,6 @@ mod new;
 pub use new::new;
 pub use new::new_ui;
 pub use new::new_exit;
+pub use new::new_network;
 mod play;
 pub use play::*;

@@ -81,7 +81,8 @@ pub fn save_profile(profile: Profile) {
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct SaveGame {
-    pub name: String,
+    pub public_name: String,
+    pub internal_name: String,
     pub version: String,
     pub data: World,
     pub path: PathBuf,
