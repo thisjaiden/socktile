@@ -16,3 +16,5 @@ mod join_choice;
 pub use join_choice::JoinChoice;
 mod new_manager;
 pub use new_manager::NewManager;
+mod play_manager;
+pub use play_manager::PlayManager;

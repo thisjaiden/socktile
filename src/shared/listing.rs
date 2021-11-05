@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 pub struct GameListing {
     pub public_name: String,
     pub description: String,
-    pub internal_name: String,
+    pub internal_id: u128,
     pub local: bool,
     pub address: String,
     pub password: bool,

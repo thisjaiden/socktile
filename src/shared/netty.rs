@@ -5,6 +5,8 @@ use crate::components::GamePosition;
 use super::{saves::{Profile, SaveGame, User}, world::World};
 use serde::{Deserialize, Serialize};
 
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-0";
+
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
     /// Data was recieved but unable to be deseriZalized.
@@ -31,11 +33,11 @@ pub enum Packet {
     /// (World Name)
     CreateWorld(String),
     /// Confirm creation of a world.
-    /// (Internal World Name)
-    CreatedWorld(String),
+    /// (World ID)
+    CreatedWorld(u128),
     /// Request to join a world.
-    /// (Internal World Name, User)
-    JoinWorld(String, User),
+    /// (World ID, User)
+    JoinWorld(u128, User),
     /// Mainly used when joining a world. A complete structure of all data. This is a lot, don't
     /// just send this whenever.
     /// (World)

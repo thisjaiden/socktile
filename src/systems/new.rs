@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, NewManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState, TextBox}, shared::{netty::Packet, saves::user}};
+use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, NewManager, PlayManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState, TextBox}, shared::{netty::Packet, saves::user}};
 
 pub fn new(
     mut commands: Commands,
@@ -129,12 +129,15 @@ pub fn new_ui(
 }
 
 pub fn new_exit(
+    mut commands: Commands,
     manager: Query<&mut NewManager>,
     mut state: ResMut<GameState>,
 ) {
     manager.for_each_mut(|mut manager| {
         if manager.swap_time() {
             // TODO
+            manager.disassemble(&mut commands);
+            commands.spawn().insert(PlayManager::new(manager.grab_world()));
             state.change_state(GameState::Play);
         }
     });
