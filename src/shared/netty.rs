@@ -91,21 +91,28 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
             if let Ok(mut stream) = connection {
                 let recv_clone = recv_buffer.clone();
                 let send_clone = send_buffer.clone();
+                let remote_addr = stream.peer_addr().unwrap();
+                let mut stream_clone = stream.try_clone().unwrap();
                 std::thread::spawn(move || {
                     let recv = recv_clone;
-                    let send = send_clone;
-                    let remote_addr = stream.peer_addr().unwrap();
                     loop {
                         let pkt = Packet::from_read(&mut stream);
                         let mut recv_access = recv.lock().unwrap();
                         recv_access.push((pkt, remote_addr));
                         drop(recv_access);
-                        let send_access = send.lock().unwrap();
+                    }
+                });
+                std::thread::spawn(move || {
+                    let send = send_clone;
+                    loop {
+                        let mut send_access = send.lock().unwrap();
                         for (packet, address) in send_access.iter() {
+                            println!("Sending {:?} to {}", packet, address);
                             if address == &remote_addr {
-                                Packet::to_write(&mut stream, packet.clone());
+                                Packet::to_write(&mut stream_clone, packet.clone());
                             }
                         }
+                        send_access.clear();
                         drop(send_access);
                     }
                 });

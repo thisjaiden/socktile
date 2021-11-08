@@ -24,6 +24,7 @@ pub fn startup() -> ! {
             func_recv.clear();
             drop(func_recv);
             for (packet, from) in incoming_data {
+                println!("packet(s) in buffer");
                 println!("{}: {:?}", from, packet);
                 match packet {
                     Packet::CreateProfile(user) => {

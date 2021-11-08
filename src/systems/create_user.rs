@@ -104,6 +104,7 @@ pub fn create_user_ui(
                             username: mode,
                             tag: 0
                         });
+                        tb.clear_buffer();
                         state.change_state(state_man.grab_previous_state());
                         state_man.disassemble(&mut commands);
                     });
