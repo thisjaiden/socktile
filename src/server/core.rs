@@ -46,6 +46,18 @@ pub fn startup() -> ! {
             drop(func_recv);
             for (packet, from) in incoming_data {
                 match packet {
+                    Packet::NettyVersion(version) => {
+                        if version == NETTY_VERSION {
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::SameVersion, from));
+                            drop(func_send);
+                        }
+                        else {
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::DifferentVerison, from));
+                            drop(func_send);
+                        }
+                    }
                     Packet::CreateProfile(user) => {
                         let mut tag = 0;
                         for profile in profiles.clone() {
@@ -148,8 +160,8 @@ pub fn startup() -> ! {
                             drop(func_send);
                         }
                     }
-                    p => {
-                        // println!("No handler from packet {:?}", p);
+                    _ => {
+                        // Ignore this packet, we don't handle it.
                     }
                 }
             }

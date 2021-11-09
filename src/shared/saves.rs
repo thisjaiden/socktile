@@ -38,7 +38,7 @@ pub fn user() -> Option<User> {
 
 pub fn profiles() -> Vec<Profile> {
     let mut saved_users = vec![];
-    for file in std::fs::read_dir(profile_folder()).expect("Unable to access profiles.").into_iter() {
+    for file in std::fs::read_dir(profile_folder()).expect("Unable to access profiles.") {
         let wrkabl = file.unwrap().path();
         if wrkabl.extension().unwrap() == "bic" {
             saved_users.push(
@@ -75,7 +75,7 @@ pub fn save_user(user: User) {
 pub fn save_profile(profile: Profile) {
     let enc = bincode::serialize(&profile).unwrap();
     let mut path = profile_folder();
-    path.push(format!("{}{}.bic", profile.clone().user.username, profile.clone().user.tag));
+    path.push(format!("{}{}.bic", profile.user.username, profile.user.tag));
     std::fs::write(path, enc).unwrap();
 }
 

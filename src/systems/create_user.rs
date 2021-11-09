@@ -93,7 +93,7 @@ pub fn create_user_ui(
                         let out = state_man.grab_out();
                         let mut mode = tb.grab_buffer();
                         mode = String::from(mode.trim_end());
-                        mode = String::from(mode.trim_end_matches("\n"));
+                        mode = String::from(mode.trim_end_matches('\n'));
                         let mut o_acc = out.lock().unwrap();
                         o_acc.push(Packet::CreateProfile(User {
                             username: mode.clone(),

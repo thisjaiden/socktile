@@ -36,7 +36,7 @@ impl CreateUserManager {
         self.net_out.clone()
     }
     pub fn grab_previous_state(&mut self) -> GameState {
-        self.previous_state.clone()
+        self.previous_state
     }
     pub fn disassemble(&mut self, commands: &mut Commands) {
         for entity in &self.entity_ids {

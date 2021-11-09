@@ -95,7 +95,7 @@ pub fn new(
 }
 
 pub fn new_ui(
-    mut commands: Commands,
+    commands: Commands,
     mut tb: ResMut<TextBox>,
     manager: Query<&mut NewManager>,
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
@@ -115,9 +115,9 @@ pub fn new_ui(
                             let out = state_man.grab_out();
                             let mut mode = tb.grab_buffer();
                             mode = String::from(mode.trim_end());
-                            mode = String::from(mode.trim_end_matches("\n"));
+                            mode = String::from(mode.trim_end_matches('\n'));
                             let mut out = out.lock().unwrap();
-                            out.push(Packet::CreateWorld(mode.clone()));
+                            out.push(Packet::CreateWorld(mode));
                             drop(out);
                             state_man.net_mode();
                         }
