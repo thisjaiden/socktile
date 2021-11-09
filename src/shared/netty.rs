@@ -34,17 +34,17 @@ pub enum Packet {
     CreateWorld(String),
     /// Confirm creation of a world.
     /// (World ID)
-    CreatedWorld(u128),
+    CreatedWorld(usize),
     /// Request to join a world.
     /// (World ID, User)
-    JoinWorld(u128, User),
+    JoinWorld(usize, User),
     /// Mainly used when joining a world. A complete structure of all data. This is a lot, don't
     /// just send this whenever.
     /// (World)
     FullWorldData(World),
     /// Requests moving a player to a new position in a world.
-    /// (Talk UUID, Position)
-    RequestMove(u128, GamePosition)
+    /// (New Position)
+    RequestMove(GamePosition)
 }
 
 impl Packet {
@@ -68,16 +68,23 @@ pub fn remote_exists() -> bool {
 
 pub fn initiate_slave(remote: &str, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) -> ! {
     let mut con = std::net::TcpStream::connect(remote).unwrap();
-    loop {
-        let mut send_access = send_buffer.lock().unwrap();
-        for packet in send_access.iter() {
-            println!("Writing {:?} to network.", packet);
-            Packet::to_write(&mut con, packet.clone());
+    let mut con_clone = con.try_clone().unwrap();
+    std::thread::spawn(move || {
+        loop {
+            let mut send_access = send_buffer.lock().unwrap();
+            for packet in send_access.iter() {
+                println!("Sending {:?} to GGS", packet);
+                Packet::to_write(&mut con_clone, packet.clone());
+            }
+            send_access.clear();
+            drop(send_access);
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
-        send_access.clear();
-        drop(send_access);
+    });
+    loop {
         let pkt = Packet::from_read(&mut con);
         let mut recv_access = recv_buffer.lock().unwrap();
+        println!("Recieved {:?} from GGS", pkt);
         recv_access.push(pkt);
         drop(recv_access);
     }
@@ -98,6 +105,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                     loop {
                         let pkt = Packet::from_read(&mut stream);
                         let mut recv_access = recv.lock().unwrap();
+                        println!("Recieved {:?} from {:?}", pkt, remote_addr);
                         recv_access.push((pkt, remote_addr));
                         drop(recv_access);
                     }
@@ -114,6 +122,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                         }
                         send_access.clear();
                         drop(send_access);
+                        std::thread::sleep(std::time::Duration::from_millis(20));
                     }
                 });
             }

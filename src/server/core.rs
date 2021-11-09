@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::shared::{netty::{NETTY_VERSION, Packet, initiate_host}, saves::{Profile, SaveGame, User, profiles, save_folder, save_profile, saves}, world::World};
+use crate::shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::{Profile, SaveGame, User, profiles, save, save_folder, save_profile, saves}, world::{SPAWN_POSITION, World}};
 
 pub const HOST_PORT: &str = "11111";
 
@@ -14,18 +14,37 @@ pub fn startup() -> ! {
         initiate_host(recv_clone, send_clone);
     });
     let mut timer = std::time::Instant::now();
+    let mut autosave = std::time::Instant::now();
     let mut saves = saves();
     let mut profiles = profiles();
     let mut ip_accociations = vec![];
+    let mut sorted = vec![];
+    println!("Sorting saves...");
+    for i in 0..saves.len() {
+        for save in saves.clone() {
+            if save.internal_id == i {
+                sorted.push(save);
+            }
+        }
+    }
+    saves = sorted;
+    println!("Saves sorted. Server started!");
     loop {
         if timer.elapsed() > std::time::Duration::from_millis(50) {
+            // autosave every 30 mins (IMPORTANT: change this to 5 on production)
+            if autosave.elapsed() > std::time::Duration::from_secs(60 * 30) {
+                println!("Autosaving...");
+                for world in saves.clone() {
+                    save(world);
+                }
+                autosave = std::time::Instant::now();
+            }
+            // rest of tick
             let mut func_recv = recv.lock().unwrap();
             let incoming_data = func_recv.clone();
             func_recv.clear();
             drop(func_recv);
             for (packet, from) in incoming_data {
-                println!("packet(s) in buffer");
-                println!("{}: {:?}", from, packet);
                 match packet {
                     Packet::CreateProfile(user) => {
                         let mut tag = 0;
@@ -91,7 +110,24 @@ pub fn startup() -> ! {
                         drop(func_send);
                     }
                     Packet::JoinWorld(world_uid, user) => {
-                        todo!();
+                        // grab world
+                        let world = &mut saves[world_uid].data;
+                        // find any existing player and make online if exists
+                        let mut existing_player = false;
+                        for (index, player) in world.offline_players.clone().into_iter().enumerate() {
+                            if player.user == user {
+                                let pulled = world.offline_players.remove(index);
+                                world.players.push(pulled);
+                                existing_player = true;
+                                break;
+                            }
+                        }
+                        if !existing_player {
+                            world.players.push(Player { user, location: SPAWN_POSITION });
+                        }
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::FullWorldData(world.clone()), from));
+                        drop(func_send);
                     }
                     Packet::RequestProfile(user) => {
                         let mut found_profile = false;
@@ -113,7 +149,7 @@ pub fn startup() -> ! {
                         }
                     }
                     p => {
-                        println!("No handler from packet {:?}", p);
+                        // println!("No handler from packet {:?}", p);
                     }
                 }
             }
