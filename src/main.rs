@@ -8,8 +8,8 @@ mod server;
 mod client;
 mod shared;
 
-const DEV_BUILD: bool = true;
-const GGS_BUILD: bool = false;
+pub const DEV_BUILD: bool = true;
+pub const GGS_BUILD: bool = false;
 
 fn main() {
     if DEV_BUILD {
@@ -22,7 +22,7 @@ fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_system(systems::loading_screen.system())
-        .add_system(systems::title_screen.system())
+        .add_system(systems::title_screen_spawner.system())
         .add_system(systems::title_screen_buttons.system())
         .add_system(systems::cursor.system())
         .add_system(systems::settings.system())
@@ -38,8 +38,10 @@ fn main() {
         .add_system(systems::new_exit.system())
         .add_system(systems::new_network.system())
         .insert_resource(resources::GameState::LoadingScreen)
+        .insert_resource(resources::SetupManager::init())
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
+        .insert_resource(resources::Animator::init())
         .run();
 }
 

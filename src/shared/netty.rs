@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
-use crate::components::GamePosition;
+use crate::{client::core::GGS, components::GamePosition};
 
 use super::{saves::{Profile, User}, world::World};
 use serde::{Deserialize, Serialize};
@@ -75,7 +75,13 @@ impl Packet {
 
 pub fn remote_exists() -> bool {
     if online::sync::check(Some(5)).is_ok() {
-        true
+        if std::net::TcpStream::connect_timeout(&GGS.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
+            true
+        }
+        else {
+            println!("No connection to the GGS avalable.");
+            false
+        }
     }
     else {
         println!("No internet connection avalable.");

@@ -1,7 +1,7 @@
 mod loading_screen;
 pub use loading_screen::loading_screen;
 mod title_screen;
-pub use title_screen::title_screen;
+pub use title_screen::title_screen_spawner;
 pub use title_screen::title_screen_buttons;
 mod cursor;
 pub use cursor::cursor;

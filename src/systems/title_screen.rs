@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use crate::{components::{CursorMarker, TitleScreenManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState}};
+use crate::{components::{CursorMarker, TitleScreenManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState, SetupManager}};
 
-pub fn title_screen(
+pub fn title_screen_spawner(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     state: Res<GameState>,
     mut handles: ResMut<AssetHandles>,
+    mut manager: ResMut<SetupManager>
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
         let mut entity_ids = vec![];
