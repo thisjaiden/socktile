@@ -37,11 +37,13 @@ fn main() {
         .add_system(systems::new_ui.system())
         .add_system(systems::new_exit.system())
         .add_system(systems::new_network.system())
+        .add_system(systems::animator.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::SetupManager::init())
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
         .insert_resource(resources::Animator::init())
+        .insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 30.0, true)))
         .run();
 }
 

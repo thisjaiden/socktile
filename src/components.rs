@@ -18,3 +18,5 @@ mod new_manager;
 pub use new_manager::NewManager;
 mod play_manager;
 pub use play_manager::PlayManager;
+mod animator_object;
+pub use animator_object::AnimatorObject;

@@ -24,3 +24,6 @@ pub use new::new_exit;
 pub use new::new_network;
 mod play;
 pub use play::*;
+mod animator;
+pub use animator::animator;
+pub use animator::AnimatorTimer;

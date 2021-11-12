@@ -1,88 +1,24 @@
 use bevy::prelude::*;
-use crate::{components::{CursorMarker, TitleScreenManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState, SetupManager}};
+use crate::{components::{CursorMarker, TitleScreenManager}, layers::{CURSOR}, resources::{Animation, Animator, AssetHandles, GameState, SetupManager}};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     state: Res<GameState>,
     mut handles: ResMut<AssetHandles>,
-    mut manager: ResMut<SetupManager>
+    mut manager: ResMut<SetupManager>,
+    mut animator: ResMut<Animator>
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
-        let mut entity_ids = vec![];
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "Play",
-                TextStyle {
-                    font: handles.get_font("base.ttf"),
-                    font_size: 52.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(512.0, 256.0, UI_TEXT),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "New",
-                TextStyle {
-                    font: handles.get_font("base.ttf"),
-                    font_size: 52.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(-512.0, 256.0, UI_TEXT),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "Settings",
-                TextStyle {
-                    font: handles.get_font("base.ttf"),
-                    font_size: 52.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(-512.0, -256.0, UI_TEXT),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "Quit",
-                TextStyle {
-                    font: handles.get_font("base.ttf"),
-                    font_size: 52.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(512.0, -256.0, UI_TEXT),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(SpriteBundle {
-            material: materials.add(handles.get_texture("gblin_exp_2.png").into()),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(SpriteBundle {
-            material: materials.add(handles.get_texture("ts.png").into()),
-            ..Default::default()
-        }).id());
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
+        if !manager.internet_access.unwrap() {
+            animator.request_animation(Animation::FloatInTitleScreenNoWIFI, false);
+        }
+        else if !manager.ggs_access.unwrap() {
+            animator.request_animation(Animation::FloatInTitleScreenNoGGS, false);
+        }
+        else {
+            animator.request_animation(Animation::FloatInTitleScreen, false);
+        }
+        commands.spawn_bundle(Text2dBundle {
             text: Text::with_section(
                 "\u{f790}",
                 TextStyle {
@@ -97,8 +33,7 @@ pub fn title_screen_spawner(
             ),
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
-        }).insert(CursorMarker {}).id());
-        commands.spawn().insert(TitleScreenManager::new(entity_ids));
+        }).insert(CursorMarker {});
     }
 }
 

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, JoinChoice, JoinManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
+use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, JoinChoice, JoinManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
 
 pub fn join(
     mut commands: Commands,
@@ -31,23 +31,6 @@ pub fn join(
                 startup(recv_clone, send_clone);
             });
         }
-        let entity_ids = vec![
-        commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "\u{f790}",
-                TextStyle {
-                    font: handles.get_font("KreativeSquare.ttf"),
-                    font_size: 34.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Bottom,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(0.0, 0.0, CURSOR),
-            ..Default::default()
-        }).insert(CursorMarker {}).id()];
 
         
         if my_user.clone().unwrap().tag != 0 {
@@ -56,7 +39,7 @@ pub fn join(
             send_access.push(Packet::RequestProfile(my_user.unwrap()));
         }
         commands.spawn().insert(
-            JoinManager::new(entity_ids, recv, send)
+            JoinManager::new(recv, send)
         );
     }
 }

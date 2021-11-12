@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{DEV_BUILD, components::{CursorMarker, SettingsManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState}};
+use crate::{DEV_BUILD, components::SettingsManager, layers::UI_TEXT, resources::{AssetHandles, GameState}};
 
 pub fn settings(
     mut commands: Commands,
@@ -53,22 +53,6 @@ pub fn settings(
             material: materials.add(handles.get_texture("ts.png").into()),
             ..Default::default()
         }).id());
-        entity_ids.push(commands.spawn_bundle(Text2dBundle {
-            text: Text::with_section(
-                "\u{f790}",
-                TextStyle {
-                    font: handles.get_font("KreativeSquare.ttf"),
-                    font_size: 34.0,
-                    color: Color::BLACK
-                },
-                TextAlignment {
-                    vertical: VerticalAlign::Bottom,
-                    horizontal: HorizontalAlign::Right
-                }
-            ),
-            transform: Transform::from_xyz(0.0, 0.0, CURSOR),
-            ..Default::default()
-        }).insert(CursorMarker {}).id());
         commands.spawn().insert(SettingsManager::new(entity_ids));
     }
     if state.eq(&GameState::Settings) {

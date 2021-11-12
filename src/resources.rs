@@ -8,3 +8,4 @@ mod setup_manager;
 pub use setup_manager::SetupManager;
 mod animator;
 pub use animator::Animator;
+pub use animator::Animation;

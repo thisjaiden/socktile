@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, NewManager, PlayManager}, layers::{CURSOR, UI_TEXT}, resources::{AssetHandles, GameState, TextBox}, shared::{netty::Packet, saves::user}};
+use crate::{client::core::startup, components::{CreateUserManager, NewManager, PlayManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState, TextBox}, shared::{netty::Packet, saves::user}};
 
 pub fn new(
     mut commands: Commands,
@@ -32,22 +32,6 @@ pub fn new(
             });
         }
         let entity_ids = vec![
-            commands.spawn_bundle(Text2dBundle {
-                text: Text::with_section(
-                    "\u{f790}",
-                    TextStyle {
-                        font: handles.get_font("KreativeSquare.ttf"),
-                        font_size: 34.0,
-                        color: Color::BLACK
-                    },
-                    TextAlignment {
-                        vertical: VerticalAlign::Bottom,
-                        horizontal: HorizontalAlign::Right
-                    }
-                ),
-                transform: Transform::from_xyz(0.0, 0.0, CURSOR),
-                ..Default::default()
-            }).insert(CursorMarker {}).id(),
             commands.spawn_bundle(Text2dBundle {
                 text: Text::with_section(
                     "Name your world.",

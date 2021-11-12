@@ -14,9 +14,9 @@ pub struct JoinManager {
 }
 
 impl JoinManager {
-    pub fn new(entity_ids: Vec<Entity>, net_in: Arc<Mutex<Vec<Packet>>>, net_out: Arc<Mutex<Vec<Packet>>>) -> Self {
+    pub fn new(net_in: Arc<Mutex<Vec<Packet>>>, net_out: Arc<Mutex<Vec<Packet>>>) -> Self {
         Self {
-            entity_ids,
+            entity_ids: vec![],
             net_in,
             net_out,
             profile: None,
