@@ -90,8 +90,10 @@ impl Animator {
         &mut self,
         mut commands: Commands,
         mut handles: ResMut<AssetHandles>,
+        mut materials: ResMut<Assets<ColorMaterial>>,
         aos: Query<
             (
+                Entity,
                 &mut AnimatorObject,
                 &mut Transform,
                 Option<&mut Handle<ColorMaterial>>,
@@ -102,16 +104,107 @@ impl Animator {
         let anims_cl = self.animations.clone();
         // spawn new animations
         for animation in &anims_cl {
-
+            // spawn new animations
+            if animation.1 == 0 {
+                let anim_details = animation.0.clone().details(0);
+                for (modal, offset, index) in anim_details.display_modals {
+                    match modal {
+                        DisplayModal::Sprite(texture_name, layer) => {
+                            commands.spawn_bundle(SpriteBundle {
+                                transform: Transform::from_xyz(
+                                    anim_details.location.x as f32 + offset.x as f32,
+                                    anim_details.location.y as f32 + offset.y as f32,
+                                    layer
+                                ),
+                                material: materials.add(handles.get_texture(&texture_name).into()),
+                                ..Default::default()
+                            }).insert(
+                                AnimatorObject {
+                                    animation_id: animation.1,
+                                    index: index
+                                }
+                            );
+                        }
+                        DisplayModal::Text(font, size, color, text) => {
+                            commands.spawn_bundle(Text2dBundle {
+                                text: Text {
+                                    sections: vec![
+                                        TextSection {
+                                            value: text,
+                                            style: TextStyle {
+                                                font: handles.get_font(&font),
+                                                font_size: size,
+                                                color: color
+                                            }
+                                        }
+                                    ],
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Top,
+                                        horizontal: HorizontalAlign::Left
+                                    }
+                                },
+                                ..Default::default()
+                            }).insert(
+                                AnimatorObject {
+                                    animation_id: animation.1,
+                                    index: index
+                                }
+                            );
+                        }
+                        DisplayModal::NoUpdate => {
+                            unimplemented!();
+                        }
+                    }
+                }
+            }
+            else { // edit existing animations
+                aos.for_each_mut(
+                    |(
+                        e,
+                        object,
+                        mut transform,
+                        mut texture,
+                        mut text
+                    )| {
+                        if object.animation_id == animation.1 {
+                            let anim_details = animation.0.clone().details(animation.1);
+                            for (modal, offset, index) in anim_details.display_modals {
+                                if index == object.index {
+                                    transform.translation.x = anim_details.location.x as f32 + offset.x as f32;
+                                    transform.translation.y = anim_details.location.y as f32 + offset.x as f32;
+                                    match modal {
+                                        DisplayModal::Sprite(tex_from, layer) => {
+                                            todo!();
+                                        },
+                                        DisplayModal::Text(font, size, color, text_from) => {
+                                            if let Some(ref mut text) = text {
+                                                text.sections[0].value = text_from;
+                                                text.sections[0].style.color = color;
+                                                text.sections[0].style.font_size = size;
+                                                text.sections[0].style.font = handles.get_font(&font);
+                                            }
+                                            else {
+                                                panic!("No Text object for Entity that should have had it.");
+                                            }
+                                        },
+                                        DisplayModal::NoUpdate => {
+                                            // do nothing
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
         }
-        // edit existing animations
 
         // handle old animations
         let mut anim_index = 0;
         let mut removal_ids = vec![];
-        for animation in anims_cl {
+        for animation in &anims_cl {
             self.animations[anim_index].1 += 1;
-            if animation.0.is_done(animation.1) {
+            if animation.0.clone().is_done(animation.1) {
                 removal_ids.push(animation.2);
             }
             anim_index += 1;
@@ -119,6 +212,19 @@ impl Animator {
         // The only reason this is done after is so the iterator doesn't skip animations as the list is shifted
         for id in removal_ids {
             self.request_animation_end_soft(id);
+            aos.for_each_mut(
+                |(
+                    e,
+                    object,
+                    transform,
+                    texture,
+                    text
+                )| {
+                    if object.animation_id == id {
+                        commands.entity(e).despawn();
+                    }
+                }
+            );
         }
     }
 }
@@ -155,17 +261,18 @@ pub type AnimationFrame = usize;
 
 pub struct FrameDetails {
     location: GamePosition,
-    display_modal: DisplayModal
+    display_modals: Vec<(DisplayModal, GamePosition, ObjectIndex)>
 }
 
 pub enum DisplayModal {
-    Sprite(TextureOrigin, Flipped),
-    Text(FontOrigin, FontSize, FontColor),
-    Multi(Vec<DisplayModal>)
+    Sprite(TextureOrigin, Layer),
+    Text(FontOrigin, FontSize, FontColor, String),
+    NoUpdate
 }
 
 type TextureOrigin = String;
 type FontOrigin = String;
 type FontSize = f32;
 type FontColor = bevy::prelude::Color;
-type Flipped = bool;
+type Layer = f32;
+type ObjectIndex = usize;

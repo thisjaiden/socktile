@@ -8,10 +8,12 @@ pub fn animator(
     mut commands: Commands,
     mut handles: ResMut<AssetHandles>,
     mut animator: ResMut<Animator>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     mut timer: ResMut<AnimatorTimer>,
     aos: Query<
         (
+            Entity,
             &mut AnimatorObject,
             &mut Transform,
             Option<&mut Handle<ColorMaterial>>,
@@ -20,6 +22,6 @@ pub fn animator(
     >
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        animator.step(commands, handles, aos);
+        animator.step(commands, handles, materials, aos);
     }
 }
