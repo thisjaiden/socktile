@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::components::{AnimatorObject, GamePosition};
+use crate::{DEV_BUILD, components::{AnimatorObject, GamePosition}};
 
 use super::AssetHandles;
 
@@ -42,7 +42,7 @@ impl Animator {
         for animation in self.animations.clone() {
             if animation.2 == id {
                 if animation.3 {
-                    self.animations[index].1 = 0;
+                    self.animations[index].1 = 1;
                 }
                 else {
                     self.animations.swap_remove(index);
@@ -102,6 +102,39 @@ impl Animator {
         >
     ) {
         let anims_cl = self.animations.clone();
+        // handle old animations
+        let mut anim_index = 0;
+        let mut removal_ids = vec![];
+        for animation in &anims_cl {
+            self.animations[anim_index].1 += 1;
+            if animation.0.clone().is_done(animation.1) {
+                removal_ids.push(animation.2);
+            }
+            anim_index += 1;
+        }
+        // The only reason this is done after is so the iterator doesn't skip animations as the list is shifted
+        for id in removal_ids {
+            self.request_animation_end_soft(id);
+            aos.for_each_mut(
+                |(
+                    e,
+                    object,
+                    _transform,
+                    _texture,
+                    _text
+                )| {
+                    if object.animation_id == id {
+                        for animation in &anims_cl {
+                            if animation.2 == id {
+                                if !animation.3 {
+                                    commands.entity(e).despawn();
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
         // spawn new animations
         for animation in &anims_cl {
             // spawn new animations
@@ -140,7 +173,7 @@ impl Animator {
                                     ],
                                     alignment: TextAlignment {
                                         vertical: VerticalAlign::Top,
-                                        horizontal: HorizontalAlign::Left
+                                        horizontal: HorizontalAlign::Right
                                     }
                                 },
                                 ..Default::default()
@@ -198,34 +231,6 @@ impl Animator {
                 );
             }
         }
-
-        // handle old animations
-        let mut anim_index = 0;
-        let mut removal_ids = vec![];
-        for animation in &anims_cl {
-            self.animations[anim_index].1 += 1;
-            if animation.0.clone().is_done(animation.1) {
-                removal_ids.push(animation.2);
-            }
-            anim_index += 1;
-        }
-        // The only reason this is done after is so the iterator doesn't skip animations as the list is shifted
-        for id in removal_ids {
-            self.request_animation_end_soft(id);
-            aos.for_each_mut(
-                |(
-                    e,
-                    object,
-                    transform,
-                    texture,
-                    text
-                )| {
-                    if object.animation_id == id {
-                        commands.entity(e).despawn();
-                    }
-                }
-            );
-        }
     }
 }
 
@@ -239,18 +244,28 @@ pub enum Animation {
     FloatInTitleScreenNoGGS,
 }
 
+mod fits;
+mod fitsnwifi;
+mod fitsnggs;
+
 impl Animation {
     fn is_done(self, frame: AnimationFrame) -> bool {
         match self {
             Self::FloatInTitleScreen => frame > 10,
-            Self::FloatInTitleScreenNoWIFI => frame > 10,
-            Self::FloatInTitleScreenNoGGS => frame > 10
+            Self::FloatInTitleScreenNoWIFI => frame > 2,
+            Self::FloatInTitleScreenNoGGS => frame > 2
         }
     }
     fn details(&mut self, frame: AnimationFrame) -> FrameDetails {
         match self {
-            _ => {
-                panic!("No animation data for {:?} frame {}!", self, frame);
+            Self::FloatInTitleScreen => {
+                return fits::fits(frame);
+            }
+            Self::FloatInTitleScreenNoWIFI => {
+                return fitsnwifi::fitsnwifi(frame);
+            }
+            Self::FloatInTitleScreenNoGGS => {
+                return fitsnggs::fitsnggs(frame);
             }
         }
     }

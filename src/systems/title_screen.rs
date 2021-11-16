@@ -10,10 +10,10 @@ pub fn title_screen_spawner(
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
         if !manager.internet_access.unwrap() {
-            animator.request_animation(Animation::FloatInTitleScreenNoWIFI, false);
+            animator.request_animation(Animation::FloatInTitleScreenNoWIFI, true);
         }
         else if !manager.ggs_access.unwrap() {
-            animator.request_animation(Animation::FloatInTitleScreenNoGGS, false);
+            animator.request_animation(Animation::FloatInTitleScreenNoGGS, true);
         }
         else {
             animator.request_animation(Animation::FloatInTitleScreen, false);

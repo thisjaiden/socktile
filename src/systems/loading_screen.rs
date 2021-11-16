@@ -42,18 +42,38 @@ pub fn loading_screen(
         path.push("assets");
         let mut wait = false;
         let mut num_assets = 0;
-        for asset in ASSET_LIST {
-            num_assets += 1;
-            path.push(asset);
-            if state.is_added() {
-                let handle: Handle<Texture> = server.load(path.clone());
-                handles.add_texture_handle(handle.clone(), asset);
-                wait = true;
+        if DEV_BUILD {
+            for asset in asset_file_to_list() {
+                if asset == String::new() {
+                    continue;
+                }
+                num_assets += 1;
+                path.push(asset.clone());
+                if state.is_added() {
+                    let handle: Handle<Texture> = server.load(path.clone());
+                    handles.add_texture_handle(handle.clone(), &asset);
+                    wait = true;
+                }
+                else {
+                    wait = handles.prod_handle(server.clone());
+                }
+                path.pop();
             }
-            else {
-                wait = handles.prod_handle(server.clone());
+        }
+        else {
+            for asset in ASSET_LIST {
+                num_assets += 1;
+                path.push(asset);
+                if state.is_added() {
+                    let handle: Handle<Texture> = server.load(path.clone());
+                    handles.add_texture_handle(handle.clone(), asset);
+                    wait = true;
+                }
+                else {
+                    wait = handles.prod_handle(server.clone());
+                }
+                path.pop();
             }
-            path.pop();
         }
         if state.is_added() {
             num_assets += 2;
@@ -104,3 +124,14 @@ const ASSET_LIST: [&str; 6] = [
     "axe.png",
     "pickaxe.png",
 ];
+
+fn asset_file_to_list() -> Vec<String> {
+    let mut dir = std::env::current_dir().unwrap();
+    dir.push("assets.dev");
+    let contents = std::fs::read_to_string(dir).unwrap();
+    let mut fin = vec![];
+    for line in contents.split("\n") {
+        fin.push(String::from(line.trim()));
+    }
+    return fin;
+}
