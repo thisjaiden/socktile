@@ -258,21 +258,12 @@ impl Animation {
     }
     fn details(&mut self, frame: AnimationFrame) -> FrameDetails {
         match self {
-            Self::FloatInTitleScreen => {
-                return fits::fits(frame);
-            }
-            Self::FloatInTitleScreenNoWIFI => {
-                return fitsnwifi::fitsnwifi(frame);
-            }
-            Self::FloatInTitleScreenNoGGS => {
-                return fitsnggs::fitsnggs(frame);
-            }
+            Self::FloatInTitleScreen => fits::fits(frame),
+            Self::FloatInTitleScreenNoWIFI => fitsnwifi::fitsnwifi(frame),
+            Self::FloatInTitleScreenNoGGS => fitsnggs::fitsnggs(frame),
         }
     }
 }
-
-pub type AnimationFrame = usize;
-
 
 pub struct FrameDetails {
     location: GamePosition,
@@ -285,6 +276,7 @@ pub enum DisplayModal {
     NoUpdate
 }
 
+pub type AnimationFrame = usize;
 type TextureOrigin = String;
 type FontOrigin = String;
 type FontSize = f32;
