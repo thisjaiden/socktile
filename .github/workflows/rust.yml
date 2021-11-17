@@ -14,12 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Update deps
+      run: sudo apt-get update
     - name: Install libasound2
       run: sudo apt-get install libasound2-dev
     - name: Install libudev
       run: sudo apt-get install libudev-dev
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check
@@ -39,7 +41,7 @@ jobs:
     - name: Install zld
       run: brew install michaeleisel/zld/zld
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check
@@ -57,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check

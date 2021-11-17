@@ -5,10 +5,10 @@ use crate::{components::AnimatorObject, resources::{Animator, AssetHandles}};
 pub struct AnimatorTimer(pub Timer);
 
 pub fn animator(
-    mut commands: Commands,
-    mut handles: ResMut<AssetHandles>,
+    commands: Commands,
+    handles: ResMut<AssetHandles>,
     mut animator: ResMut<Animator>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     mut timer: ResMut<AnimatorTimer>,
     aos: Query<

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{DEV_BUILD, components::{AnimatorObject, GamePosition}};
+use crate::{components::{AnimatorObject, GamePosition}};
 
 use super::AssetHandles;
 
@@ -193,10 +193,10 @@ impl Animator {
             else { // edit existing animations
                 aos.for_each_mut(
                     |(
-                        e,
+                        _e,
                         object,
                         mut transform,
-                        mut texture,
+                        _texture,
                         mut text
                     )| {
                         if object.animation_id == animation.1 {
@@ -206,7 +206,7 @@ impl Animator {
                                     transform.translation.x = anim_details.location.x as f32 + offset.x as f32;
                                     transform.translation.y = anim_details.location.y as f32 + offset.x as f32;
                                     match modal {
-                                        DisplayModal::Sprite(tex_from, layer) => {
+                                        DisplayModal::Sprite(_tex_from, _layer) => {
                                             todo!();
                                         },
                                         DisplayModal::Text(font, size, color, text_from) => {

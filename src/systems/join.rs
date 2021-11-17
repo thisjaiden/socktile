@@ -2,12 +2,12 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::*;
 
-use crate::{client::core::startup, components::{CreateUserManager, CursorMarker, JoinChoice, JoinManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
+use crate::{client::core::startup, components::{CreateUserManager, JoinChoice, JoinManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState}, shared::{netty::Packet, saves::user}};
 
 pub fn join(
     mut commands: Commands,
     mut state: ResMut<GameState>,
-    mut handles: ResMut<AssetHandles>,
+    _handles: ResMut<AssetHandles>,
     old_manager: Query<&mut CreateUserManager>,
 ) {
     if state.eq(&GameState::Join) && state.is_changed() {

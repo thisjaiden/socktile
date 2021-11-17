@@ -5,7 +5,7 @@ pub fn title_screen_spawner(
     mut commands: Commands,
     state: Res<GameState>,
     mut handles: ResMut<AssetHandles>,
-    mut manager: ResMut<SetupManager>,
+    manager: ResMut<SetupManager>,
     mut animator: ResMut<Animator>
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {

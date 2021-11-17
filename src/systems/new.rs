@@ -79,7 +79,7 @@ pub fn new(
 }
 
 pub fn new_ui(
-    commands: Commands,
+    _commands: Commands,
     mut tb: ResMut<TextBox>,
     manager: Query<&mut NewManager>,
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
