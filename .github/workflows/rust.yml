@@ -33,7 +33,7 @@ jobs:
       with:
         path: target/release/socktile
         name: nix_build
-        retention-days: 1
+        retention-days: 3
   build-macos:
     runs-on: macos-latest
     steps:
@@ -53,7 +53,7 @@ jobs:
       with:
         path: target/release/socktile
         name: macos_build
-        retention-days: 1
+        retention-days: 3
   build-windows:
     runs-on: windows-latest
     steps:
@@ -71,4 +71,4 @@ jobs:
       with:
         path: target/release/socktile.exe
         name: windows_build
-        retention-days: 1
+        retention-days: 3

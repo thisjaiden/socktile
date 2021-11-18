@@ -14,6 +14,13 @@ pub const GGS_BUILD: bool = false;
 fn main() {
     if DEV_BUILD {
         println!("\x1B[40;91mTHIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.\x1B[0m");
+        let mut args = std::env::args();
+        args.next();
+        if let Some(argument) = args.next() {
+            if argument == "--ggs" {
+                server::core::startup();
+            }
+        }
     }
     if GGS_BUILD {
         println!("\x1B[40;91mTHIS IS A GLOBAL GAME SERVER BUILD. DO NOT DISTRIBUTE. DO NOT RUN FROM THE WRONG LOCATION.\x1B[0m");
