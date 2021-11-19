@@ -4,9 +4,9 @@ use crate::{components::GamePosition, layers::BACKGROUND, resources::animator::D
 
 use super::FrameDetails;
 
-pub fn fits(frame: usize) -> FrameDetails {
+pub fn tsb(frame: usize) -> FrameDetails {
     match frame {
-        0 | 1 => {
+        0 => {
             FrameDetails {
                 location: GamePosition { x: 0.0, y: 0.0 },
                 display_modals: vec![
@@ -17,7 +17,7 @@ pub fn fits(frame: usize) -> FrameDetails {
                             Color::BLACK,
                             String::from("Join")
                         ),
-                        GamePosition { x: 0.0, y: 0.0 },
+                        GamePosition { x: 128.0, y: 0.0 },
                         0
                     ),
                     (
@@ -27,7 +27,7 @@ pub fn fits(frame: usize) -> FrameDetails {
                             Color::BLACK,
                             String::from("New")
                         ),
-                        GamePosition { x: 0.0, y: 0.0 },
+                        GamePosition { x: 128.0, y: 50.0 },
                         1
                     ),
                     (
@@ -37,7 +37,7 @@ pub fn fits(frame: usize) -> FrameDetails {
                             Color::BLACK,
                             String::from("Exit")
                         ),
-                        GamePosition { x: 0.0, y: 0.0 },
+                        GamePosition { x: -128.0, y: 128.0 },
                         2
                     ),
                     (
@@ -47,7 +47,7 @@ pub fn fits(frame: usize) -> FrameDetails {
                             Color::BLACK,
                             String::from("Settings")
                         ),
-                        GamePosition { x: 0.0, y: 0.0 },
+                        GamePosition { x: -128.0, y: -128.0 },
                         3
                     ),
                     (

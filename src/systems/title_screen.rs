@@ -10,13 +10,16 @@ pub fn title_screen_spawner(
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
         if !manager.internet_access.unwrap() {
+            // No internet - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoWIFI, true);
         }
         else if !manager.ggs_access.unwrap() {
+            // No GGS - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoGGS, true);
         }
         else {
-            animator.request_animation(Animation::FloatInTitleScreen, false);
+            let fiid = animator.request_animation(Animation::FloatInTitleScreen, false);
+            animator.request_animation_followup(fiid, Animation::TitleScreenBob, true);
         }
         commands.spawn_bundle(Text2dBundle {
             text: Text::with_section(

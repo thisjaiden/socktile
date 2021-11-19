@@ -4,8 +4,13 @@ use crate::{components::{AnimatorObject, GamePosition}};
 use super::AssetHandles;
 
 pub struct Animator {
+    /// A list of all animations.
+    /// (Animation Type, Frame, ID, Should Loop)
     animations: Vec<(Animation, AnimationFrame, AnimatorID, Loops)>,
+    /// The highest unique animation ID.
     top_id: AnimatorID,
+    /// A list of animations to play after an animation ends.
+    /// (ID of Animation to Play After, (Animation Type, ID, Should Loop))
     followups: Vec<(AnimatorID, (Animation, AnimatorID, Loops))>
 }
 
@@ -61,30 +66,6 @@ impl Animator {
         self.followups.push((id, (animation, self.top_id, loops)));
         self.top_id += 1;
         self.top_id - 1
-    }
-    pub fn animation_exists(&mut self, id: AnimatorID) -> bool {
-        for animation in &self.animations {
-            if animation.2 == id {
-                return true;
-            }
-        }
-        false
-    }
-    pub fn animation_frame(&mut self, id: AnimatorID) -> AnimationFrame {
-        for animation in &self.animations {
-            if animation.2 == id {
-                return animation.1;
-            }
-        }
-        panic!("Invalid AnimatorID {}!", id);
-    }
-    pub fn animation_details(&mut self, id: AnimatorID) -> FrameDetails {
-        for animation in &self.animations {
-            if animation.2 == id {
-                return animation.0.clone().details(animation.1);
-            }
-        }
-        panic!("Invalid AnimatorID {}!", id);
     }
     pub fn step(
         &mut self,
@@ -153,7 +134,7 @@ impl Animator {
                                 ..Default::default()
                             }).insert(
                                 AnimatorObject {
-                                    animation_id: animation.1,
+                                    animation_id: animation.2,
                                     index: index
                                 }
                             );
@@ -179,7 +160,7 @@ impl Animator {
                                 ..Default::default()
                             }).insert(
                                 AnimatorObject {
-                                    animation_id: animation.1,
+                                    animation_id: animation.2,
                                     index: index
                                 }
                             );
@@ -199,7 +180,7 @@ impl Animator {
                         _texture,
                         mut text
                     )| {
-                        if object.animation_id == animation.1 {
+                        if object.animation_id == animation.2 {
                             let anim_details = animation.0.clone().details(animation.1);
                             for (modal, offset, index) in anim_details.display_modals {
                                 if index == object.index {
@@ -242,18 +223,21 @@ pub enum Animation {
     FloatInTitleScreen,
     FloatInTitleScreenNoWIFI,
     FloatInTitleScreenNoGGS,
+    TitleScreenBob
 }
 
 mod fits;
 mod fitsnwifi;
 mod fitsnggs;
+mod tsb;
 
 impl Animation {
     fn is_done(self, frame: AnimationFrame) -> bool {
         match self {
             Self::FloatInTitleScreen => frame > 10,
-            Self::FloatInTitleScreenNoWIFI => frame > 2,
-            Self::FloatInTitleScreenNoGGS => frame > 2
+            Self::FloatInTitleScreenNoWIFI => frame > 1,
+            Self::FloatInTitleScreenNoGGS => frame > 1,
+            Self::TitleScreenBob => frame > 40
         }
     }
     fn details(&mut self, frame: AnimationFrame) -> FrameDetails {
@@ -261,6 +245,7 @@ impl Animation {
             Self::FloatInTitleScreen => fits::fits(frame),
             Self::FloatInTitleScreenNoWIFI => fitsnwifi::fitsnwifi(frame),
             Self::FloatInTitleScreenNoGGS => fitsnggs::fitsnggs(frame),
+            Self::TitleScreenBob => tsb::tsb(frame),
         }
     }
 }
