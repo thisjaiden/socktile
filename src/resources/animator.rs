@@ -185,10 +185,10 @@ impl Animator {
                             for (modal, offset, index) in anim_details.display_modals {
                                 if index == object.index {
                                     transform.translation.x = anim_details.location.x as f32 + offset.x as f32;
-                                    transform.translation.y = anim_details.location.y as f32 + offset.x as f32;
+                                    transform.translation.y = anim_details.location.y as f32 + offset.y as f32;
                                     match modal {
                                         DisplayModal::Sprite(_tex_from, _layer) => {
-                                            todo!();
+                                            // todo!();
                                         },
                                         DisplayModal::Text(font, size, color, text_from) => {
                                             if let Some(ref mut text) = text {
@@ -234,7 +234,7 @@ mod tsb;
 impl Animation {
     fn is_done(self, frame: AnimationFrame) -> bool {
         match self {
-            Self::FloatInTitleScreen => frame > 10,
+            Self::FloatInTitleScreen => frame > 400,
             Self::FloatInTitleScreenNoWIFI => frame > 1,
             Self::FloatInTitleScreenNoGGS => frame > 1,
             Self::TitleScreenBob => frame > 40

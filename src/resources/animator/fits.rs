@@ -61,6 +61,25 @@ pub fn fits(frame: usize) -> FrameDetails {
                 ]
             }
         }
-        _ => unimplemented!()
+        i => {
+            FrameDetails {
+                location: GamePosition { x: 0.0, y: 0.0 },
+                display_modals: vec![
+                    ( // https://www.desmos.com/calculator/f1zarrftbo
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("Exit")
+                        ),
+                        GamePosition {
+                            x: i as f64 - 1000.0,
+                            y: (i as f64 - 800.0 * ((i as f64 / 50.0).sin() * 0.2)) - 400.0
+                        },
+                        2
+                    ),
+                ]
+            }
+        }
     }
 }
