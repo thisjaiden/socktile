@@ -9,3 +9,4 @@ pub const FOREGROUND_PAN_2: f32 = 53.0;
 pub const UI: f32 = 100.0;
 pub const UI_TEXT: f32 = 101.0;
 pub const CURSOR: f32 = 250.0;
+pub const DEBUG: f32 = 275.0;

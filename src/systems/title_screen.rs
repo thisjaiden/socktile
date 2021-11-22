@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::{components::{CursorMarker, TitleScreenManager}, layers::{CURSOR}, resources::{Animation, Animator, AssetHandles, GameState, SetupManager}};
+use bevy_prototype_debug_lines::DebugLines;
+use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, SetupManager}};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
@@ -43,13 +44,16 @@ pub fn title_screen_spawner(
 pub fn title_screen_buttons(
     mut commands: Commands,
     mut state: ResMut<GameState>,
-    query_manager: Query<&mut TitleScreenManager>,
     query_cursor: Query<&mut Transform, With<CursorMarker>>,
-    query_final: Query<Entity, With<TitleScreenManager>>,
     mousein: Res<Input<MouseButton>>,
-    mut quit: EventWriter<bevy::app::AppExit>
+    mut quit: EventWriter<bevy::app::AppExit>,
+    mut lines: ResMut<DebugLines>
 ) {
     if state.eq(&GameState::TitleScreen) {
+        debug_box(&mut lines, PLAY_BUTTON_LOC, PLAY_BUTTON_SIZE);
+        debug_box(&mut lines, NEW_BUTTON_LOC, NEW_BUTTON_SIZE);
+        debug_box(&mut lines, SETTINGS_BUTTON_LOC, SETTINGS_BUTTON_SIZE);
+        debug_box(&mut lines, QUIT_BUTTON_LOC, QUIT_BUTTON_SIZE);
         query_cursor.for_each_mut(|location| {
             if mousein.just_pressed(MouseButton::Left) {
                 if
@@ -59,12 +63,6 @@ pub fn title_screen_buttons(
                     location.translation.y < PLAY_BUTTON_LOC.1 + PLAY_BUTTON_SIZE.1
                 {
                     println!("Play button selected.");
-                    query_manager.for_each_mut(|mut manager| {
-                        manager.disassemble(&mut commands);
-                    });
-                    for entity in query_final.iter() {
-                        commands.entity(entity).despawn();
-                    }
                     state.change_state(GameState::Join);
                 }
                 else if
@@ -74,12 +72,6 @@ pub fn title_screen_buttons(
                     location.translation.y < NEW_BUTTON_LOC.1 + NEW_BUTTON_SIZE.1
                 {
                     println!("New button selected.");
-                    query_manager.for_each_mut(|mut manager| {
-                        manager.disassemble(&mut commands);
-                    });
-                    for entity in query_final.iter() {
-                        commands.entity(entity).despawn();
-                    }
                     state.change_state(GameState::New);
                 }
                 else if
@@ -89,12 +81,6 @@ pub fn title_screen_buttons(
                     location.translation.y < SETTINGS_BUTTON_LOC.1 + SETTINGS_BUTTON_SIZE.1
                 {
                     println!("Settings button selected.");
-                    query_manager.for_each_mut(|mut manager| {
-                        manager.disassemble(&mut commands);
-                    });
-                    for entity in query_final.iter() {
-                        commands.entity(entity).despawn();
-                    }
                     state.change_state(GameState::Settings);
                 }
                 else if
@@ -109,6 +95,33 @@ pub fn title_screen_buttons(
             }
         });
     }
+}
+
+fn debug_box(
+    mut lines: &mut ResMut<DebugLines>,
+    pos: (f32, f32),
+    size: (f32, f32)
+) {
+    lines.line_colored(
+        Vec3::from((pos.0, pos.1, DEBUG)),
+        Vec3::from((pos.0 + size.0, pos.1, DEBUG)),
+         0.0, Color::RED
+    );
+    lines.line_colored(
+        Vec3::from((pos.0, pos.1, DEBUG)),
+        Vec3::from((pos.0, pos.1 + size.1, DEBUG)),
+         0.0, Color::RED
+    );
+    lines.line_colored(
+        Vec3::from((pos.0 + size.0, pos.1, DEBUG)),
+        Vec3::from((pos.0 + size.0, pos.1 + size.1, DEBUG)),
+         0.0, Color::RED
+    );
+    lines.line_colored(
+        Vec3::from((pos.0, pos.1 + size.1, DEBUG)),
+        Vec3::from((pos.0 + size.0, pos.1 + size.1, DEBUG)),
+         0.0, Color::RED
+    );
 }
 
 const PLAY_BUTTON_LOC: (f32, f32) = (512.0, 256.0);

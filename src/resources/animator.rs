@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use bevy::prelude::*;
 use crate::{components::{AnimatorObject, GamePosition}};
 
@@ -56,11 +58,6 @@ impl Animator {
             }
             index += 1;
         }
-        for followup in self.followups.clone() {
-            if followup.0 == id {
-                self.animations.push((followup.1.0, 0, followup.1.1, followup.1.2));
-            }
-        }
     }
     pub fn request_animation_followup(&mut self, id: AnimatorID, animation: Animation, loops: bool) -> AnimatorID {
         self.followups.push((id, (animation, self.top_id, loops)));
@@ -90,6 +87,13 @@ impl Animator {
             self.animations[anim_index].1 += 1;
             if animation.0.clone().is_done(animation.1) {
                 removal_ids.push(animation.2);
+            }
+            if animation.0.clone().is_done(animation.1 + 1) {
+                for followup in self.followups.clone() {
+                    if followup.0 == animation.2 {
+                        self.animations.push((followup.1.0, 0, followup.1.1, followup.1.2));
+                    }
+                }
             }
             anim_index += 1;
         }
@@ -237,7 +241,7 @@ impl Animation {
             Self::FloatInTitleScreen => frame > 400,
             Self::FloatInTitleScreenNoWIFI => frame > 1,
             Self::FloatInTitleScreenNoGGS => frame > 1,
-            Self::TitleScreenBob => frame > 40
+            Self::TitleScreenBob => frame > (100.0 * PI) as usize
         }
     }
     fn details(&mut self, frame: AnimationFrame) -> FrameDetails {

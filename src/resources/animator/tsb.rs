@@ -61,6 +61,39 @@ pub fn tsb(frame: usize) -> FrameDetails {
                 ]
             }
         }
-        _ => unimplemented!()
+        i => {
+            // prev at 400
+            FrameDetails {
+                location: GamePosition { x: 0.0, y: 0.0 },
+                display_modals: vec![
+                    (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("Exit")
+                        ),
+                        GamePosition {
+                            x: -600.0,
+                            y: -160.0 + ((i as f64 / 50.0).sin() * 3.0)
+                        },
+                        2
+                    ),
+                    (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("Settings")
+                        ),
+                        GamePosition {
+                            x: -600.0,
+                            y: -110.0 + ((i as f64 / 50.0).sin() * 3.0)
+                        },
+                        3
+                    )
+                ]
+            }
+        }
     }
 }
