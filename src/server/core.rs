@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::{Profile, SaveGame, User, profiles, save, save_folder, save_profile, saves}, world::{SPAWN_POSITION, World}};
+use crate::shared::{listing::GameListing, netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::{Profile, SaveGame, User, profiles, save, save_folder, save_profile, saves}, world::{SPAWN_POSITION, World}};
 
 pub const HOST_PORT: &str = "11111";
 
@@ -84,12 +84,7 @@ pub fn startup() -> ! {
                         drop(func_send);
                     }
                     Packet::CreateWorld(name) => {
-                        let mut world_id = 0;
-                        for save in saves.clone() {
-                            if save.internal_id > world_id {
-                                world_id = save.internal_id;
-                            }
-                        }
+                        let world_id = saves.last().unwrap().internal_id + 1;
                         let mut path = save_folder();
                         path.push(format!("world_{}.bic", world_id));
                         let mut owner = User {
@@ -101,8 +96,24 @@ pub fn startup() -> ! {
                                 owner = user_pair;
                             }
                         }
+                        for (index, profile) in profiles.clone().into_iter().enumerate() {
+                            if owner == profile.user {
+                                profiles[index].created_games.push(
+                                    GameListing {
+                                        public_name: name.clone(),
+                                        description: String::new(),
+                                        internal_id: world_id,
+                                        local: false,
+                                        address: String::from("ggs"),
+                                        password: false,
+                                        played: false
+                                    }
+                                );
+                            }
+                        }
                         if owner.tag == 0 {
-                            panic!("No user found for an IP adress used with Packet::CreateWorld(String)");
+                            // TODO: Properly
+                            panic!("No user found for an IP address used with Packet::CreateWorld(String)");
                         }
                         saves.push(
                             SaveGame {

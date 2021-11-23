@@ -71,6 +71,32 @@ pub fn tsb(frame: usize) -> FrameDetails {
                             String::from("base.ttf"),
                             64.0,
                             Color::BLACK,
+                            String::from("Join")
+                        ),
+                        GamePosition {
+                            x: 450.0,
+                            y: 17.0 + ((i as f64 / 50.0).sin() * 3.0)
+                        },
+                        0
+                    ),
+                    (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("New")
+                        ),
+                        GamePosition {
+                            x: 450.0,
+                            y: 67.0 + ((i as f64 / 50.0).sin() * 3.0)
+                        },
+                        1
+                    ),
+                    (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
                             String::from("Exit")
                         ),
                         GamePosition {

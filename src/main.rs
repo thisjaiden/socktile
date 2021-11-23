@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use bevy::diagnostic::{DiagnosticsPlugin, EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::diagnostic::{
+    DiagnosticsPlugin, EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin
+};
 
 use bevy_prototype_debug_lines::*;
 
@@ -52,20 +54,19 @@ fn main() {
         .add_system(systems::join.system())
         .add_system(systems::join_ui_create.system())
         .add_system(systems::join_ui_update.system())
-        .add_system(systems::join_network.system())
         .add_system(systems::create_user.system())
         .add_system(systems::create_user_ui.system())
         .add_system(systems::text_box.system())
         .add_system(systems::new.system())
         .add_system(systems::new_ui.system())
         .add_system(systems::new_exit.system())
-        .add_system(systems::new_network.system())
         .add_system(systems::animator.system())
+        .add_system(systems::netty_general.system())
         .insert_resource(resources::GameState::LoadingScreen)
-        .insert_resource(resources::SetupManager::init())
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 60.0, true)))
+        .insert_resource(resources::Netty::init())
         .run();
 }

@@ -1,8 +1,6 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::prelude::*;
 
-use crate::{components::CreateUserManager, layers::UI_TEXT, resources::{AssetHandles, GameState, TextBox}, shared::{netty::Packet, saves::{User, save_user}}};
+use crate::{components::CreateUserManager, layers::UI_TEXT, resources::{AssetHandles, GameState, Netty, TextBox}, shared::{netty::Packet, saves::{User, save_user}}};
 
 pub fn create_user(
     mut tb: ResMut<TextBox>,
@@ -62,13 +60,11 @@ pub fn create_user(
                 ..Default::default()
             }).insert(crate::components::TextBox {}).id()
         ];
-        let recv = Arc::new(Mutex::new(vec![]));
-        let send = Arc::new(Mutex::new(vec![]));
         if state.eq(&GameState::CreateUser) {
-            commands.spawn().insert(CreateUserManager::new(eids, recv, send));
+            commands.spawn().insert(CreateUserManager::new(eids));
         }
         else {
-            commands.spawn().insert(CreateUserManager::new_b(eids, recv, send));
+            commands.spawn().insert(CreateUserManager::new_b(eids));
         }
     }
 }
@@ -79,6 +75,7 @@ pub fn create_user_ui(
     manager: Query<&mut CreateUserManager>,
     tb_q: Query<&mut Text, With<crate::components::TextBox>>,
     mut state: ResMut<GameState>,
+    mut netty: ResMut<Netty>
 ) {
     if state.eq(&GameState::CreateUser) || state.eq(&GameState::CreateUserB) {
         tb_q.for_each_mut(|mut text| {
@@ -90,16 +87,13 @@ pub fn create_user_ui(
                 text.sections[0].style.color = Color::BLACK;
                 if tb.grab_buffer().contains('\n') {
                     manager.for_each_mut(|mut state_man| {
-                        let out = state_man.grab_out();
                         let mut mode = tb.grab_buffer();
                         mode = String::from(mode.trim_end());
                         mode = String::from(mode.trim_end_matches('\n'));
-                        let mut o_acc = out.lock().unwrap();
-                        o_acc.push(Packet::CreateProfile(User {
+                        netty.say(Packet::CreateProfile(User {
                             username: mode.clone(),
                             tag: 0
                         }));
-                        drop(o_acc);
                         save_user(User {
                             username: mode,
                             tag: 0

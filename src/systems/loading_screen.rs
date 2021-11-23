@@ -4,16 +4,13 @@ use crate::DEV_BUILD;
 use crate::layers::UI_TEXT;
 use crate::resources::GameState;
 use crate::resources::AssetHandles;
-use crate::resources::SetupManager;
-use crate::shared::netty::remote_exists;
 
 pub fn loading_screen(
     mut commands: Commands,
     mut state: ResMut<GameState>,
     server: Res<AssetServer>,
     mut windows: ResMut<Windows>,
-    mut handles: ResMut<AssetHandles>,
-    mut manager: ResMut<SetupManager>
+    mut handles: ResMut<AssetHandles>
 ) {
     if state.eq(&GameState::LoadingScreen) {
         if state.is_added() {
@@ -41,13 +38,11 @@ pub fn loading_screen(
         let mut path = std::env::current_dir().unwrap();
         path.push("assets");
         let mut wait = false;
-        let mut num_assets = 0;
         if DEV_BUILD {
             for asset in asset_file_to_list() {
                 if asset == String::new() {
                     continue;
                 }
-                num_assets += 1;
                 path.push(asset.clone());
                 if state.is_added() {
                     let handle: Handle<Texture> = server.load(path.clone());
@@ -62,7 +57,6 @@ pub fn loading_screen(
         }
         else {
             for asset in ASSET_LIST {
-                num_assets += 1;
                 path.push(asset);
                 if state.is_added() {
                     let handle: Handle<Texture> = server.load(path.clone());
@@ -76,16 +70,12 @@ pub fn loading_screen(
             }
         }
         if state.is_added() {
-            num_assets += 2;
             path.push("base.ttf");
             handles.add_font_handle(server.load(path.clone()), "base.ttf");
             path.pop();
             path.push("KreativeSquare.ttf");
             handles.add_font_handle(server.load(path.clone()), "KreativeSquare.ttf");
             path.pop();
-            manager.number_of_assets = Some(num_assets);
-            manager.internet_access = Some(online::sync::check(Some(5)).is_ok());
-            manager.ggs_access = Some(remote_exists());
         }
         if !wait {
             println!("Switching state to TitleScreen...");

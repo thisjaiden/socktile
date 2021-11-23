@@ -1,25 +1,29 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, SetupManager}};
+use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
-    state: Res<GameState>,
+    mut state: ResMut<GameState>,
     mut handles: ResMut<AssetHandles>,
-    manager: ResMut<SetupManager>,
-    mut animator: ResMut<Animator>
+    mut animator: ResMut<Animator>,
+    mut netty: ResMut<Netty>
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
-        if !manager.internet_access.unwrap() {
+        if !netty.internet_connection() {
             // No internet - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoWIFI, true);
+            // Remove all UI and handlers
+            state.change_state(GameState::Void);
         }
-        else if !manager.ggs_access.unwrap() {
+        else if !netty.ggs_connection() {
             // No GGS - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoGGS, true);
+            // Remove all UI and handlers
+            state.change_state(GameState::Void);
         }
         else {
-            let fiid = animator.request_animation(Animation::FloatInTitleScreen, false);
+            let fiid = animator.request_named_animation(Animation::FloatInTitleScreen, false, "tsbob");
             animator.request_animation_followup(fiid, Animation::TitleScreenBob, true);
         }
         commands.spawn_bundle(Text2dBundle {
@@ -42,12 +46,12 @@ pub fn title_screen_spawner(
 }
 
 pub fn title_screen_buttons(
-    mut commands: Commands,
     mut state: ResMut<GameState>,
     query_cursor: Query<&mut Transform, With<CursorMarker>>,
     mousein: Res<Input<MouseButton>>,
     mut quit: EventWriter<bevy::app::AppExit>,
-    mut lines: ResMut<DebugLines>
+    mut lines: ResMut<DebugLines>,
+    mut animator: ResMut<Animator>
 ) {
     if state.eq(&GameState::TitleScreen) {
         debug_box(&mut lines, PLAY_BUTTON_LOC, PLAY_BUTTON_SIZE);
@@ -63,6 +67,7 @@ pub fn title_screen_buttons(
                     location.translation.y < PLAY_BUTTON_LOC.1 + PLAY_BUTTON_SIZE.1
                 {
                     println!("Play button selected.");
+                    animator.request_animation_end("tsbob");
                     state.change_state(GameState::Join);
                 }
                 else if
@@ -72,6 +77,7 @@ pub fn title_screen_buttons(
                     location.translation.y < NEW_BUTTON_LOC.1 + NEW_BUTTON_SIZE.1
                 {
                     println!("New button selected.");
+                    animator.request_animation_end("tsbob");
                     state.change_state(GameState::New);
                 }
                 else if
@@ -81,6 +87,7 @@ pub fn title_screen_buttons(
                     location.translation.y < SETTINGS_BUTTON_LOC.1 + SETTINGS_BUTTON_SIZE.1
                 {
                     println!("Settings button selected.");
+                    animator.request_animation_end("tsbob");
                     state.change_state(GameState::Settings);
                 }
                 else if
@@ -98,7 +105,7 @@ pub fn title_screen_buttons(
 }
 
 fn debug_box(
-    mut lines: &mut ResMut<DebugLines>,
+    lines: &mut ResMut<DebugLines>,
     pos: (f32, f32),
     size: (f32, f32)
 ) {
@@ -124,11 +131,11 @@ fn debug_box(
     );
 }
 
-const PLAY_BUTTON_LOC: (f32, f32) = (512.0, 256.0);
-const PLAY_BUTTON_SIZE: (f32, f32) = (128.0, 32.0);
-const NEW_BUTTON_LOC: (f32, f32) = (-512.0, 256.0);
-const NEW_BUTTON_SIZE: (f32, f32) = (96.0, 32.0);
-const SETTINGS_BUTTON_LOC: (f32, f32) = (-512.0, -256.0);
-const SETTINGS_BUTTON_SIZE: (f32, f32) = (256.0, 32.0);
-const QUIT_BUTTON_LOC: (f32, f32) = (512.0, -256.0);
-const QUIT_BUTTON_SIZE: (f32, f32) = (128.0, 32.0);
+const PLAY_BUTTON_LOC: (f32, f32) = (440.0, 15.0);
+const PLAY_BUTTON_SIZE: (f32, f32) = (128.0, 60.0);
+const NEW_BUTTON_LOC: (f32, f32) = (440.0, 75.0);
+const NEW_BUTTON_SIZE: (f32, f32) = (96.0, 60.0);
+const SETTINGS_BUTTON_LOC: (f32, f32) = (-625.0, -90.0);
+const SETTINGS_BUTTON_SIZE: (f32, f32) = (256.0, 60.0);
+const QUIT_BUTTON_LOC: (f32, f32) = (-625.0, -150.0);
+const QUIT_BUTTON_SIZE: (f32, f32) = (128.0, 60.0);

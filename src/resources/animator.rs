@@ -13,7 +13,10 @@ pub struct Animator {
     top_id: AnimatorID,
     /// A list of animations to play after an animation ends.
     /// (ID of Animation to Play After, (Animation Type, ID, Should Loop))
-    followups: Vec<(AnimatorID, (Animation, AnimatorID, Loops))>
+    followups: Vec<(AnimatorID, (Animation, AnimatorID, Loops))>,
+    /// A list of user-friendly names for animations.
+    /// (ID of Animation, User Name)
+    user_names: Vec<(AnimatorID, String)>
 }
 
 impl Animator {
@@ -21,7 +24,8 @@ impl Animator {
         Animator {
             animations: vec![],
             top_id: 0,
-            followups: vec![]
+            followups: vec![],
+            user_names: vec![]
         }
     }
     pub fn request_animation(&mut self, animation: Animation, loops: bool) -> AnimatorID {
@@ -29,7 +33,20 @@ impl Animator {
         self.top_id += 1;
         self.top_id - 1
     }
-    pub fn request_animation_end(&mut self, id: AnimatorID) {
+    pub fn request_named_animation(&mut self, animation: Animation, loops: bool, name: &str) -> AnimatorID {
+        self.animations.push((animation, 0, self.top_id, loops));
+        self.user_names.push((self.top_id, name.to_string()));
+        self.top_id += 1;
+        self.top_id - 1
+    }
+    pub fn request_animation_end(&mut self, id: &str) {
+        for (iid, eid) in self.user_names.clone() {
+            if eid == id {
+                self.request_animation_end_internal(iid);
+            }
+        }
+    }
+    fn request_animation_end_internal(&mut self, id: AnimatorID) {
         let mut index = 0;
         for animation in self.animations.clone() {
             if animation.2 == id {
@@ -92,6 +109,11 @@ impl Animator {
                 for followup in self.followups.clone() {
                     if followup.0 == animation.2 {
                         self.animations.push((followup.1.0, 0, followup.1.1, followup.1.2));
+                        for (index, (iid, _)) in self.user_names.clone().into_iter().enumerate() {
+                            if iid == animation.2 {
+                                self.user_names[index].0 = followup.1.1;
+                            }
+                        }
                     }
                 }
             }

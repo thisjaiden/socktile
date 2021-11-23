@@ -89,41 +89,6 @@ pub fn remote_exists() -> bool {
     }
 }
 
-pub fn initiate_slave(remote: &str, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) -> ! {
-    if !remote_exists() {
-        todo!("No network, offline mode");
-    }
-    let mut con = std::net::TcpStream::connect(remote).unwrap();
-    let mut con_clone = con.try_clone().unwrap();
-    Packet::to_write(&mut con, Packet::NettyVersion(String::from(NETTY_VERSION)));
-    std::thread::spawn(move || {
-        loop {
-            let mut send_access = send_buffer.lock().unwrap();
-            for packet in send_access.iter() {
-                println!("Sending {:?} to GGS", packet);
-                Packet::to_write(&mut con_clone, packet.clone());
-            }
-            send_access.clear();
-            drop(send_access);
-            std::thread::sleep(std::time::Duration::from_millis(20));
-        }
-    });
-    loop {
-        let pkt = Packet::from_read(&mut con);
-        let mut recv_access = recv_buffer.lock().unwrap();
-        println!("Recieved {:?} from GGS", pkt);
-        if pkt == Packet::DifferentVerison {
-            todo!("Invalid version, offline mode");
-        }
-        if pkt == Packet::FailedDeserialize {
-            todo!("Remote dead? Proper handle needed.");
-        }
-        recv_access.push(pkt);
-        drop(recv_access);
-    }
-}
-
-
 pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>) -> ! {
     let net = std::net::TcpListener::bind(format!("0.0.0.0:{}", crate::server::core::HOST_PORT));
     if let Ok(network) = net {

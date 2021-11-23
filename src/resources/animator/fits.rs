@@ -66,8 +66,37 @@ pub fn fits(frame: usize) -> FrameDetails {
                 location: GamePosition { x: 0.0, y: 0.0 },
                 display_modals: vec![
                     (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("Join")
+                        ),
+                        GamePosition {
+                            x: -(i as f64) + 850.0,
+                            y: -(i as f64 - 800.0 * (((i as f64 + 50.0) / 50.0).sin() * 0.2)) + 350.0
+                        },
+                        0
+                    ),
+                    (
+                        DisplayModal::Text(
+                            String::from("base.ttf"),
+                            64.0,
+                            Color::BLACK,
+                            String::from("New")
+                        ),
+                        GamePosition {
+                            x: -(i as f64) + 850.0,
+                            y: -(i as f64 - 800.0 * (((i as f64 + 50.0) / 50.0).sin() * 0.2)) + 400.0
+                        },
+                        1
+                    ),
+                    (
+                        // norm
                         // https://www.desmos.com/calculator/f1zarrftbo
                         // https://www.desmos.com/calculator/phg9dopwzv
+                        // others
+                        // https://www.desmos.com/calculator/3oqvfxcoxp
                         DisplayModal::Text(
                             String::from("base.ttf"),
                             64.0,

@@ -2,6 +2,7 @@
 pub enum GameState {
     LoadingScreen,
     TitleScreen,
+    Void,
     Settings,
     Join,
     CreateUser,
