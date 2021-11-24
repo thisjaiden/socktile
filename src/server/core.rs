@@ -61,10 +61,8 @@ pub fn startup() -> ! {
                     Packet::CreateProfile(user) => {
                         let mut tag = 0;
                         for profile in profiles.clone() {
-                            if profile.user.username == user.username {
-                                if profile.user.tag > tag {
-                                    tag = profile.user.tag;
-                                }
+                            if profile.user.username == user.username && profile.user.tag > tag {
+                                tag = profile.user.tag;
                             }
                         }
                         let new_profile = Profile {

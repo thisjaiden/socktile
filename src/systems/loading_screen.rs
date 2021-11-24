@@ -120,8 +120,8 @@ fn asset_file_to_list() -> Vec<String> {
     dir.push("assets.dev");
     let contents = std::fs::read_to_string(dir).unwrap();
     let mut fin = vec![];
-    for line in contents.split("\n") {
+    for line in contents.split('\n') {
         fin.push(String::from(line.trim()));
     }
-    return fin;
+    fin
 }

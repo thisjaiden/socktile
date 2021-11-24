@@ -126,12 +126,10 @@ impl TextBox {
                 self.buffer += "=";
             }
         }
-        if input.just_pressed(KeyCode::Back) {
-            if !self.buffer.is_empty() {
-                let mut chars = self.buffer.chars();
-                chars.next_back();
-                self.buffer = String::from(chars.as_str());
-            }
+        if input.just_pressed(KeyCode::Back) && !self.buffer.is_empty() {
+            let mut chars = self.buffer.chars();
+            chars.next_back();
+            self.buffer = String::from(chars.as_str());
         }
         if input.just_pressed(KeyCode::Q) {
             if is_caps {

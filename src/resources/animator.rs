@@ -47,13 +47,11 @@ impl Animator {
         }
     }
     fn request_animation_end_internal(&mut self, id: AnimatorID) {
-        let mut index = 0;
-        for animation in self.animations.clone() {
+        for (index, animation) in self.animations.clone().into_iter().enumerate() {
             if animation.2 == id {
                 self.animations.swap_remove(index);
                 break;
             }
-            index += 1;
         }
         for followup in self.followups.clone() {
             if followup.0 == id {
@@ -62,8 +60,7 @@ impl Animator {
         }
     }
     fn request_animation_end_soft(&mut self, id: AnimatorID) {
-        let mut index = 0;
-        for animation in self.animations.clone() {
+        for (index, animation) in self.animations.clone().into_iter().enumerate() {
             if animation.2 == id {
                 if animation.3 {
                     self.animations[index].1 = 1;
@@ -73,7 +70,6 @@ impl Animator {
                 }
                 break;
             }
-            index += 1;
         }
     }
     pub fn request_animation_followup(&mut self, id: AnimatorID, animation: Animation, loops: bool) -> AnimatorID {
@@ -98,14 +94,13 @@ impl Animator {
     ) {
         let anims_cl = self.animations.clone();
         // handle old animations
-        let mut anim_index = 0;
         let mut removal_ids = vec![];
-        for animation in &anims_cl {
+        for (anim_index, animation) in self.animations.clone().into_iter().enumerate() {
             self.animations[anim_index].1 += 1;
-            if animation.0.clone().is_done(animation.1) {
+            if animation.0.clone().done(animation.1) {
                 removal_ids.push(animation.2);
             }
-            if animation.0.clone().is_done(animation.1 + 1) {
+            if animation.0.clone().done(animation.1 + 1) {
                 for followup in self.followups.clone() {
                     if followup.0 == animation.2 {
                         self.animations.push((followup.1.0, 0, followup.1.1, followup.1.2));
@@ -117,7 +112,6 @@ impl Animator {
                     }
                 }
             }
-            anim_index += 1;
         }
         // The only reason this is done after is so the iterator doesn't skip animations as the list is shifted
         for id in removal_ids {
@@ -132,10 +126,8 @@ impl Animator {
                 )| {
                     if object.animation_id == id {
                         for animation in &anims_cl {
-                            if animation.2 == id {
-                                if !animation.3 {
-                                    commands.entity(e).despawn();
-                                }
+                            if animation.2 == id && !animation.3 {
+                                commands.entity(e).despawn();
                             }
                         }
                     }
@@ -161,7 +153,7 @@ impl Animator {
                             }).insert(
                                 AnimatorObject {
                                     animation_id: animation.2,
-                                    index: index
+                                    index
                                 }
                             );
                         }
@@ -174,7 +166,7 @@ impl Animator {
                                             style: TextStyle {
                                                 font: handles.get_font(&font),
                                                 font_size: size,
-                                                color: color
+                                                color
                                             }
                                         }
                                     ],
@@ -258,7 +250,7 @@ mod fitsnggs;
 mod tsb;
 
 impl Animation {
-    fn is_done(self, frame: AnimationFrame) -> bool {
+    fn done(self, frame: AnimationFrame) -> bool {
         match self {
             Self::FloatInTitleScreen => frame > 400,
             Self::FloatInTitleScreenNoWIFI => frame > 1,
