@@ -9,11 +9,6 @@ pub fn new(
     mut netty: ResMut<Netty>
 ) {
     if state.eq(&GameState::New) && state.is_changed() {
-        let my_user = user();
-        if my_user.is_none() {
-            state.change_state(GameState::CreateUserB);
-            return;
-        }
         let entity_ids = vec![
             commands.spawn_bundle(Text2dBundle {
                 text: Text::with_section(
@@ -49,10 +44,6 @@ pub fn new(
             }).insert(crate::components::TextBox {}).id()
         ];
 
-        
-        if my_user.clone().unwrap().tag != 0 {
-            netty.say(Packet::RequestProfile(my_user.unwrap()));
-        }
         commands.spawn().insert(
             NewManager::new(entity_ids)
         );

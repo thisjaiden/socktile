@@ -8,7 +8,7 @@ pub fn create_user(
     state: Res<GameState>,
     mut handles: ResMut<AssetHandles>,
 ) {
-    if (state.eq(&GameState::CreateUser) || state.eq(&GameState::CreateUserB)) && state.is_changed() {
+    if state.eq(&GameState::CreateUser) && state.is_changed() {
         tb.clear_buffer();
         let eids = vec![
             commands.spawn_bundle(Text2dBundle {
@@ -77,7 +77,7 @@ pub fn create_user_ui(
     mut state: ResMut<GameState>,
     mut netty: ResMut<Netty>
 ) {
-    if state.eq(&GameState::CreateUser) || state.eq(&GameState::CreateUserB) {
+    if state.eq(&GameState::CreateUser) {
         tb_q.for_each_mut(|mut text| {
             text.sections[0].value = tb.grab_buffer() + "#0000";
             if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
@@ -99,7 +99,7 @@ pub fn create_user_ui(
                             tag: 0
                         });
                         tb.clear_buffer();
-                        state.change_state(state_man.grab_previous_state());
+                        state.change_state(GameState::TitleScreen);
                         state_man.disassemble(&mut commands);
                     });
                 }

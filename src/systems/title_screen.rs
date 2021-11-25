@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}};
+use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}, shared::saves::user};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
@@ -22,13 +22,17 @@ pub fn title_screen_spawner(
             // Remove all UI and handlers
             state.change_state(GameState::Void);
         }
+        else if user().is_none() {
+            state.change_state(GameState::CreateUser);
+            return;
+        }
         else {
             let fiid = animator.request_named_animation(Animation::FloatInTitleScreen, false, "tsbob");
             animator.request_animation_followup(fiid, Animation::TitleScreenBob, true);
         }
         commands.spawn_bundle(Text2dBundle {
             text: Text::with_section(
-                "\u{f790}",
+                '\u{f790}',
                 TextStyle {
                     font: handles.get_font("KreativeSquare.ttf"),
                     font_size: 34.0,

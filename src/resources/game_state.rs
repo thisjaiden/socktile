@@ -6,7 +6,6 @@ pub enum GameState {
     Settings,
     Join,
     CreateUser,
-    CreateUserB,
     New,
     Play
 }

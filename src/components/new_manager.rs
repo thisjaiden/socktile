@@ -23,7 +23,12 @@ impl NewManager {
         self.world.clone().unwrap()
     }
     pub fn net_mode(&mut self) {
-        self.waiting_for_net = true;
+        if !self.waiting_for_net {
+            self.waiting_for_net = true;
+        }
+        else {
+            self.time_to_swap = true;
+        }
     }
     pub fn is_waiting(&mut self) -> bool {
         self.waiting_for_net

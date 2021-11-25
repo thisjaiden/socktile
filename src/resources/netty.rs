@@ -1,4 +1,4 @@
-use crate::{client::core::{GGS, startup}, shared::netty::{NETTY_VERSION, Packet, remote_exists}};
+use crate::{client::core::{GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet, remote_exists}, saves::save_user}};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
@@ -7,7 +7,8 @@ pub struct Netty {
     internet_access: bool,
     ggs_access: bool,
     input: Arc<Mutex<Vec<Packet>>>,
-    output: Arc<Mutex<Vec<Packet>>>
+    output: Arc<Mutex<Vec<Packet>>>,
+    pool_queues: Vec<(String, Packet)>
 }
 
 impl Netty {
@@ -29,7 +30,8 @@ impl Netty {
                 ggs_access: ggs,
                 connection: stat,
                 input: Arc::new(Mutex::new(vec![])),
-                output: Arc::new(Mutex::new(vec![]))
+                output: Arc::new(Mutex::new(vec![])),
+                pool_queues: vec![]
             };
         }
         if let Ok(good_con) = connection {
@@ -42,10 +44,11 @@ impl Netty {
                 ggs_access: ggs,
                 connection: ConnectionStatus::Connected,
                 input: inp,
-                output: out
+                output: out,
+                pool_queues: vec![]
             };
             fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
-            return fin;
+            fin
         }
         else {
             println!("GGS refused a connection. Not starting client.");
@@ -54,7 +57,8 @@ impl Netty {
                 ggs_access: false,
                 connection: ConnectionStatus::Refused,
                 input: Arc::new(Mutex::new(vec![])),
-                output: Arc::new(Mutex::new(vec![]))
+                output: Arc::new(Mutex::new(vec![])),
+                pool_queues: vec![]
             }
         }
     }
@@ -69,6 +73,36 @@ impl Netty {
         out.push(packet);
         drop(out);
     }
+    pub fn exclusive_tick(&mut self) {
+        let mut input = self.input.lock().unwrap();
+        let pkts = input.clone();
+        input.clear();
+        drop(input);
+        for packet in pkts {
+            match packet {
+                Packet::CreatedProfile(prof) => {
+                    save_user(prof.user);
+                }
+                Packet::DifferentVerison => {
+                    self.connection = ConnectionStatus::Old;
+                    self.ggs_access = false;
+                }
+                Packet::CreatedWorld(_) => {
+                    self.pool_queues.push((String::from("new"), packet));
+                }
+                p => {
+                    panic!("Unhandled client packet failed netty! ({:?})", p);
+                }
+            }
+        }
+    }
+    pub fn new_tick(&mut self, man: &mut NewManager) {
+        for (pool, packet) in self.pool_queues.clone() {
+            if pool == "new" {
+                man.net_mode();
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -77,5 +111,6 @@ pub enum ConnectionStatus {
     NoGGS,
     Refused,
     NotConnected,
+    Old,
     Connected
 }

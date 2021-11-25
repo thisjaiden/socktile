@@ -8,7 +8,6 @@ mod display_players;
 mod display_self;
 mod display_world;
 mod move_self;
-mod network;
 mod open_chat_ui;
 mod open_container_ui;
 mod open_npc_ui;

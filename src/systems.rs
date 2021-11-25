@@ -26,4 +26,5 @@ mod animator;
 pub use animator::animator;
 pub use animator::AnimatorTimer;
 mod netty;
-pub use netty::netty_general;
+pub use netty::netty_etick;
+pub use netty::netty_newtick;
