@@ -15,7 +15,7 @@ pub fn join(
 
         
         if my_user.clone().unwrap().tag != 0 {
-            netty.say(Packet::RequestProfile(my_user.unwrap()));
+            netty.say(Packet::UserPresence(my_user.unwrap()));
         }
     }
 }

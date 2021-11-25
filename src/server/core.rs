@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::shared::{listing::GameListing, netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::{Profile, SaveGame, User, profiles, save, save_folder, save_profile, saves}, world::{SPAWN_POSITION, World}};
+use crate::{server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, saves::User, world::World}};
 
 pub const HOST_PORT: &str = "11111";
 
@@ -58,28 +58,30 @@ pub fn startup() -> ! {
                             drop(func_send);
                         }
                     }
-                    Packet::CreateProfile(user) => {
+                    Packet::CreateUser(user) => {
                         let mut tag = 0;
                         for profile in profiles.clone() {
                             if profile.user.username == user.username && profile.user.tag > tag {
                                 tag = profile.user.tag;
                             }
                         }
+                        let new_user = User {
+                            username: user.username,
+                            tag: tag + 1
+                        };
                         let new_profile = Profile {
-                            user: User {
-                                username: user.username,
-                                tag: tag + 1
-                            },
-                            joined_games: vec![],
-                            invited_games: vec![],
-                            created_games: vec![]
+                            user: new_user.clone(),
+                            avalable_games: vec![]
                         };
                         profiles.push(new_profile.clone());
                         save_profile(new_profile.clone());
                         let mut func_send = send.lock().unwrap();
-                        ip_accociations.push((from, new_profile.clone().user));
-                        func_send.push((Packet::CreatedProfile(new_profile), from));
+                        ip_accociations.push((from, new_user.clone()));
+                        func_send.push((Packet::CreatedUser(new_user), from));
                         drop(func_send);
+                    }
+                    Packet::UserPresence(user) => {
+                        ip_accociations.push((from, user));
                     }
                     Packet::CreateWorld(name) => {
                         let world_id = saves.last().unwrap().internal_id + 1;
@@ -96,17 +98,7 @@ pub fn startup() -> ! {
                         }
                         for (index, profile) in profiles.clone().into_iter().enumerate() {
                             if owner == profile.user {
-                                profiles[index].created_games.push(
-                                    GameListing {
-                                        public_name: name.clone(),
-                                        description: String::new(),
-                                        internal_id: world_id,
-                                        local: false,
-                                        address: String::from("ggs"),
-                                        password: false,
-                                        played: false
-                                    }
-                                );
+                                profiles[index].avalable_games.push(world_id);
                             }
                         }
                         if owner.tag == 0 {
@@ -129,45 +121,6 @@ pub fn startup() -> ! {
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::CreatedWorld(saves.last().unwrap().internal_id), from));
                         drop(func_send);
-                    }
-                    Packet::JoinWorld(world_uid, user) => {
-                        // grab world
-                        let world = &mut saves[world_uid].data;
-                        // find any existing player and make online if exists
-                        let mut existing_player = false;
-                        for (index, player) in world.offline_players.clone().into_iter().enumerate() {
-                            if player.user == user {
-                                let pulled = world.offline_players.remove(index);
-                                world.players.push(pulled);
-                                existing_player = true;
-                                break;
-                            }
-                        }
-                        if !existing_player {
-                            world.players.push(Player { user, location: SPAWN_POSITION });
-                        }
-                        let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::FullWorldData(world.clone()), from));
-                        drop(func_send);
-                    }
-                    Packet::RequestProfile(user) => {
-                        let mut found_profile = false;
-                        for profile in profiles.clone() {
-                            if profile.user.username == user.username {
-                                if profile.user.tag == user.tag {
-                                    let mut func_send = send.lock().unwrap();
-                                    ip_accociations.push((from, user.clone()));
-                                    func_send.push((Packet::GiveProfile(profile), from));
-                                    drop(func_send);
-                                    found_profile = true;
-                                }
-                            }
-                        }
-                        if !found_profile {
-                            let mut func_send = send.lock().unwrap();
-                            func_send.push((Packet::NoProfile, from));
-                            drop(func_send);
-                        }
                     }
                     _ => {
                         // Ignore this packet, we don't handle it.

@@ -1,4 +1,4 @@
-use crate::{client::core::{GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet, remote_exists}, saves::save_user}};
+use crate::{client::core::{GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
@@ -80,8 +80,9 @@ impl Netty {
         drop(input);
         for packet in pkts {
             match packet {
-                Packet::CreatedProfile(prof) => {
-                    save_user(prof.user);
+                Packet::CreatedUser(user) => {
+                    save_user(user);
+                    println!("Saved new user information.");
                 }
                 Packet::DifferentVerison => {
                     self.connection = ConnectionStatus::Old;
@@ -113,4 +114,20 @@ pub enum ConnectionStatus {
     NotConnected,
     Old,
     Connected
+}
+
+pub fn remote_exists() -> bool {
+    if online::sync::check(Some(5)).is_ok() {
+        if std::net::TcpStream::connect_timeout(&GGS.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
+            true
+        }
+        else {
+            println!("No connection to the GGS avalable.");
+            false
+        }
+    }
+    else {
+        println!("No internet connection avalable.");
+        false
+    }
 }

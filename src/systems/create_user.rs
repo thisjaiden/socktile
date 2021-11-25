@@ -90,7 +90,7 @@ pub fn create_user_ui(
                         let mut mode = tb.grab_buffer();
                         mode = String::from(mode.trim_end());
                         mode = String::from(mode.trim_end_matches('\n'));
-                        netty.say(Packet::CreateProfile(User {
+                        netty.say(Packet::CreateUser(User {
                             username: mode.clone(),
                             tag: 0
                         }));

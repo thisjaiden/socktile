@@ -1,8 +1,8 @@
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
-use crate::{client::core::GGS, components::GamePosition};
+use crate::components::GamePosition;
 
-use super::{saves::{Profile, User}, world::World};
+use super::{object::Object, saves::User, terrain::TerrainState, world::World};
 use serde::{Deserialize, Serialize};
 
 pub const NETTY_VERSION: &str = "closed-alpha-iteration-0";
@@ -20,26 +20,20 @@ pub enum Packet {
     /// The server uses a different version. Do not connect.
     /// (No Data)
     DifferentVerison,
-    /// Data was recieved but unable to be deseriZalized.
+    /// Data was recieved but unable to be deserizalized.
     /// (No Data)
     FailedDeserialize,
-    /// Request a profile from the remote server.
+    /// Create a user on the remote server.
     /// (User)
-    RequestProfile(User),
-    /// Server responds with a profile for the user.
-    /// (Profile)
-    GiveProfile(Profile),
-    /// Server responds with no profile. (Does not exist/Not found)
-    /// (No Data)
-    NoProfile,
-    /// Create a profile on the remote server.
-    /// (User)
-    CreateProfile(User),
+    CreateUser(User),
     /// Confirm creation of a profile.
-    /// NOTE: The user's tag of the User in this profile can be different from that of the requested
+    /// NOTE: The user's tag of the User in this profile should be different from that of the requested
     /// profile. Take this into account.
-    /// (Profile)
-    CreatedProfile(Profile),
+    /// (User)
+    CreatedUser(User),
+    /// Lets the server know what user is associated with what IP.
+    /// (User)
+    UserPresence(User),
     /// Create a world on the remote server.
     /// (World Name)
     CreateWorld(String),
@@ -52,10 +46,25 @@ pub enum Packet {
     /// Disconnects from a world.
     /// (No Data)
     LeaveWorld,
-    /// Mainly used when joining a world. A complete structure of all data. This is a lot, don't
-    /// just send this whenever.
-    /// (World)
-    FullWorldData(World),
+    /// A client has been connected. Send them their position.
+    /// (Player Position)
+    JoinedGame(GamePosition),
+    /// The server sends over the information relating to some terrain.
+    /// This is always a 64x64 chunk.
+    /// (Chunk Position, Chunk Data)
+    TerrainChunk((usize, usize), Vec<TerrainState>),
+    /// Sends over all game objects.
+    /// (Game Objects)
+    AllObjects(Vec<Object>),
+    /// Updates a given object on the client.
+    /// (Updated Object)
+    UpdateObject(Object),
+    /// Removes an object on the client by id.
+    /// (Object ID)
+    RemoveObject(usize),
+    /// Creates an object on the client.
+    /// (New Object)
+    CreateObject(Object),
     /// Requests moving a player to a new position in a world.
     /// (New Position)
     RequestMove(GamePosition),
@@ -70,22 +79,6 @@ impl Packet {
     }
     pub fn to_write<W: std::io::Write>(write: &mut W, packet: Packet) {
         write.write_all(&bincode::serialize(&packet).unwrap()).unwrap();
-    }
-}
-
-pub fn remote_exists() -> bool {
-    if online::sync::check(Some(5)).is_ok() {
-        if std::net::TcpStream::connect_timeout(&GGS.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
-            true
-        }
-        else {
-            println!("No connection to the GGS avalable.");
-            false
-        }
-    }
-    else {
-        println!("No internet connection avalable.");
-        false
     }
 }
 
