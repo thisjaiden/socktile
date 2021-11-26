@@ -98,9 +98,16 @@ impl Netty {
         }
     }
     pub fn new_tick(&mut self, man: &mut NewManager) {
-        for (pool, packet) in self.pool_queues.clone() {
+        let mut rmed = 0;
+        for (index, (pool, packet)) in self.pool_queues.clone().into_iter().enumerate() {
             if pool == "new" {
-                man.net_mode();
+                if let Packet::CreatedWorld(world_id) = packet {
+                    println!("joining!");
+                    self.say(Packet::JoinWorld(world_id));
+                    man.net_mode();
+                }
+                self.pool_queues.remove(index - rmed);
+                rmed += 1;
             }
         }
     }

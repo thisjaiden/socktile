@@ -2,10 +2,10 @@ use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
 use crate::components::GamePosition;
 
-use super::{object::Object, saves::User, terrain::TerrainState, world::World};
+use super::{object::Object, saves::User, terrain::TerrainState};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-0";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-1";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -41,8 +41,8 @@ pub enum Packet {
     /// (World ID)
     CreatedWorld(usize),
     /// Request to join a world.
-    /// (World ID, User)
-    JoinWorld(usize, User),
+    /// (World ID)
+    JoinWorld(usize),
     /// Disconnects from a world.
     /// (No Data)
     LeaveWorld,
@@ -50,7 +50,7 @@ pub enum Packet {
     /// (Player Position)
     JoinedGame(GamePosition),
     /// The server sends over the information relating to some terrain.
-    /// This is always a 64x64 chunk.
+    /// This is always a 32x32 chunk.
     /// (Chunk Position, Chunk Data)
     TerrainChunk((usize, usize), Vec<TerrainState>),
     /// Sends over all game objects.
@@ -83,6 +83,7 @@ impl Packet {
 }
 
 pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>) -> ! {
+    println!("NETTY VERSION: {}", NETTY_VERSION);
     let net = std::net::TcpListener::bind(format!("0.0.0.0:{}", crate::server::core::HOST_PORT));
     if let Ok(network) = net {
         for connection in network.incoming() {

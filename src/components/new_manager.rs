@@ -27,6 +27,7 @@ impl NewManager {
             self.waiting_for_net = true;
         }
         else {
+            println!("Switch to Play state, please!");
             self.time_to_swap = true;
         }
     }

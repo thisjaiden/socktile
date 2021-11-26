@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}, shared::saves::user};
+use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}, shared::{netty::Packet, saves::user}};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
@@ -27,6 +27,7 @@ pub fn title_screen_spawner(
             return;
         }
         else {
+            netty.say(Packet::UserPresence(user().unwrap()));
             let fiid = animator.request_named_animation(Animation::FloatInTitleScreen, false, "tsbob");
             animator.request_animation_followup(fiid, Animation::TitleScreenBob, true);
         }

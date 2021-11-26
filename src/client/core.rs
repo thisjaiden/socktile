@@ -1,6 +1,6 @@
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
-use crate::shared::netty::Packet;
+use crate::shared::netty::{NETTY_VERSION, Packet};
 
 pub const GGS: &str = "127.0.0.1:11111";
 
@@ -10,6 +10,7 @@ pub fn startup(connection: TcpStream, recv: Arc<Mutex<Vec<Packet>>>, send: Arc<M
 }
 
 fn initiate_slave(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) {
+    println!("NETTY VERSION: {}", NETTY_VERSION);
     let mut con_clone = con.try_clone().unwrap();
     std::thread::spawn(move || {
         loop {

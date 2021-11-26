@@ -74,6 +74,7 @@ pub fn new_ui(
                             mode = String::from(mode.trim_end_matches('\n'));
                             netty.say(Packet::CreateWorld(mode));
                             state_man.net_mode();
+                            tb.clear_buffer();
                         }
                     });
                 }
@@ -91,7 +92,7 @@ pub fn new_exit(
         if manager.swap_time() {
             // TODO
             manager.disassemble(&mut commands);
-            commands.spawn().insert(PlayManager::new(manager.grab_world()));
+            commands.spawn().insert(PlayManager::new());
             state.change_state(GameState::Play);
         }
     });

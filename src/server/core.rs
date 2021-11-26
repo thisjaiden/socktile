@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, saves::User, world::World}};
+use crate::{components::GamePosition, server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::User, world::World}};
 
 pub const HOST_PORT: &str = "11111";
 
@@ -81,10 +81,15 @@ pub fn startup() -> ! {
                         drop(func_send);
                     }
                     Packet::UserPresence(user) => {
-                        ip_accociations.push((from, user));
+                        if user.tag > 0 {
+                            ip_accociations.push((from, user));
+                        }
                     }
                     Packet::CreateWorld(name) => {
-                        let world_id = saves.last().unwrap().internal_id + 1;
+                        let mut world_id = 0;
+                        if let Some(last) = saves.last() {
+                            world_id = last.internal_id + 1;
+                        }
                         let mut path = save_folder();
                         path.push(format!("world_{}.bic", world_id));
                         let mut owner = User {
@@ -102,7 +107,7 @@ pub fn startup() -> ! {
                             }
                         }
                         if owner.tag == 0 {
-                            // TODO: Properly
+                            // TODO: Properly handle
                             panic!("No user found for an IP address used with Packet::CreateWorld(String)");
                         }
                         saves.push(
@@ -120,6 +125,53 @@ pub fn startup() -> ! {
                         );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::CreatedWorld(saves.last().unwrap().internal_id), from));
+                        drop(func_send);
+                    }
+                    Packet::JoinWorld(world_id) => {
+                        let mut owner = User {
+                            username: String::new(),
+                            tag: 0
+                        };
+                        for (address_pair, user_pair) in ip_accociations.clone() {
+                            if address_pair == from {
+                                owner = user_pair;
+                            }
+                        }
+                        for (index, profile) in profiles.clone().into_iter().enumerate() {
+                            if owner == profile.user {
+                                profiles[index].avalable_games.push(world_id);
+                            }
+                        }
+                        if owner.tag == 0 {
+                            // TODO: Properly handle
+                            panic!("No user found for an IP address used with Packet::JoinWorld(usize)");
+                        }
+                        let mut index: usize = 0;
+                        let mut world_index = 0;
+                        for world in &saves {
+                            if world.internal_id == world_id {
+                                world_index = index;
+                                break;
+                            }
+                            index += 1;
+                        }
+                        let mut has_joined = false;
+                        let mut player_info = None;
+                        for (index, player) in saves[world_index].data.offline_players.clone().into_iter().enumerate() {
+                            if player.user == owner {
+                                has_joined = true;
+                                player_info = Some(saves[world_index].data.offline_players.remove(index));
+                                break;
+                            }
+                        }
+                        if !has_joined {
+                            player_info = Some(Player {
+                                user: owner,
+                                location: GamePosition { x: 0.0, y: 0.0 }
+                            });
+                        }
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
                         drop(func_send);
                     }
                     _ => {

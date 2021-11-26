@@ -5,9 +5,9 @@ pub struct PlayManager {
 }
 
 impl PlayManager {
-    pub fn new(world: World) -> PlayManager {
+    pub fn new() -> PlayManager {
         PlayManager {
-            world
+            world: World::empty()
         }
     }
 }
