@@ -5,7 +5,7 @@ use crate::{components::GamePosition, server::saves::{Profile, SaveGame, profile
 pub const HOST_PORT: &str = "11111";
 
 pub fn startup() -> ! {
-    println!("STARTING GLOBAL GAME SERVER WITH PORT {}. PLEASE CLOSE ALL OTHER INSTANCES OF THE GGS AND APPLICATIONS USING THIS PORT.", HOST_PORT);
+    println!("GGS using port *:{}", HOST_PORT);
     let recv = Arc::new(Mutex::new(vec![]));
     let send = Arc::new(Mutex::new(vec![]));
     let recv_clone = recv.clone();
@@ -47,16 +47,9 @@ pub fn startup() -> ! {
             for (packet, from) in incoming_data {
                 match packet {
                     Packet::NettyVersion(version) => {
-                        if version == NETTY_VERSION {
-                            let mut func_send = send.lock().unwrap();
-                            func_send.push((Packet::SameVersion, from));
-                            drop(func_send);
-                        }
-                        else {
-                            let mut func_send = send.lock().unwrap();
-                            func_send.push((Packet::DifferentVerison, from));
-                            drop(func_send);
-                        }
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::NettyStable, from));
+                        drop(func_send);
                     }
                     Packet::CreateUser(user) => {
                         let mut tag = 0;
@@ -84,6 +77,9 @@ pub fn startup() -> ! {
                         if user.tag > 0 {
                             ip_accociations.push((from, user));
                         }
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::NettyStable, from));
+                        drop(func_send);
                     }
                     Packet::CreateWorld(name) => {
                         let mut world_id = 0;
@@ -170,8 +166,13 @@ pub fn startup() -> ! {
                                 location: GamePosition { x: 0.0, y: 0.0 }
                             });
                         }
+                        let spawn_centre_chnks_lack = (
+                            (player_info.clone().unwrap().location.x / 32.0).round() as usize,
+                            (player_info.clone().unwrap().location.y / 32.0).round() as usize
+                        );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
+                        func_send.push((Packet::TerrainChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         drop(func_send);
                     }
                     _ => {

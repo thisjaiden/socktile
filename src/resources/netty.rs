@@ -1,4 +1,4 @@
-use crate::{client::core::{GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
+use crate::{DEV_BUILD, client::core::{DEV_GGS, GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
@@ -14,9 +14,16 @@ pub struct Netty {
 impl Netty {
     pub fn init() -> Netty {
         println!("Netty initalizing!");
+        let l_ggs;
+        if DEV_BUILD {
+            l_ggs = DEV_GGS;
+        }
+        else {
+            l_ggs = GGS;
+        }
         let internet = online::sync::check(Some(5)).is_ok();
-        let ggs = remote_exists();
-        let connection = TcpStream::connect(GGS);
+        let ggs = remote_exists(l_ggs);
+        let connection = TcpStream::connect(l_ggs);
         let mut stat = ConnectionStatus::NotConnected;
         if !ggs {
             stat = ConnectionStatus::NoGGS;
@@ -84,10 +91,6 @@ impl Netty {
                     save_user(user);
                     println!("Saved new user information.");
                 }
-                Packet::DifferentVerison => {
-                    self.connection = ConnectionStatus::Old;
-                    self.ggs_access = false;
-                }
                 Packet::CreatedWorld(_) => {
                     self.pool_queues.push((String::from("new"), packet));
                 }
@@ -119,13 +122,12 @@ pub enum ConnectionStatus {
     NoGGS,
     Refused,
     NotConnected,
-    Old,
     Connected
 }
 
-pub fn remote_exists() -> bool {
+pub fn remote_exists(ggs: &str) -> bool {
     if online::sync::check(Some(5)).is_ok() {
-        if std::net::TcpStream::connect_timeout(&GGS.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
+        if std::net::TcpStream::connect_timeout(&ggs.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
             true
         }
         else {

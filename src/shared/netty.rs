@@ -5,7 +5,7 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-1";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-2";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -14,13 +14,11 @@ pub enum Packet {
     /// TODO: This hasn't been confirmed to work cross-version, `bincode` enums are a black box.
     /// (Netty Version)
     NettyVersion(String),
-    /// The server uses the same version. Continue.
+    /// The server appears to use the same version. Continue.
     /// (No Data)
-    SameVersion,
-    /// The server uses a different version. Do not connect.
-    /// (No Data)
-    DifferentVerison,
+    NettyStable,
     /// Data was recieved but unable to be deserizalized.
+    /// (This occurs on data courruption or a disconnect, usually the latter.)
     /// (No Data)
     FailedDeserialize,
     /// Create a user on the remote server.
@@ -113,7 +111,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                         let mut send_access = send.lock().unwrap();
                         for (packet, address) in send_access.iter() {
                             println!("Sending {:?} to {}", packet, address);
-                            if packet == &Packet::DifferentVerison || packet == &Packet::FailedDeserialize {
+                            if packet == &Packet::FailedDeserialize {
                                 destroy_conenction = true;
                             }
                             if address == &remote_addr {

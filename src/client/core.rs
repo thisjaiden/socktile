@@ -2,10 +2,12 @@ use std::{net::TcpStream, sync::{Arc, Mutex}};
 
 use crate::shared::netty::{NETTY_VERSION, Packet};
 
-pub const GGS: &str = "127.0.0.1:11111";
+pub const GGS: &str = "lumen.place:11111";
+pub const DEV_GGS: &str = "127.0.0.1:11111";
 
 pub fn startup(connection: TcpStream, recv: Arc<Mutex<Vec<Packet>>>, send: Arc<Mutex<Vec<Packet>>>) {
-    println!("Starting client with GGS set to {}.", GGS);
+    println!("Starting client with GGS set to {:?}.", connection.peer_addr());
+    println!("GGS | DEV_GGS: {} | {}", GGS, DEV_GGS);
     initiate_slave(connection, recv, send);
 }
 
@@ -29,9 +31,6 @@ fn initiate_slave(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send
             let pkt = Packet::from_read(&mut con);
             let mut recv_access = recv_buffer.lock().unwrap();
             println!("Recieved {:?} from GGS", pkt);
-            if pkt == Packet::DifferentVerison {
-                todo!("Invalid version, offline mode");
-            }
             if pkt == Packet::FailedDeserialize {
                 todo!("Remote dead? Proper handle needed.");
             }
