@@ -35,7 +35,7 @@ jobs:
         name: nix_build
         retention-days: 3
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - name: Install zld
