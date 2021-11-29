@@ -90,6 +90,9 @@ impl Netty {
                 Packet::TerrainChunk(..) => {
                     self.pool_queues.push((String::from("terrain"), packet));
                 }
+                Packet::NettyStable => {
+                    self.connection = ConnectionStatus::Stable;
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }
@@ -140,7 +143,8 @@ pub enum ConnectionStatus {
     NoGGS,
     Refused,
     NotConnected,
-    Connected
+    Connected,
+    Stable
 }
 
 pub fn remote_exists(ggs: &str) -> bool {
