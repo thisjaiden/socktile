@@ -46,7 +46,7 @@ pub fn startup() -> ! {
             drop(func_recv);
             for (packet, from) in incoming_data {
                 match packet {
-                    Packet::NettyVersion(version) => {
+                    Packet::NettyVersion(_) => {
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::NettyStable, from));
                         drop(func_send);

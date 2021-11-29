@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, GameState, Netty}, shared::{netty::Packet, saves::user}};
+use crate::{components::CursorMarker, layers::{CURSOR, DEBUG}, resources::{Animation, Animator, AssetHandles, ConnectionStatus, GameState, Netty}, shared::{netty::Packet, saves::user}};
 
 pub fn title_screen_spawner(
     mut commands: Commands,
@@ -10,13 +10,13 @@ pub fn title_screen_spawner(
     mut netty: ResMut<Netty>
 ) {
     if state.eq(&GameState::TitleScreen) && state.is_changed() {
-        if !netty.internet_connection() {
+        if netty.connection() == ConnectionStatus::NoInternet {
             // No internet - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoWIFI, true);
             // Remove all UI and handlers
             state.change_state(GameState::Void);
         }
-        else if !netty.ggs_connection() {
+        else if netty.connection() == ConnectionStatus::NoGGS {
             // No GGS - show error indefinitely.
             animator.request_animation(Animation::FloatInTitleScreenNoGGS, true);
             // Remove all UI and handlers

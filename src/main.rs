@@ -51,11 +51,13 @@ fn main() {
         .add_system(systems::animator.system())
         .add_system(systems::netty_etick.system())
         .add_system(systems::netty_newtick.system())
+        .add_system(systems::netty_reality.system())
         .insert_resource(resources::GameState::LoadingScreen)
         .insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 60.0, true)))
         .insert_resource(resources::Netty::init())
+        .insert_resource(resources::Reality::init())
         .run();
 }

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{components::NewManager, resources::Netty};
+use crate::{components::NewManager, resources::{Netty, Reality}};
 
 pub fn netty_etick(
     mut netty: ResMut<Netty>
@@ -14,4 +14,11 @@ pub fn netty_newtick(
     manager.for_each_mut(|mut man| {
         netty.new_tick(&mut man);
     });
+}
+
+pub fn netty_reality(
+    mut netty: ResMut<Netty>,
+    mut reality: ResMut<Reality>
+) {
+    netty.reality(&mut reality);
 }

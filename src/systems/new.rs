@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 
-use crate::{components::{NewManager, PlayManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState, Netty, TextBox}, shared::{netty::Packet, saves::user}};
+use crate::{components::{NewManager, PlayManager}, layers::{UI_TEXT}, resources::{AssetHandles, GameState, Netty, TextBox}, shared::{netty::Packet}};
 
 pub fn new(
     mut commands: Commands,
-    mut state: ResMut<GameState>,
-    mut handles: ResMut<AssetHandles>,
-    mut netty: ResMut<Netty>
+    state: Res<GameState>,
+    mut handles: ResMut<AssetHandles>
 ) {
     if state.eq(&GameState::New) && state.is_changed() {
         let entity_ids = vec![

@@ -1,13 +1,10 @@
 use bevy::prelude::*;
 
-use crate::shared::world::World;
-
 #[derive(Clone, Debug)]
 pub struct NewManager {
     entity_ids: Vec<Entity>,
     waiting_for_net: bool,
-    time_to_swap: bool,
-    world: Option<World>
+    time_to_swap: bool
 }
 
 impl NewManager {
@@ -15,12 +12,8 @@ impl NewManager {
         Self {
             entity_ids,
             waiting_for_net: false,
-            time_to_swap: false,
-            world: None
+            time_to_swap: false
         }
-    }
-    pub fn grab_world(&mut self) -> World {
-        self.world.clone().unwrap()
     }
     pub fn net_mode(&mut self) {
         if !self.waiting_for_net {

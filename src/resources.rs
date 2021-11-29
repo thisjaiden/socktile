@@ -9,3 +9,6 @@ pub use animator::Animator;
 pub use animator::Animation;
 mod netty;
 pub use netty::Netty;
+pub use netty::ConnectionStatus;
+mod reality;
+pub use reality::Reality;

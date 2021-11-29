@@ -51,6 +51,9 @@ pub enum Packet {
     /// This is always a 32x32 chunk.
     /// (Chunk Position, Chunk Data)
     TerrainChunk((usize, usize), Vec<TerrainState>),
+    /// An update has occurred in a chunk.
+    /// (Chunk Position, [(Terrain Position, Terrain's New State)])
+    ChunkUpdate((usize, usize), Vec<((usize, usize), TerrainState)>),
     /// Sends over all game objects.
     /// (Game Objects)
     AllObjects(Vec<Object>),

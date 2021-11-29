@@ -2,10 +2,10 @@ use crate::{DEV_BUILD, client::core::{DEV_GGS, GGS, startup}, components::NewMan
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
+use super::Reality;
+
 pub struct Netty {
     connection: ConnectionStatus,
-    internet_access: bool,
-    ggs_access: bool,
     input: Arc<Mutex<Vec<Packet>>>,
     output: Arc<Mutex<Vec<Packet>>>,
     pool_queues: Vec<(String, Packet)>
@@ -21,20 +21,17 @@ impl Netty {
         else {
             l_ggs = GGS;
         }
-        let internet = online::sync::check(Some(5)).is_ok();
-        let ggs = remote_exists(l_ggs);
         let connection = TcpStream::connect(l_ggs);
         let mut stat = ConnectionStatus::NotConnected;
-        if !ggs {
+        if !remote_exists(l_ggs) {
             stat = ConnectionStatus::NoGGS;
         }
-        if !internet {
+        if !online::sync::check(Some(5)).is_ok() {
             stat = ConnectionStatus::NoInternet;
         }
         if stat != ConnectionStatus::NotConnected {
+            println!("Unable to connect to GGS, not starting client.");
             return Netty {
-                internet_access: internet,
-                ggs_access: ggs,
                 connection: stat,
                 input: Arc::new(Mutex::new(vec![])),
                 output: Arc::new(Mutex::new(vec![])),
@@ -47,8 +44,6 @@ impl Netty {
             println!("Good connection to GGS, starting up client.");
             startup(good_con, inp.clone(), out.clone());
             let mut fin = Netty {
-                internet_access: internet,
-                ggs_access: ggs,
                 connection: ConnectionStatus::Connected,
                 input: inp,
                 output: out,
@@ -60,8 +55,6 @@ impl Netty {
         else {
             println!("GGS refused a connection. Not starting client.");
             Netty {
-                internet_access: internet,
-                ggs_access: false,
                 connection: ConnectionStatus::Refused,
                 input: Arc::new(Mutex::new(vec![])),
                 output: Arc::new(Mutex::new(vec![])),
@@ -69,11 +62,8 @@ impl Netty {
             }
         }
     }
-    pub fn ggs_connection(&mut self) -> bool {
-        self.ggs_access
-    }
-    pub fn internet_connection(&mut self) -> bool {
-        self.internet_access
+    pub fn connection(&mut self) -> ConnectionStatus {
+        self.connection
     }
     pub fn say(&mut self, packet: Packet) {
         let mut out = self.output.lock().unwrap();
@@ -94,6 +84,12 @@ impl Netty {
                 Packet::CreatedWorld(_) => {
                     self.pool_queues.push((String::from("new"), packet));
                 }
+                Packet::JoinedGame(_) => {
+                    self.pool_queues.push((String::from("selfmove"), packet));
+                }
+                Packet::TerrainChunk(..) => {
+                    self.pool_queues.push((String::from("terrain"), packet));
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }
@@ -108,6 +104,28 @@ impl Netty {
                     println!("joining!");
                     self.say(Packet::JoinWorld(world_id));
                     man.net_mode();
+                }
+                self.pool_queues.remove(index - rmed);
+                rmed += 1;
+            }
+        }
+    }
+    pub fn reality(&mut self, reality: &mut Reality) {
+        let mut rmed = 0;
+        for (index, (pool, packet)) in self.pool_queues.clone().into_iter().enumerate() {
+            if pool == "selfmove" {
+                if let Packet::JoinedGame(my_pos) = packet {
+                    reality.set_player_position(my_pos);
+                }
+                else if let Packet::PlayerPositionUpdates(position_updates) = packet {
+                    todo!();
+                }
+                self.pool_queues.remove(index - rmed);
+                rmed += 1;
+            }
+            else if pool == "terrain" {
+                if let Packet::TerrainChunk(location, data) = packet {
+                    reality.add_chunk(location, data);
                 }
                 self.pool_queues.remove(index - rmed);
                 rmed += 1;
