@@ -112,16 +112,18 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                     loop {
                         let mut destroy_conenction = false;
                         let mut send_access = send.lock().unwrap();
-                        for (packet, address) in send_access.iter() {
+                        let mut removed = 0;
+                        for (index, (packet, address)) in send_access.clone().iter().enumerate() {
                             println!("Sending {:?} to {}", packet, address);
                             if packet == &Packet::FailedDeserialize {
                                 destroy_conenction = true;
                             }
                             if address == &remote_addr {
                                 Packet::to_write(&mut stream_clone, packet.clone());
+                                send_access.remove(index - removed);
+                                removed += 1;
                             }
                         }
-                        send_access.clear();
                         drop(send_access);
                         if destroy_conenction {
                             println!("Dropping connection to {:?}", remote_addr);
