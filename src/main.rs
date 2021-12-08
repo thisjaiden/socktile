@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-
-use bevy_prototype_debug_lines::*;
+use bevy_asset_loader::{AssetLoader, AssetCollection};
 
 mod components;
 mod systems;
@@ -9,6 +8,8 @@ mod layers;
 mod server;
 mod client;
 mod shared;
+mod load_maps;
+mod ldtk;
 
 // Build switches
 // --------------
@@ -18,6 +19,17 @@ pub const DEV_BUILD: bool      = true;
 pub const DEBUG_UI: bool       = true;
 // Should hitbox debug lines be shown?
 pub const DEBUG_HITBOXES: bool = false;
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+enum GameState {
+    TitleScreen,
+    MakeUser,
+    ServerList,
+    MakeGame,
+    Play,
+    Settings,
+    Load
+}
 
 fn main() {
     if DEV_BUILD {
@@ -31,9 +43,23 @@ fn main() {
             }
         }
     }
-    App::build()
+    let mut app = App::build();
+    AssetLoader::new(GameState::Load, GameState::TitleScreen)
+          .with_collection::<MapAssets>()
+          .build(&mut app);
+    app
         .add_plugins(DefaultPlugins)
-        .add_plugin(DebugLinesPlugin)
+        .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin)
+        .add_plugin(bevy_editor_pls::EditorPlugin)
+        .add_plugin(benimator::AnimationPlugin)
+        .add_plugin(bevy_kira_audio::AudioPlugin)
+        .add_plugin(bevy_ecs_tilemap::prelude::TilemapPlugin)
+        .add_plugin(ldtk::LDtkPlugin)
+        .add_state(GameState::Load)
+        .add_system_set(
+            SystemSet::on_enter(GameState::Load)
+                .with_system(load_maps::load_maps.system())
+        )
         .add_system(systems::loading_screen.system())
         .add_system(systems::title_screen_spawner.system())
         .add_system(systems::title_screen_buttons.system())
@@ -52,12 +78,20 @@ fn main() {
         .add_system(systems::netty_etick.system())
         .add_system(systems::netty_newtick.system())
         .add_system(systems::netty_reality.system())
-        .insert_resource(resources::GameState::LoadingScreen)
-        .insert_resource(resources::AssetHandles::init())
+        //.add_system(systems::on_start.system())
+        //.add_system(systems::on_tick.system())
+        //.insert_resource(resources::GameState::LoadingScreen)
+        //.insert_resource(resources::AssetHandles::init())
         .insert_resource(resources::TextBox::init())
-        .insert_resource(resources::Animator::init())
-        .insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 60.0, true)))
+        //.insert_resource(resources::Animator::init())
+        //.insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 60.0, true)))
         .insert_resource(resources::Netty::init())
         .insert_resource(resources::Reality::init())
         .run();
+}
+
+#[derive(AssetCollection)]
+struct MapAssets {
+  #[asset(path = "assets/core.ldtk")]
+  player: Handle<ldtk::LDtkMap>,
 }

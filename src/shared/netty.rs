@@ -5,7 +5,7 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-2";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-3";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -80,6 +80,7 @@ impl Packet {
     }
     pub fn to_write<W: std::io::Write>(write: &mut W, packet: Packet) {
         write.write_all(&bincode::serialize(&packet).unwrap()).unwrap();
+        write.flush().unwrap();
     }
 }
 
@@ -119,6 +120,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                                 destroy_conenction = true;
                             }
                             if address == &remote_addr {
+                                println!("adress matches.");
                                 Packet::to_write(&mut stream_clone, packet.clone());
                                 send_access.remove(index - removed);
                                 removed += 1;

@@ -6,6 +6,8 @@ mod display_pause_ui;
 mod display_perma_ui;
 mod display_players;
 mod display_self;
+pub use display_self::on_start;
+pub use display_self::on_tick;
 mod display_world;
 mod move_self;
 mod open_chat_ui;

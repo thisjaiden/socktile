@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy::window::WindowMode;
 use crate::DEV_BUILD;
 use crate::layers::UI_TEXT;
-use crate::resources::GameState;
 use crate::resources::AssetHandles;
 
 pub fn loading_screen(
@@ -28,10 +27,10 @@ pub fn loading_screen(
             let h_factor = 1080.0;
             let s_factor = 1.0;
             println!("Width {} Height {} Scale {}", w_factor, h_factor, s_factor);
-            window.set_resolution(w_factor, h_factor);
-            window.set_scale_factor_override(Some(s_factor as f64));
-            window.set_mode(WindowMode::BorderlessFullscreen);
-            window.set_cursor_visibility(false);
+            //window.set_resolution(w_factor, h_factor);
+            //window.set_scale_factor_override(Some(s_factor as f64));
+            //window.set_mode(WindowMode::BorderlessFullscreen);
+            //window.set_cursor_visibility(false);
             println!("Initalizing camera...");
             commands.spawn_bundle(OrthographicCameraBundle::new_2d());
         }
