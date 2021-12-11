@@ -11,6 +11,14 @@ use bevy::reflect::TypeUuid;
 
 use std::collections::HashMap;
 
+pub fn load_level(
+    level: &ldtk_rust::Level,
+    commands: &mut Commands
+) {
+    let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
+    
+}
+
 #[derive(Default)]
 pub struct LDtkPlugin;
 
@@ -26,6 +34,17 @@ impl Plugin for LDtkPlugin {
 pub struct LDtkMap {
     pub project: ldtk_rust::Project,
     pub tilesets: HashMap<i64, Handle<Texture>>
+}
+
+impl LDtkMap {
+    pub fn get_level(&mut self, identifier: &str) -> &ldtk_rust::Level {
+        for level in &self.project.levels {
+            if level.identifier == identifier {
+                return level.clone();
+            }
+        }
+        panic!("no level exists for identifier {}!", identifier);
+    }
 }
 
 pub struct LDtkLoader;

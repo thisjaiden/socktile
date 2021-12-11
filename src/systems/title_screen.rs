@@ -45,7 +45,6 @@ pub fn title_screen_spawner(
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
         }).insert(CursorMarker {});
-    }
 }
 
 pub fn title_screen_buttons(
@@ -56,7 +55,6 @@ pub fn title_screen_buttons(
     mut lines: ResMut<DebugLines>,
     mut animator: ResMut<Animator>
 ) {
-    if state.eq(&GameState::TitleScreen) {
         debug_box(&mut lines, PLAY_BUTTON_LOC, PLAY_BUTTON_SIZE);
         debug_box(&mut lines, NEW_BUTTON_LOC, NEW_BUTTON_SIZE);
         debug_box(&mut lines, SETTINGS_BUTTON_LOC, SETTINGS_BUTTON_SIZE);

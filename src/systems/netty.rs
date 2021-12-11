@@ -22,3 +22,7 @@ pub fn netty_reality(
 ) {
     netty.reality(&mut reality);
 }
+
+
+mod startup_checks;
+pub use startup_checks::startup_checks;

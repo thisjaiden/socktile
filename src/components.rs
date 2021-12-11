@@ -2,8 +2,6 @@ mod game_position;
 pub use game_position::GamePosition;
 mod cursor_marker;
 pub use cursor_marker::CursorMarker;
-mod create_user_manager;
-pub use create_user_manager::CreateUserManager;
 mod text_box;
 pub use text_box::TextBox;
 mod new_manager;

@@ -74,7 +74,7 @@
 			"uid": 4,
 			"tags": [],
 			"width": 64,
-			"height": 32,
+			"height": 64,
 			"resizableX": false,
 			"resizableY": false,
 			"keepAspectRatio": false,
@@ -161,13 +161,13 @@
 					"entityInstances": [
 						{
 							"__identifier": "Player",
-							"__grid": [5,5],
+							"__grid": [6,7],
 							"__pivot": [0,0],
 							"__tile": null,
 							"width": 64,
-							"height": 32,
+							"height": 64,
 							"defUid": 4,
-							"px": [80,80],
+							"px": [96,112],
 							"fieldInstances": []
 						}
 					]
@@ -208,7 +208,7 @@
 						{ "px": [128,128], "src": [0,192], "f": 0, "t": 24, "d": [10] },
 						{ "px": [192,128], "src": [0,192], "f": 0, "t": 24, "d": [11] },
 						{ "px": [0,192], "src": [0,192], "f": 0, "t": 24, "d": [12] },
-						{ "px": [64,192], "src": [128,64], "f": 0, "t": 10, "d": [13] },
+						{ "px": [64,192], "src": [0,192], "f": 0, "t": 24, "d": [13] },
 						{ "px": [128,192], "src": [128,192], "f": 0, "t": 26, "d": [14] },
 						{ "px": [192,192], "src": [0,192], "f": 0, "t": 24, "d": [15] }
 					],

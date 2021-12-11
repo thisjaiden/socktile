@@ -21,14 +21,25 @@ pub const DEBUG_UI: bool       = true;
 pub const DEBUG_HITBOXES: bool = false;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum GameState {
+pub enum GameState {
+    /// Loads assets from disk
+    Load,
+    /// Checks network status
+    NetworkCheck,
+    /// Offline mode title screen
+    OfflineTitle,
+    /// Online mode title screen
     TitleScreen,
+    /// User creation screen
     MakeUser,
+    /// Server listings
     ServerList,
+    /// World creation screen
     MakeGame,
-    Play,
+    /// Settings screen
     Settings,
-    Load
+    /// Gameplay state
+    Play,
 }
 
 fn main() {
@@ -44,8 +55,9 @@ fn main() {
         }
     }
     let mut app = App::build();
-    AssetLoader::new(GameState::Load, GameState::TitleScreen)
+    AssetLoader::new(GameState::Load, GameState::NetworkCheck)
           .with_collection::<MapAssets>()
+          .with_collection::<FontAssets>()
           .build(&mut app);
     app
         .add_plugins(DefaultPlugins)
@@ -60,38 +72,31 @@ fn main() {
             SystemSet::on_enter(GameState::Load)
                 .with_system(load_maps::load_maps.system())
         )
-        .add_system(systems::loading_screen.system())
-        .add_system(systems::title_screen_spawner.system())
-        .add_system(systems::title_screen_buttons.system())
-        .add_system(systems::cursor.system())
-        .add_system(systems::settings.system())
-        .add_system(systems::join.system())
-        .add_system(systems::join_ui_create.system())
-        .add_system(systems::join_ui_update.system())
-        .add_system(systems::create_user.system())
-        .add_system(systems::create_user_ui.system())
-        .add_system(systems::text_box.system())
-        .add_system(systems::new.system())
-        .add_system(systems::new_ui.system())
-        .add_system(systems::new_exit.system())
-        .add_system(systems::animator.system())
-        .add_system(systems::netty_etick.system())
-        .add_system(systems::netty_newtick.system())
-        .add_system(systems::netty_reality.system())
-        //.add_system(systems::on_start.system())
-        //.add_system(systems::on_tick.system())
-        //.insert_resource(resources::GameState::LoadingScreen)
-        //.insert_resource(resources::AssetHandles::init())
+        .add_system_set(
+            SystemSet::on_enter(GameState::NetworkCheck)
+                .with_system(systems::netty::startup_checks.system())
+                .with_system(systems::visual::network_check_display.system())
+        )
+        .add_system_set(
+            SystemSet::on_enter(GameState::TitleScreen)
+                .with_system(systems::visual::load_title_screen_map.system())
+        )
         .insert_resource(resources::TextBox::init())
-        //.insert_resource(resources::Animator::init())
-        //.insert_resource(systems::AnimatorTimer(Timer::from_seconds(1.0 / 60.0, true)))
         .insert_resource(resources::Netty::init())
         .insert_resource(resources::Reality::init())
         .run();
 }
 
 #[derive(AssetCollection)]
-struct MapAssets {
-  #[asset(path = "assets/core.ldtk")]
-  player: Handle<ldtk::LDtkMap>,
+pub struct MapAssets {
+    #[asset(path = "core.ldtk")]
+    player: Handle<ldtk::LDtkMap>,
+}
+
+#[derive(AssetCollection)]
+struct FontAssets {
+    #[asset(path = "font/base.ttf")]
+    base: Handle<Font>,
+    #[asset(path = "font/KreativeSquare.ttf")]
+    kreative_square: Handle<Font>,
 }
