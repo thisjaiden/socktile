@@ -11,14 +11,16 @@ use bevy::reflect::TypeUuid;
 
 use std::collections::HashMap;
 
+use crate::FontAssets;
 use crate::components::ldtk::{TileMarker, PlayerMarker};
-use crate::layers::{BACKGROUND, PLAYER_CHARACTERS};
+use crate::layers::{BACKGROUND, PLAYER_CHARACTERS, UI_TEXT};
 
 pub fn load_level(
     unloads: Query<Entity, With<TileMarker>>,
     level: &ldtk_rust::Level,
     map: &LDtkMap,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    fonts: Res<FontAssets>,
     commands: &mut Commands
 ) {
     unloads.for_each_mut(|e| {
@@ -47,8 +49,8 @@ pub fn load_level(
                     let tileset_tile_id = tile.t;
                     commands.spawn_bundle(SpriteSheetBundle {
                         transform: Transform::from_xyz(
-                            tile.px[0] as f32 + level.world_x as f32 - (1920.0 / 2.0) + 32.0,
-                            -tile.px[1] as f32 + (1080.0 / 2.0) - 32.0,
+                            (-1920.0 / 2.0) + tile.px[0] as f32 + 32.0,
+                            (1080.0 / 2.0) - tile.px[1] as f32 - 32.0,
                             BACKGROUND),
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
@@ -63,12 +65,44 @@ pub fn load_level(
                         "Player" => {
                             commands.spawn_bundle(SpriteBundle {
                                 transform: Transform::from_xyz(
-                                    entity.px[0] as f32,
-                                    entity.px[1] as f32,
+                                    (-1920.0 / 2.0) + entity.px[0] as f32,
+                                    (1080.0 / 2.0) - entity.px[1] as f32,
                                     PLAYER_CHARACTERS
                                 ),
                                 ..Default::default()
                             }).insert(PlayerMarker {});
+                        }
+                        "Text" => {
+                            let mut text = String::new();
+                            for field in &entity.field_instances {
+                                if field.identifier == "Text" {
+                                    text = field.value.clone().unwrap().as_str().unwrap().to_string();
+                                }
+                            }
+                            commands.spawn_bundle(Text2dBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + entity.px[0] as f32 + (entity.width as f32 / 2.0),
+                                    (1080.0 / 2.0) - entity.px[1] as f32 - (entity.height as f32 / 2.0),
+                                    UI_TEXT
+                                ),
+                                text: Text {
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Center,
+                                        horizontal: HorizontalAlign::Center
+                                    },
+                                    sections: vec![
+                                        TextSection {
+                                            value: text,
+                                            style: TextStyle {
+                                                font: fonts.kreative_square.clone(),
+                                                font_size: entity.height as f32,
+                                                color: Color::BLACK
+                                            }
+                                        }
+                                    ]
+                                },
+                                ..Default::default()
+                            }).insert(TileMarker {});
                         }
                         ei => {
                             println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);
@@ -104,7 +138,7 @@ impl LDtkMap {
     pub fn get_level(&self, identifier: &str) -> &ldtk_rust::Level {
         for level in &self.project.levels {
             if level.identifier == identifier {
-                return level.clone();
+                return level;
             }
         }
         panic!("no level exists for identifier {}!", identifier);

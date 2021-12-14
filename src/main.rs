@@ -11,14 +11,8 @@ mod shared;
 mod window_setup;
 mod ldtk;
 
-// Build switches
-// --------------
 // Is this an internal dev build?
 pub const DEV_BUILD: bool      = true;
-// Should UI debug lines be shown?
-pub const DEBUG_UI: bool       = true;
-// Should hitbox debug lines be shown?
-pub const DEBUG_HITBOXES: bool = false;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
@@ -77,6 +71,10 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
                 .with_system(systems::visual::load_title_screen_map.system())
+        )
+        .add_system_set(
+            SystemSet::on_enter(GameState::MakeUser)
+                .with_system(systems::visual::load_user_creation_map.system())
         )
         .add_system(systems::cursor::cursor.system())
         .insert_resource(resources::TextBox::init())

@@ -142,14 +142,12 @@ pub fn startup() -> ! {
                             // TODO: Properly handle
                             panic!("No user found for an IP address used with Packet::JoinWorld(usize)");
                         }
-                        let mut index: usize = 0;
                         let mut world_index = 0;
-                        for world in &saves {
+                        for (index, world) in saves.iter().enumerate() {
                             if world.internal_id == world_id {
                                 world_index = index;
                                 break;
                             }
-                            index += 1;
                         }
                         let mut has_joined = false;
                         let mut player_info = None;

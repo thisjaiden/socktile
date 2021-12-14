@@ -13,19 +13,20 @@ pub struct Netty {
 impl Netty {
     pub fn init() -> Netty {
         println!("Netty initalizing!");
-        let l_ggs;
-        if DEV_BUILD {
-            l_ggs = DEV_GGS;
+
+        let l_ggs = if DEV_BUILD {
+            DEV_GGS
         }
         else {
-            l_ggs = GGS;
-        }
+            GGS
+        };
+
         let connection = TcpStream::connect(l_ggs);
         let mut stat = ConnectionStatus::NotConnected;
         if !remote_exists(l_ggs) {
             stat = ConnectionStatus::NoGGS;
         }
-        if !online::sync::check(Some(5)).is_ok() {
+        if online::sync::check(Some(5)).is_err() {
             stat = ConnectionStatus::NoInternet;
         }
         if stat != ConnectionStatus::NotConnected {
