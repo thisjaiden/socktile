@@ -41,7 +41,10 @@ pub fn load_level(
                 for tile in &layer.grid_tiles {
                     let tileset_tile_id = tile.t;
                     commands.spawn_bundle(SpriteSheetBundle {
-                        transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
+                        transform: Transform::from_xyz(
+                            tile.px[0] as f32 + level.world_x as f32 - (1920.0 / 2.0) + 32.0,
+                            -tile.px[1] as f32 + (1080.0 / 2.0) - 32.0,
+                            BACKGROUND),
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
                         ..Default::default()
@@ -50,7 +53,7 @@ pub fn load_level(
                 
             }
             it => {
-                //panic!("LDTK: INVALID INSTANCE TYPE {}.", it)
+                panic!("LDTK: INVALID INSTANCE TYPE {}.", it)
             }
         }
     }

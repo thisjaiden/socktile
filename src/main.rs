@@ -8,7 +8,7 @@ mod layers;
 mod server;
 mod client;
 mod shared;
-mod load_maps;
+mod window_setup;
 mod ldtk;
 
 // Build switches
@@ -70,7 +70,7 @@ fn main() {
         .add_state(GameState::Load)
         .add_system_set(
             SystemSet::on_enter(GameState::Load)
-                .with_system(load_maps::load_maps.system())
+                .with_system(window_setup::window_setup.system())
         )
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
