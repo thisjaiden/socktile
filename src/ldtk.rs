@@ -11,14 +11,19 @@ use bevy::reflect::TypeUuid;
 
 use std::collections::HashMap;
 
-use crate::layers::BACKGROUND;
+use crate::components::ldtk::{TileMarker, PlayerMarker};
+use crate::layers::{BACKGROUND, PLAYER_CHARACTERS};
 
 pub fn load_level(
+    unloads: Query<Entity, With<TileMarker>>,
     level: &ldtk_rust::Level,
     map: &LDtkMap,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     commands: &mut Commands
 ) {
+    unloads.for_each_mut(|e| {
+        commands.entity(e).despawn_recursive();
+    });
     let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
     for layer in layers {
         match layer.layer_instance_type.as_str() {
@@ -48,9 +53,28 @@ pub fn load_level(
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
                         ..Default::default()
-                    });
+                    }).insert(TileMarker {});
                 }
                 
+            }
+            "Entities" => {
+                for entity in &layer.entity_instances {
+                    match entity.identifier.as_str() {
+                        "Player" => {
+                            commands.spawn_bundle(SpriteBundle {
+                                transform: Transform::from_xyz(
+                                    entity.px[0] as f32,
+                                    entity.px[1] as f32,
+                                    PLAYER_CHARACTERS
+                                ),
+                                ..Default::default()
+                            }).insert(PlayerMarker {});
+                        }
+                        ei => {
+                            println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);
+                        }
+                    }
+                }
             }
             it => {
                 panic!("LDTK: INVALID INSTANCE TYPE {}.", it)

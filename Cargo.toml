@@ -10,13 +10,10 @@ online = { version = "3.0.1",  default-features = false, features = ["sync"] }
 bevy = { version = "0.5.0", default-features = false, features = ["bevy_dynamic_plugin", "bevy_gilrs", "bevy_gltf", "bevy_wgpu", "bevy_winit", "render", "png", "hdr", "x11"] }
 bevy_kira_audio = { version = "0.6.0", features = ["mp3", "ogg", "wav"] }
 bevy_asset_loader = "0.6.0"
-bevy_prototype_debug_lines = "0.3.3"
-bevy_ecs_tilemap = { version = "0.4.0" }
 ldtk_rust = "0.5.2"
 benimator = "0.3.1"
 serde_json = "1.0.72"
 anyhow = "1.0.51"
-bevy_editor_pls = { git = "https://github.com/jakobhellermann/bevy_editor_pls" }
 
 [profile.release]
 codegen-units = 1

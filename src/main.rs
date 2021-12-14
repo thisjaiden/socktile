@@ -61,11 +61,8 @@ fn main() {
           .build(&mut app);
     app
         .add_plugins(DefaultPlugins)
-        .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin)
-        .add_plugin(bevy_editor_pls::EditorPlugin)
         .add_plugin(benimator::AnimationPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
-        .add_plugin(bevy_ecs_tilemap::prelude::TilemapPlugin)
         .add_plugin(ldtk::LDtkPlugin)
         .add_state(GameState::Load)
         .add_system_set(
@@ -75,14 +72,17 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
                 .with_system(systems::netty::startup_checks.system())
-                .with_system(systems::visual::network_check_display.system())
+                .with_system(systems::cursor::spawn.system())
         )
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
                 .with_system(systems::visual::load_title_screen_map.system())
         )
+        .add_system(systems::cursor::cursor.system())
         .insert_resource(resources::TextBox::init())
+        .add_system(systems::text_box::text_box.system())
         .insert_resource(resources::Netty::init())
+        .add_system(systems::netty::step.system())
         .insert_resource(resources::Reality::init())
         .run();
 }
@@ -94,7 +94,7 @@ pub struct MapAssets {
 }
 
 #[derive(AssetCollection)]
-struct FontAssets {
+pub struct FontAssets {
     #[asset(path = "font/base.ttf")]
     base: Handle<Font>,
     #[asset(path = "font/KreativeSquare.ttf")]

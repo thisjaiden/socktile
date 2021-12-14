@@ -1,28 +1,24 @@
 use bevy::prelude::*;
-use crate::{components::NewManager, resources::{Netty, Reality}};
 
-pub fn netty_etick(
-    mut netty: ResMut<Netty>
-) {
-    netty.exclusive_tick();
-}
+use crate::{resources::{Netty, ConnectionStatus, Reality}, GameState};
 
-pub fn netty_newtick(
+pub fn startup_checks(
     mut netty: ResMut<Netty>,
-    manager: Query<&mut NewManager>,
+    mut state: ResMut<State<GameState>>
 ) {
-    manager.for_each_mut(|mut man| {
-        netty.new_tick(&mut man);
-    });
+    match netty.connection() {
+        ConnectionStatus::Connected | ConnectionStatus::Stable => {
+            state.set(GameState::TitleScreen).unwrap();
+        }
+        _ => {
+            state.set(GameState::OfflineTitle).unwrap();
+        }
+    }
 }
 
-pub fn netty_reality(
+pub fn step(
     mut netty: ResMut<Netty>,
     mut reality: ResMut<Reality>
 ) {
-    netty.reality(&mut reality);
+    netty.step(&mut reality);
 }
-
-
-mod startup_checks;
-pub use startup_checks::startup_checks;
