@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use crate::FontAssets;
 use crate::components::ldtk::{TileMarker, PlayerMarker};
 use crate::layers::{BACKGROUND, PLAYER_CHARACTERS, UI_TEXT};
+use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
 
 pub fn load_level(
     unloads: Query<Entity, With<TileMarker>>,
@@ -21,6 +22,7 @@ pub fn load_level(
     map: &LDtkMap,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     fonts: Res<FontAssets>,
+    mut uimanager: ResMut<UIManager>,
     commands: &mut Commands
 ) {
     unloads.for_each_mut(|e| {
@@ -74,9 +76,13 @@ pub fn load_level(
                         }
                         "Text" => {
                             let mut text = String::new();
+                            let mut font_size = 1.0;
                             for field in &entity.field_instances {
                                 if field.identifier == "Text" {
                                     text = field.value.clone().unwrap().as_str().unwrap().to_string();
+                                }
+                                if field.identifier == "Font_Size" {
+                                    font_size = field.value.clone().unwrap().as_f64().unwrap();
                                 }
                             }
                             commands.spawn_bundle(Text2dBundle {
@@ -95,7 +101,7 @@ pub fn load_level(
                                             value: text,
                                             style: TextStyle {
                                                 font: fonts.kreative_square.clone(),
-                                                font_size: entity.height as f32,
+                                                font_size: font_size as f32,
                                                 color: Color::BLACK
                                             }
                                         }
@@ -103,6 +109,23 @@ pub fn load_level(
                                 },
                                 ..Default::default()
                             }).insert(TileMarker {});
+                        }
+                        "UIClickable" => {
+                            let mut level = String::new();
+                            for field in &entity.field_instances {
+                                if field.identifier == "LoadableLevel" {
+                                    level = field.value.clone().unwrap().as_str().unwrap().to_string();
+                                }
+                            }
+                            uimanager.add_ui(UIClickable {
+                                action: UIClickAction::ChangeScene(level),
+                                removed_on_use: false,
+                                location: (
+                                    (-1920.0 / 2.0) + entity.px[0] as f32,
+                                    (1080.0 / 2.0) - entity.px[1] as f32
+                                ),
+                                size: (entity.width as f32, entity.height as f32)
+                            });
                         }
                         ei => {
                             println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);

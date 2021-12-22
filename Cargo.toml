@@ -23,4 +23,3 @@ overflow-checks = false
 debug-assertions = false
 debug = 0
 opt-level = 3
-

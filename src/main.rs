@@ -12,7 +12,7 @@ mod window_setup;
 mod ldtk;
 
 // Is this an internal dev build?
-pub const DEV_BUILD: bool      = true;
+pub const DEV_BUILD: bool = true;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
@@ -81,6 +81,9 @@ fn main() {
         .add_system(systems::text_box::text_box.system())
         .insert_resource(resources::Netty::init())
         .add_system(systems::netty::step.system())
+        .insert_resource(resources::ui::UIManager::init())
+        .add_system(resources::ui::ui_scene.system())
+        .add_system(resources::ui::ui_manager.system())
         .insert_resource(resources::Reality::init())
         .run();
 }
