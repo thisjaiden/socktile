@@ -114,7 +114,7 @@ pub fn ui_scene(
                     man.reset_ui();
                     let a = maps.get_mut(target_maps.player.clone()).unwrap();
                     let level = a.get_level(goto.as_str());
-                    load_level(unloads, level, a, texture_atlases, font_assets, man, &mut commands);
+                    load_level(unloads, level, a, texture_atlases, font_assets.clone(), man, &mut commands);
                     match goto.as_str() {
                         "Settings" => {
                             state.set(GameState::Settings).unwrap();

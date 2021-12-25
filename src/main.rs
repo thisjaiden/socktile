@@ -76,6 +76,10 @@ fn main() {
             SystemSet::on_enter(GameState::MakeUser)
                 .with_system(systems::visual::load_user_creation_map.system())
         )
+        .add_system_set(
+            SystemSet::on_update(GameState::MakeUser)
+                .with_system(systems::user_creation.system())
+        )
         .add_system(systems::cursor::cursor.system())
         .insert_resource(resources::TextBox::init())
         .add_system(systems::text_box::text_box.system())
@@ -94,7 +98,7 @@ pub struct MapAssets {
     player: Handle<ldtk::LDtkMap>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Clone)]
 pub struct FontAssets {
     #[asset(path = "font/base.ttf")]
     base: Handle<Font>,

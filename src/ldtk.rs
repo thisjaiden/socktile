@@ -21,7 +21,7 @@ pub fn load_level(
     level: &ldtk_rust::Level,
     map: &LDtkMap,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    fonts: Res<FontAssets>,
+    fonts: FontAssets,
     mut uimanager: ResMut<UIManager>,
     commands: &mut Commands
 ) {
@@ -110,7 +110,7 @@ pub fn load_level(
                                 ..Default::default()
                             }).insert(TileMarker {});
                         }
-                        "UIClickable" => {
+                        "LoadLevel" => {
                             let mut level = String::new();
                             for field in &entity.field_instances {
                                 if field.identifier == "LoadableLevel" {

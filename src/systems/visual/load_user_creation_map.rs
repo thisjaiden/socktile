@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{MapAssets, ldtk::{LDtkMap, load_level}, components::ldtk::TileMarker, FontAssets, resources::ui::UIManager};
+use crate::{MapAssets, ldtk::{LDtkMap, load_level}, components::{ldtk::TileMarker, TextBox}, FontAssets, resources::ui::UIManager};
 
 pub fn load_user_creation_map(
     mut commands: Commands,
@@ -12,5 +12,24 @@ pub fn load_user_creation_map(
 ) {
     let a = maps.get_mut(target_maps.player.clone()).unwrap();
     let level = a.get_level("Create_user");
-    load_level(unloads, level, a, texture_atlases, font_assets, uiman, &mut commands);
+    load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: String::new(),
+                    style: TextStyle {
+                        font: font_assets.kreative_square.clone(),
+                        font_size: 35.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        ..Default::default()
+    }).insert(TextBox {});
 }

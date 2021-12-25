@@ -14,7 +14,7 @@ pub fn load_title_screen_map(
     if user().is_some() {
         let a = maps.get_mut(target_maps.player.clone()).unwrap();
         let level = a.get_level("Title_screen");
-        load_level(unloads, level, a, texture_atlases, font_assets, uiman, &mut commands);
+        load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
     }
     else {
         state.set(GameState::MakeUser).unwrap();
