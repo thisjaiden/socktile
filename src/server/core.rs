@@ -170,7 +170,7 @@ pub fn startup() -> ! {
                         );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
-                        func_send.push((Packet::TerrainChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         drop(func_send);
                     }
                     _ => {
