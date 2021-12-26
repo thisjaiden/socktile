@@ -8,7 +8,7 @@ pub struct World {
     pub offline_players: Vec<Player>,
     // reminder: all chunks are 32x32, with world coordinates starting in the center.
     // all terrain objects are 32x32 FOR NOW
-    pub terrain_chunks: Vec<((usize, usize), Vec<TerrainState>)>,
+    pub terrain_changes: Vec<((usize, usize), Vec<(usize, usize, TerrainState)>)>,
     pub objects: Vec<Object>
 }
 
@@ -17,47 +17,38 @@ impl World {
         World {
             players: vec![],
             offline_players: vec![],
-            terrain_chunks: vec![((0, 0), vec![TerrainState::Test; 1024])],
+            terrain_changes: vec![],
             objects: vec![]
         }
     }
-    pub fn empty() -> World {
-        World {
-            players: vec![],
-            offline_players: vec![],
-            terrain_chunks: vec![],
-            objects: vec![]
-        }
-    }
-    pub fn clone_chunk(&mut self, chunk: (usize, usize)) -> Vec<TerrainState> {
-        for (loc, data) in &self.terrain_chunks {
+    pub fn clone_chunk(&mut self, chunk: (usize, usize)) -> Vec<(usize, usize, TerrainState)> {
+        for (loc, data) in &self.terrain_changes {
             if loc == &chunk {
                 return data.clone();
             }
         }
-        self.generate_chunk(chunk);
-        return self.terrain_chunks.last().unwrap().1.clone();
+        return self.terrain_changes.last().unwrap().1.clone();
     }
-    pub fn modify_chunk(&mut self, chunk: (usize, usize), modify: &mut dyn FnMut(&mut Vec<TerrainState>)) {
-        let mut index: usize = 0;
-        let mut needs_generation = true;
-        for (loc, _) in &self.terrain_chunks {
+    pub fn modify_tile(&mut self, chunk: (usize, usize), tile: (usize, usize), state: TerrainState) {
+        let mut target_index = 0;
+        let mut found_target = false;
+        for (index, (loc, _data)) in self.terrain_changes.iter().enumerate() {
             if loc == &chunk {
-                needs_generation = false;
-                break;
+                target_index = index;
+                found_target = true;
             }
-            index += 1;
         }
-        if needs_generation {
-            index = self.terrain_chunks.len() - 1;
-            self.generate_chunk(chunk)
+        if found_target {
+            for (index2, (posx, posy, _state)) in self.terrain_changes[target_index].1.iter().enumerate() {
+                if posx == &tile.0 && posy == &tile.1 {
+                    self.terrain_changes[target_index].1[index2].2 = state;
+                    return;
+                }
+            }
+            self.terrain_changes[target_index].1.push((tile.0, tile.1, state));
         }
-        modify(&mut self.terrain_chunks[index].1);
-    }
-    pub fn generate_chunk(&mut self, chunk: (usize, usize)) {
-        self.terrain_chunks.push((
-            chunk,
-            vec![TerrainState::EmptyWater; 1024]
-        ));
+        else {
+            self.terrain_changes.push((chunk, vec![(tile.0, tile.1, state)]));
+        }
     }
 }

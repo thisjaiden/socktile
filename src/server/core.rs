@@ -142,14 +142,12 @@ pub fn startup() -> ! {
                             // TODO: Properly handle
                             panic!("No user found for an IP address used with Packet::JoinWorld(usize)");
                         }
-                        let mut index: usize = 0;
                         let mut world_index = 0;
-                        for world in &saves {
+                        for (index, world) in saves.iter().enumerate() {
                             if world.internal_id == world_id {
                                 world_index = index;
                                 break;
                             }
-                            index += 1;
                         }
                         let mut has_joined = false;
                         let mut player_info = None;
@@ -172,7 +170,7 @@ pub fn startup() -> ! {
                         );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
-                        func_send.push((Packet::TerrainChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         drop(func_send);
                     }
                     _ => {

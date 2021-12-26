@@ -1,4 +1,4 @@
-use crate::{DEV_BUILD, client::core::{DEV_GGS, GGS, startup}, components::NewManager, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
+use crate::{DEV_BUILD, client::core::{DEV_GGS, GGS, startup}, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
@@ -8,25 +8,25 @@ pub struct Netty {
     connection: ConnectionStatus,
     input: Arc<Mutex<Vec<Packet>>>,
     output: Arc<Mutex<Vec<Packet>>>,
-    pool_queues: Vec<(String, Packet)>
 }
 
 impl Netty {
     pub fn init() -> Netty {
         println!("Netty initalizing!");
-        let l_ggs;
-        if DEV_BUILD {
-            l_ggs = DEV_GGS;
+
+        let l_ggs = if DEV_BUILD {
+            DEV_GGS
         }
         else {
-            l_ggs = GGS;
-        }
+            GGS
+        };
+
         let connection = TcpStream::connect(l_ggs);
         let mut stat = ConnectionStatus::NotConnected;
         if !remote_exists(l_ggs) {
             stat = ConnectionStatus::NoGGS;
         }
-        if !online::sync::check(Some(5)).is_ok() {
+        if online::sync::check(Some(5)).is_err() {
             stat = ConnectionStatus::NoInternet;
         }
         if stat != ConnectionStatus::NotConnected {
@@ -34,8 +34,7 @@ impl Netty {
             return Netty {
                 connection: stat,
                 input: Arc::new(Mutex::new(vec![])),
-                output: Arc::new(Mutex::new(vec![])),
-                pool_queues: vec![]
+                output: Arc::new(Mutex::new(vec![]))
             };
         }
         if let Ok(good_con) = connection {
@@ -46,8 +45,7 @@ impl Netty {
             let mut fin = Netty {
                 connection: ConnectionStatus::Connected,
                 input: inp,
-                output: out,
-                pool_queues: vec![]
+                output: out
             };
             fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
             fin
@@ -57,8 +55,7 @@ impl Netty {
             Netty {
                 connection: ConnectionStatus::Refused,
                 input: Arc::new(Mutex::new(vec![])),
-                output: Arc::new(Mutex::new(vec![])),
-                pool_queues: vec![]
+                output: Arc::new(Mutex::new(vec![]))
             }
         }
     }
@@ -70,7 +67,7 @@ impl Netty {
         out.push(packet);
         drop(out);
     }
-    pub fn exclusive_tick(&mut self) {
+    pub fn step(&mut self, reality: &mut Reality) {
         let mut input = self.input.lock().unwrap();
         let pkts = input.clone();
         input.clear();
@@ -81,57 +78,12 @@ impl Netty {
                     save_user(user);
                     println!("Saved new user information.");
                 }
-                Packet::CreatedWorld(_) => {
-                    self.pool_queues.push((String::from("new"), packet));
-                }
-                Packet::JoinedGame(_) => {
-                    self.pool_queues.push((String::from("selfmove"), packet));
-                }
-                Packet::TerrainChunk(..) => {
-                    self.pool_queues.push((String::from("terrain"), packet));
-                }
                 Packet::NettyStable => {
                     self.connection = ConnectionStatus::Stable;
                 }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }
-            }
-        }
-    }
-    pub fn new_tick(&mut self, man: &mut NewManager) {
-        let mut rmed = 0;
-        for (index, (pool, packet)) in self.pool_queues.clone().into_iter().enumerate() {
-            if pool == "new" {
-                if let Packet::CreatedWorld(world_id) = packet {
-                    println!("joining!");
-                    self.say(Packet::JoinWorld(world_id));
-                    man.net_mode();
-                }
-                self.pool_queues.remove(index - rmed);
-                rmed += 1;
-            }
-        }
-    }
-    pub fn reality(&mut self, reality: &mut Reality) {
-        let mut rmed = 0;
-        for (index, (pool, packet)) in self.pool_queues.clone().into_iter().enumerate() {
-            if pool == "selfmove" {
-                if let Packet::JoinedGame(my_pos) = packet {
-                    reality.set_player_position(my_pos);
-                }
-                else if let Packet::PlayerPositionUpdates(position_updates) = packet {
-                    todo!();
-                }
-                self.pool_queues.remove(index - rmed);
-                rmed += 1;
-            }
-            else if pool == "terrain" {
-                if let Packet::TerrainChunk(location, data) = packet {
-                    reality.add_chunk(location, data);
-                }
-                self.pool_queues.remove(index - rmed);
-                rmed += 1;
             }
         }
     }
