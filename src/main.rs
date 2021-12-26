@@ -78,15 +78,15 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeUser)
-                .with_system(systems::user_creation.system())
+                .with_system(systems::text_box::user_creation.system())
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
-                .with_system(systems::game_creation_once.system())
+                .with_system(systems::text_box::game_creation_once.system())
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeGame)
-                .with_system(systems::game_creation.system())
+                .with_system(systems::text_box::game_creation.system())
         )
         .add_system(systems::cursor::cursor.system())
         .insert_resource(resources::TextBox::init())

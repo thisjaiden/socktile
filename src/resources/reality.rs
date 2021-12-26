@@ -10,7 +10,7 @@ pub struct Reality {
 impl Reality {
     pub fn init() -> Reality {
         Reality {
-            player_position: GamePosition { x: -25565.0, y: -25565.0 },
+            player_position: GamePosition { x: 0.0, y: 0.0 },
             camera: Camera::Static(GamePosition { x: 0.0, y: 0.0 })
         }
     }
