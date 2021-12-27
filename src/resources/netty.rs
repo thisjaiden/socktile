@@ -81,6 +81,12 @@ impl Netty {
                 Packet::NettyStable => {
                     self.connection = ConnectionStatus::Stable;
                 }
+                Packet::CreatedWorld(id) => {
+                    self.say(Packet::JoinWorld(id));
+                }
+                Packet::JoinedGame(mypos) => {
+                    reality.set_player_position(mypos);
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

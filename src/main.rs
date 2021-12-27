@@ -73,6 +73,10 @@ fn main() {
                 .with_system(systems::visual::load_title_screen_map.system())
         )
         .add_system_set(
+            SystemSet::on_enter(GameState::OfflineTitle)
+                .with_system(systems::visual::load_offline_title_map.system())
+        )
+        .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
                 .with_system(systems::visual::load_user_creation_map.system())
         )
@@ -109,7 +113,7 @@ pub struct MapAssets {
 #[derive(AssetCollection, Clone)]
 pub struct FontAssets {
     #[asset(path = "font/base.ttf")]
-    base: Handle<Font>,
+    _base: Handle<Font>,
     #[asset(path = "font/KreativeSquare.ttf")]
     kreative_square: Handle<Font>,
 }

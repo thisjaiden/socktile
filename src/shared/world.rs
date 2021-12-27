@@ -6,8 +6,6 @@ use super::{object::Object, player::Player, terrain::TerrainState};
 pub struct World {
     pub players: Vec<Player>,
     pub offline_players: Vec<Player>,
-    // reminder: all chunks are 32x32, with world coordinates starting in the center.
-    // all terrain objects are 32x32 FOR NOW
     pub terrain_changes: Vec<((usize, usize), Vec<(usize, usize, TerrainState)>)>,
     pub objects: Vec<Object>
 }
@@ -27,7 +25,7 @@ impl World {
                 return data.clone();
             }
         }
-        return self.terrain_changes.last().unwrap().1.clone();
+        return vec![];
     }
     pub fn modify_tile(&mut self, chunk: (usize, usize), tile: (usize, usize), state: TerrainState) {
         let mut target_index = 0;
