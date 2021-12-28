@@ -25,7 +25,19 @@ pub fn load_chunk(
 ) {
     let mut selected_level = None;
     for level in &map.project.levels {
-        if level.identifier == format!("Env_{}_{}", chunk.0, chunk.1) {
+        let fmta = if chunk.0.is_negative() {
+            format!("M{}", chunk.0 * -1)
+        }
+        else {
+            format!("{}", chunk.0)
+        };
+        let fmtb = if chunk.1.is_negative() {
+            format!("M{}", chunk.1 * -1)
+        }
+        else {
+            format!("{}", chunk.1)
+        };
+        if level.identifier == format!("Env_{}_{}", fmta, fmtb) {
             selected_level = Some(level);
         }
     }
@@ -73,16 +85,6 @@ pub fn load_chunk(
             "Entities" => {
                 for entity in &layer.entity_instances {
                     match entity.identifier.as_str() {
-                        "Player" => {
-                            commands.spawn_bundle(SpriteBundle {
-                                transform: Transform::from_xyz(
-                                    (-1920.0 / 2.0) + entity.px[0] as f32,
-                                    (1080.0 / 2.0) - entity.px[1] as f32,
-                                    PLAYER_CHARACTERS
-                                ),
-                                ..Default::default()
-                            }).insert(PlayerMarker {});
-                        }
                         "Text" => {
                             let mut text = String::new();
                             let mut font_size = 1.0;

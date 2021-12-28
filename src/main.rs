@@ -101,11 +101,13 @@ fn main() {
         .add_system(resources::ui::ui_scene.system())
         .add_system(resources::ui::ui_manager.system())
         .insert_resource(resources::Reality::init())
+        .insert_resource(resources::Animator::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_chunk_loader.system())
                 .with_system(resources::Reality::system_player_controls.system())
                 .with_system(resources::Reality::system_camera_updater.system())
+                .with_system(resources::Animator::system_player_animator.system())
         )
         .run();
 }

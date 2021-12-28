@@ -5,18 +5,20 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-5";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-6";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
     /// Post the version of the network protocol being used.
     /// A response is expected, regardless of the version on either end.
-    /// TODO: This hasn't been confirmed to work cross-version, `bincode` enums are a black box.
     /// (Netty Version)
     NettyVersion(String),
     /// The server appears to use the same version. Continue.
     /// (No Data)
     NettyStable,
+    /// The server is running a newer version. Exit.
+    /// (No Data)
+    Old,
     /// Data was recieved but unable to be deserizalized.
     /// (This occurs on data courruption or a disconnect, usually the latter.)
     /// (No Data)
@@ -48,7 +50,7 @@ pub enum Packet {
     /// (Player Position)
     JoinedGame(GamePosition),
     /// The server sends over the information relating to some terrain.
-    /// (Chunk, [Tile, Tile Override])
+    /// (Chunk, Array (Tile, Tile Override))
     ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
     /// An update has occurred in a chunk.
     /// (Chunk, Tile, Tile Override)
@@ -114,12 +116,11 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                         let mut send_access = send.lock().unwrap();
                         let mut removed = 0;
                         for (index, (packet, address)) in send_access.clone().iter().enumerate() {
-                            println!("Sending {:?} to {}", packet, address);
                             if packet == &Packet::FailedDeserialize {
                                 destroy_conenction = true;
                             }
                             if address == &remote_addr {
-                                println!("adress matches.");
+                                println!("Sending {:?} to {}", packet, address);
                                 Packet::to_write(&mut stream_clone, packet.clone());
                                 send_access.remove(index - removed);
                                 removed += 1;

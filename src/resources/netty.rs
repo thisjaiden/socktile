@@ -91,6 +91,9 @@ impl Netty {
                     reality.add_chunk(chunk, changes);
                     reality.update_chunk(chunk);
                 }
+                Packet::Old => {
+                    panic!("YOUR VERSION IS NOT THE SAME AS THE REMOTE GGS! (You're most likely out of date, update!)");
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

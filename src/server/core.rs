@@ -46,9 +46,14 @@ pub fn startup() -> ! {
             drop(func_recv);
             for (packet, from) in incoming_data {
                 match packet {
-                    Packet::NettyVersion(_) => {
+                    Packet::NettyVersion(v) => {
                         let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::NettyStable, from));
+                        if v == NETTY_VERSION {
+                            func_send.push((Packet::NettyStable, from));
+                        }
+                        else {
+                            func_send.push((Packet::Old, from));
+                        }
                         drop(func_send);
                     }
                     Packet::CreateUser(user) => {
