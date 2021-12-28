@@ -1,18 +1,29 @@
 use bevy::prelude::*;
+use bevy::render::camera::Camera;
 use crate::FontAssets;
 use crate::{components::CursorMarker};
 use crate::layers::CURSOR;
 
 pub fn cursor(
     windows: Res<Windows>,
-    mut cursors: Query<&mut Transform, With<CursorMarker>>
+    mut qset: QuerySet<(
+        Query<&mut Transform, With<CursorMarker>>,
+        Query<&mut Transform, With<Camera>>
+    )>
 ) {
-    for mut transform in cursors.iter_mut() {
+
+    let mut camx = 0.0;
+    let mut camy = 0.0;
+    for transform in qset.q1_mut().iter_mut() {
+        camx = transform.translation.x;
+        camy = transform.translation.y;
+    }
+    for mut transform in qset.q0_mut().iter_mut() {
         let p_window = windows.get_primary().unwrap();
         let cursor_pos = p_window.cursor_position();
         if let Some(position) = cursor_pos {
-            transform.translation.x = (position.x * 2.0) - (p_window.width() / 2.0) - 7.0;
-            transform.translation.y = (position.y * 2.0) - (p_window.height() / 2.0) + 5.0;
+            transform.translation.x = (position.x * 2.0) - (p_window.width() / 2.0) - 7.0 + camx;
+            transform.translation.y = (position.y * 2.0) - (p_window.height() / 2.0) + 5.0 + camy;
             transform.translation.z = CURSOR;
         }
     }

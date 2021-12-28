@@ -165,8 +165,8 @@ pub fn startup() -> ! {
                             });
                         }
                         let spawn_centre_chnks_lack = (
-                            (player_info.clone().unwrap().location.x / 32.0).round() as usize,
-                            (player_info.clone().unwrap().location.y / 32.0).round() as usize
+                            (player_info.clone().unwrap().location.x / 32.0).round() as isize,
+                            (player_info.clone().unwrap().location.y / 32.0).round() as isize
                         );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));

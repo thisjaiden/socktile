@@ -12,9 +12,128 @@ use bevy::reflect::TypeUuid;
 use std::collections::HashMap;
 
 use crate::FontAssets;
-use crate::components::ldtk::{TileMarker, PlayerMarker};
+use crate::components::ldtk::{TileMarker, PlayerMarker, InGameTile};
 use crate::layers::{BACKGROUND, PLAYER_CHARACTERS, UI_TEXT};
 use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
+
+pub fn load_chunk(
+    chunk: (isize, isize),
+    map: &LDtkMap,
+    texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
+    fonts: FontAssets,
+    commands: &mut Commands
+) {
+    let mut selected_level = None;
+    for level in &map.project.levels {
+        if level.identifier == format!("Env_{}_{}", chunk.0, chunk.1) {
+            selected_level = Some(level);
+        }
+    }
+    if selected_level.is_none() {
+        for level in &map.project.levels {
+            if level.identifier == "Env_NONE" {
+                selected_level = Some(level);
+            }
+        }
+    }
+    let level = selected_level.unwrap();
+    let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
+    for layer in layers {
+        match layer.layer_instance_type.as_str() {
+            "Tiles" => {
+                let tileset_id = layer.tileset_def_uid.unwrap();
+                let tileset = map.tilesets.get(&tileset_id).unwrap();
+                let mut tileset_definition = None;
+                for tileset in &map.project.defs.tilesets {
+                    if tileset.uid == tileset_id {
+                        tileset_definition = Some(tileset);
+                    }
+                }
+                let tileset_definition = tileset_definition.unwrap();
+                let texture_atlas = TextureAtlas::from_grid(
+                    tileset.clone(),
+                    Vec2::from((tileset_definition.tile_grid_size as f32, tileset_definition.tile_grid_size as f32)),
+                    tileset_definition.c_hei as usize, tileset_definition.c_wid as usize
+                );
+                let atlas_handle = texture_atlases.add(texture_atlas);
+                for tile in &layer.grid_tiles {
+                    let tileset_tile_id = tile.t;
+                    commands.spawn_bundle(SpriteSheetBundle {
+                        transform: Transform::from_xyz(
+                            (-1920.0 / 2.0) + tile.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                            (1080.0 / 2.0) - tile.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                            BACKGROUND),
+                        texture_atlas: atlas_handle.clone(),
+                        sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
+                        ..Default::default()
+                    }).insert(InGameTile { chunk });
+                }
+                
+            }
+            "Entities" => {
+                for entity in &layer.entity_instances {
+                    match entity.identifier.as_str() {
+                        "Player" => {
+                            commands.spawn_bundle(SpriteBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + entity.px[0] as f32,
+                                    (1080.0 / 2.0) - entity.px[1] as f32,
+                                    PLAYER_CHARACTERS
+                                ),
+                                ..Default::default()
+                            }).insert(PlayerMarker {});
+                        }
+                        "Text" => {
+                            let mut text = String::new();
+                            let mut font_size = 1.0;
+                            for field in &entity.field_instances {
+                                if field.identifier == "Text" {
+                                    text = field.value.clone().unwrap().as_str().unwrap().to_string();
+                                }
+                                if field.identifier == "Font_Size" {
+                                    font_size = field.value.clone().unwrap().as_f64().unwrap();
+                                }
+                            }
+                            commands.spawn_bundle(Text2dBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + entity.px[0] as f32 + (entity.width as f32 / 2.0),
+                                    (1080.0 / 2.0) - entity.px[1] as f32 - (entity.height as f32 / 2.0),
+                                    UI_TEXT
+                                ),
+                                text: Text {
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Center,
+                                        horizontal: HorizontalAlign::Center
+                                    },
+                                    sections: vec![
+                                        TextSection {
+                                            value: text,
+                                            style: TextStyle {
+                                                font: fonts.kreative_square.clone(),
+                                                font_size: font_size as f32,
+                                                color: Color::BLACK
+                                            }
+                                        }
+                                    ]
+                                },
+                                ..Default::default()
+                            }).insert(TileMarker {});
+                        }
+                        "LoadLevel" => {
+                            println!("WARNING: LDTK ENTITY TYPE LoadLevel DOES NOT WORK FOR ENV");
+                        }
+                        ei => {
+                            println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);
+                        }
+                    }
+                }
+            }
+            it => {
+                panic!("LDTK: INVALID INSTANCE TYPE {}.", it)
+            }
+        }
+    }
+}
 
 pub fn load_level(
     unloads: Query<Entity, With<TileMarker>>,

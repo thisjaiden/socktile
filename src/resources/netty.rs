@@ -87,6 +87,10 @@ impl Netty {
                 Packet::JoinedGame(mypos) => {
                     reality.set_player_position(mypos);
                 }
+                Packet::ChangesChunk(chunk, changes) => {
+                    reality.add_chunk(chunk, changes);
+                    reality.update_chunk(chunk);
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

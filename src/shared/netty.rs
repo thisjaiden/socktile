@@ -5,7 +5,7 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-4";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-5";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -49,10 +49,10 @@ pub enum Packet {
     JoinedGame(GamePosition),
     /// The server sends over the information relating to some terrain.
     /// (Chunk, [Tile, Tile Override])
-    ChangesChunk((usize, usize), Vec<(usize, usize, TerrainState)>),
+    ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
     /// An update has occurred in a chunk.
     /// (Chunk, Tile, Tile Override)
-    ChunkUpdate((usize, usize), (usize, usize), TerrainState),
+    ChunkUpdate((isize, isize), (usize, usize), TerrainState),
     /// Sends over all game objects.
     /// (Game Objects)
     AllObjects(Vec<Object>),

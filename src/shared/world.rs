@@ -6,7 +6,7 @@ use super::{object::Object, player::Player, terrain::TerrainState};
 pub struct World {
     pub players: Vec<Player>,
     pub offline_players: Vec<Player>,
-    pub terrain_changes: Vec<((usize, usize), Vec<(usize, usize, TerrainState)>)>,
+    pub terrain_changes: Vec<((isize, isize), Vec<(usize, usize, TerrainState)>)>,
     pub objects: Vec<Object>
 }
 
@@ -19,7 +19,7 @@ impl World {
             objects: vec![]
         }
     }
-    pub fn clone_chunk(&mut self, chunk: (usize, usize)) -> Vec<(usize, usize, TerrainState)> {
+    pub fn clone_chunk(&mut self, chunk: (isize, isize)) -> Vec<(usize, usize, TerrainState)> {
         for (loc, data) in &self.terrain_changes {
             if loc == &chunk {
                 return data.clone();
@@ -27,7 +27,7 @@ impl World {
         }
         return vec![];
     }
-    pub fn modify_tile(&mut self, chunk: (usize, usize), tile: (usize, usize), state: TerrainState) {
+    pub fn modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: TerrainState) {
         let mut target_index = 0;
         let mut found_target = false;
         for (index, (loc, _data)) in self.terrain_changes.iter().enumerate() {
