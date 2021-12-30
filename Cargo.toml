@@ -9,7 +9,7 @@ serde = { version = "1.0.130", features = ["derive"] }
 online = { version = "3.0.1",  default-features = false, features = ["sync"] }
 bevy = { version = "0.5.0", default-features = false, features = ["bevy_dynamic_plugin", "bevy_gilrs", "bevy_gltf", "bevy_wgpu", "bevy_winit", "render", "png", "hdr", "x11"] }
 bevy_kira_audio = { version = "0.6.0", features = ["mp3", "ogg", "wav"] }
-bevy_asset_loader = "0.6.0"
+bevy_asset_loader = { version = "0.6.0", features = ["sprite"] }
 ldtk_rust = "0.5.2"
 benimator = "0.3.1"
 serde_json = "1.0.72"

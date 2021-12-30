@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{resources::{Netty, ConnectionStatus, Reality}, GameState};
+use crate::{resources::{Netty, ConnectionStatus, Reality}, GameState, shared::netty::Packet};
 
 pub fn startup_checks(
     mut netty: ResMut<Netty>,
@@ -21,4 +21,10 @@ pub fn step(
     mut reality: ResMut<Reality>
 ) {
     netty.step(&mut reality);
+}
+
+pub fn server_list(
+    mut netty: ResMut<Netty>,
+) {
+    netty.say(Packet::AvalableServers)
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::PLAYER_CHARACTERS};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::PLAYER_CHARACTERS, AnimatorAssets};
 
 pub fn text_box(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -44,14 +44,6 @@ pub fn user_creation(
             tb.clear_buffer();
             state.replace(GameState::TitleScreen).unwrap();
             commands.entity(entity).despawn_recursive();
-            commands.spawn_bundle(SpriteBundle {
-                transform: Transform::from_xyz(
-                    0.0,
-                    0.0,
-                    PLAYER_CHARACTERS
-                ),
-                ..Default::default()
-            }).insert(PlayerMarker {});
             let a = maps.get_mut(target_maps.player.clone()).unwrap();
             let level = a.get_level("Title_screen");
             load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
@@ -65,6 +57,7 @@ pub fn game_creation(
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
+    materials: Res<AnimatorAssets>,
     unloads: Query<Entity, With<TileMarker>>
 ) {
     let (entity, mut text) = tb_q.single_mut().unwrap();
@@ -82,6 +75,15 @@ pub fn game_creation(
             tb.clear_buffer();
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();
+            commands.spawn_bundle(SpriteBundle {
+                material: materials.placeholder.clone(),
+                transform: Transform::from_xyz(
+                    0.0,
+                    0.0,
+                    PLAYER_CHARACTERS
+                ),
+                ..Default::default()
+            }).insert(PlayerMarker {});
 
             unloads.for_each_mut(|e| {
                 commands.entity(e).despawn_recursive();

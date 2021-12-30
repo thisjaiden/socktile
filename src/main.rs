@@ -52,6 +52,7 @@ fn main() {
     AssetLoader::new(GameState::Load, GameState::NetworkCheck)
           .with_collection::<MapAssets>()
           .with_collection::<FontAssets>()
+          .with_collection::<AnimatorAssets>()
           .build(&mut app);
     app
         .add_plugins(DefaultPlugins)
@@ -92,6 +93,14 @@ fn main() {
             SystemSet::on_update(GameState::MakeGame)
                 .with_system(systems::text_box::game_creation.system())
         )
+        .add_system_set(
+            SystemSet::on_enter(GameState::ServerList)
+                .with_system(systems::netty::server_list.system())
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::ServerList)
+                .with_system(resources::Reality::system_server_list_renderer.system())
+        )
         .add_system(systems::cursor::cursor.system())
         .insert_resource(resources::TextBox::init())
         .add_system(systems::text_box::text_box.system())
@@ -107,6 +116,7 @@ fn main() {
                 .with_system(resources::Reality::system_chunk_loader.system())
                 .with_system(resources::Reality::system_player_controls.system())
                 .with_system(resources::Reality::system_camera_updater.system())
+                .with_system(resources::Reality::system_player_locator.system())
                 .with_system(resources::Animator::system_player_animator.system())
         )
         .run();
@@ -124,4 +134,11 @@ pub struct FontAssets {
     _base: Handle<Font>,
     #[asset(path = "font/KreativeSquare.ttf")]
     kreative_square: Handle<Font>,
+}
+
+#[derive(AssetCollection)]
+pub struct AnimatorAssets {
+    #[asset(color_material)]
+    #[asset(path = "player/placeholder.png")]
+    placeholder: Handle<ColorMaterial>
 }

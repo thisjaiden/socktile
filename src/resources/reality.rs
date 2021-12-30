@@ -1,12 +1,13 @@
 use bevy::{prelude::*, utils::HashMap, render::camera::Camera as BevyCam};
 
-use crate::{components::GamePosition, shared::{terrain::TerrainState, netty::Packet}, ldtk::LDtkMap, MapAssets, GameState, FontAssets};
+use crate::{components::{GamePosition, ldtk::PlayerMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing}, ldtk::LDtkMap, MapAssets, GameState, FontAssets};
 
 use super::Netty;
 
 pub struct Reality {
     player_position: GamePosition,
     camera: Camera,
+    avalable_servers: Vec<GameListing>,
     chunks_to_load: Vec<(isize, isize)>,
     loaded_chunks: Vec<(isize, isize)>,
     buffered_chunks: HashMap<(isize, isize), Vec<(usize, usize, TerrainState)>>
@@ -17,6 +18,7 @@ impl Reality {
         Reality {
             player_position: GamePosition { x: 0.0, y: 0.0 },
             camera: Camera::PlayerPosition,
+            avalable_servers: vec![],
             chunks_to_load: vec![],
             loaded_chunks: vec![],
             buffered_chunks: HashMap::default()
@@ -36,6 +38,9 @@ impl Reality {
     }
     pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize, TerrainState)>) {
         println!("Reality::add_chunk needs finishing");
+    }
+    pub fn set_avalable_servers(&mut self, servers: Vec<GameListing>) {
+        self.avalable_servers = servers;
     }
 
     // Systems
@@ -107,6 +112,19 @@ impl Reality {
                 todo!();
             }
         }
+    }
+    pub fn system_player_locator(
+        selfs: ResMut<Reality>,
+        mut player: Query<&mut Transform, With<PlayerMarker>>
+    ) {
+        let mut location = player.single_mut().unwrap();
+        location.translation.x = selfs.player_position.x as f32;
+        location.translation.y = selfs.player_position.y as f32;
+    }
+    pub fn system_server_list_renderer(
+        selfs: ResMut<Reality>
+    ) {
+        
     }
 }
 

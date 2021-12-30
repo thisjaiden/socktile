@@ -2,10 +2,10 @@ use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
 use crate::components::GamePosition;
 
-use super::{object::Object, saves::User, terrain::TerrainState};
+use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-6";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-7";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -43,6 +43,12 @@ pub enum Packet {
     /// Request to join a world.
     /// (World ID)
     JoinWorld(usize),
+    /// Request avalable servers for the sending user.
+    /// (No Data)
+    AvalableServers,
+    /// Sends back a list of servers.
+    /// (Array (Server))
+    ServerList(Vec<GameListing>),
     /// Disconnects from a world.
     /// (No Data)
     LeaveWorld,

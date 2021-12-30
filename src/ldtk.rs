@@ -185,16 +185,6 @@ pub fn load_level(
             "Entities" => {
                 for entity in &layer.entity_instances {
                     match entity.identifier.as_str() {
-                        "Player" => {
-                            commands.spawn_bundle(SpriteBundle {
-                                transform: Transform::from_xyz(
-                                    (-1920.0 / 2.0) + entity.px[0] as f32,
-                                    (1080.0 / 2.0) - entity.px[1] as f32,
-                                    PLAYER_CHARACTERS
-                                ),
-                                ..Default::default()
-                            }).insert(PlayerMarker {});
-                        }
                         "Text" => {
                             let mut text = String::new();
                             let mut font_size = 1.0;

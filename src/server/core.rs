@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{components::GamePosition, server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::User, world::World}};
+use crate::{components::GamePosition, server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::User, world::World, listing::GameListing}};
 
 pub const HOST_PORT: &str = "11111";
 
@@ -176,6 +176,43 @@ pub fn startup() -> ! {
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
+                        drop(func_send);
+                    }
+                    Packet::AvalableServers => {
+                        // find assoc user
+                        let mut user = None;
+                        for (address, assoc) in &ip_accociations {
+                            if address == &from {
+                                user = Some(assoc.clone());
+                            }
+                        }
+                        let user = user.unwrap();
+                        let mut profile = None;
+                        for tprofile in &profiles {
+                            if tprofile.user == user {
+                                profile = Some(tprofile.clone());
+                            }
+                        }
+                        let profile = profile.unwrap();
+                        // get servers
+                        let mut listings = vec![];
+                        for server_id in profile.avalable_games {
+                            let this_server = &saves[server_id];
+                            listings.push(
+                                GameListing {
+                                    public_name: this_server.public_name.clone(),
+                                    description: String::from("TODO"),
+                                    internal_id: server_id,
+                                    local: false,
+                                    address: String::from("NA/TODO"),
+                                    password: false,
+                                    played: this_server.played_before.contains(&user)
+                                }
+                            )
+                        }
+                        // send list
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::ServerList(listings), from));
                         drop(func_send);
                     }
                     _ => {

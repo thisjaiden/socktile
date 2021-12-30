@@ -29,8 +29,31 @@ impl Netty {
         if online::sync::check(Some(5)).is_err() {
             stat = ConnectionStatus::NoInternet;
         }
-        if stat != ConnectionStatus::NotConnected {
-            println!("Unable to connect to GGS, not starting client.");
+        if stat == ConnectionStatus::NoInternet && DEV_BUILD {
+            if let Ok(good_con) = connection {
+                let inp = Arc::new(Mutex::new(vec![]));
+                let out = Arc::new(Mutex::new(vec![]));
+                println!("Good connection to GGS (LOCAL-DEV), starting up client.");
+                startup(good_con, inp.clone(), out.clone());
+                let mut fin = Netty {
+                    connection: ConnectionStatus::Connected,
+                    input: inp,
+                    output: out
+                };
+                fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
+                return fin;
+            }
+            else {
+                println!("GGS refused a connection. Not starting client. (NO_INTERNET)");
+                return Netty {
+                    connection: ConnectionStatus::Refused,
+                    input: Arc::new(Mutex::new(vec![])),
+                    output: Arc::new(Mutex::new(vec![]))
+                };
+            }
+        }
+        else if stat != ConnectionStatus::NotConnected {
+            println!("Unable to connect to GGS, not starting client. (ERR: {:?})", stat);
             return Netty {
                 connection: stat,
                 input: Arc::new(Mutex::new(vec![])),
@@ -90,6 +113,9 @@ impl Netty {
                 Packet::ChangesChunk(chunk, changes) => {
                     reality.add_chunk(chunk, changes);
                     reality.update_chunk(chunk);
+                }
+                Packet::ServerList(servers) => {
+                    reality.set_avalable_servers(servers);
                 }
                 Packet::Old => {
                     panic!("YOUR VERSION IS NOT THE SAME AS THE REMOTE GGS! (You're most likely out of date, update!)");
