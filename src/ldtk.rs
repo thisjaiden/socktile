@@ -111,7 +111,7 @@ pub fn load_chunk(
                                         TextSection {
                                             value: text,
                                             style: TextStyle {
-                                                font: fonts.kreative_square.clone(),
+                                                font: fonts.simvoni.clone(),
                                                 font_size: font_size as f32,
                                                 color: Color::BLACK
                                             }
@@ -211,7 +211,7 @@ pub fn load_level(
                                         TextSection {
                                             value: text,
                                             style: TextStyle {
-                                                font: fonts.kreative_square.clone(),
+                                                font: fonts.simvoni.clone(),
                                                 font_size: font_size as f32,
                                                 color: Color::BLACK
                                             }

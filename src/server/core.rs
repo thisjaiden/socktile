@@ -19,6 +19,7 @@ pub fn startup() -> ! {
     let mut profiles = profiles();
     let mut ip_accociations = vec![];
     let mut sorted = vec![];
+    println!("{} profiles and {} saves.", profiles.len(), saves.len());
     println!("Sorting saves...");
     for i in 0..saves.len() {
         for save in saves.clone() {
@@ -37,6 +38,9 @@ pub fn startup() -> ! {
                 for world in saves.clone() {
                     save(world);
                 }
+                for profile in profiles.clone() {
+                    save_profile(profile);
+                }
                 autosave = std::time::Instant::now();
             }
             // rest of tick
@@ -49,10 +53,10 @@ pub fn startup() -> ! {
                     Packet::NettyVersion(v) => {
                         let mut func_send = send.lock().unwrap();
                         if v == NETTY_VERSION {
-                            func_send.push((Packet::NettyStable, from));
+                            func_send.push((Packet::AllSet, from));
                         }
                         else {
-                            func_send.push((Packet::Old, from));
+                            func_send.push((Packet::WrongVersion(String::from(NETTY_VERSION)), from));
                         }
                         drop(func_send);
                     }
@@ -67,6 +71,12 @@ pub fn startup() -> ! {
                             username: user.username,
                             tag: tag + 1
                         };
+                        if new_user.tag > 9999 {
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::OverusedName, from));
+                            drop(func_send);
+                            break;
+                        }
                         let new_profile = Profile {
                             user: new_user.clone(),
                             avalable_games: vec![]
@@ -83,7 +93,7 @@ pub fn startup() -> ! {
                             ip_accociations.push((from, user));
                         }
                         let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::NettyStable, from));
+                        func_send.push((Packet::AllSet, from));
                         drop(func_send);
                     }
                     Packet::CreateWorld(name) => {
@@ -136,11 +146,6 @@ pub fn startup() -> ! {
                         for (address_pair, user_pair) in ip_accociations.clone() {
                             if address_pair == from {
                                 owner = user_pair;
-                            }
-                        }
-                        for (index, profile) in profiles.clone().into_iter().enumerate() {
-                            if owner == profile.user {
-                                profiles[index].avalable_games.push(world_id);
                             }
                         }
                         if owner.tag == 0 {

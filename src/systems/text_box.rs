@@ -102,7 +102,7 @@ pub fn game_creation_once(
                 TextSection {
                     value: String::new(),
                     style: TextStyle {
-                        font: font_assets.kreative_square.clone(),
+                        font: font_assets.simvoni.clone(),
                         font_size: 35.0,
                         color: Color::BLACK
                     }

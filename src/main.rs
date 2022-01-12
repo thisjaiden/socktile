@@ -130,10 +130,19 @@ pub struct MapAssets {
 
 #[derive(AssetCollection, Clone)]
 pub struct FontAssets {
-    #[asset(path = "font/base.ttf")]
-    _base: Handle<Font>,
-    #[asset(path = "font/KreativeSquare.ttf")]
-    kreative_square: Handle<Font>,
+    #[asset(path = "font/apple_tea.ttf")]
+    apple_tea: Handle<Font>,
+    #[asset(path = "font/simvoni/regular.ttf")]
+    simvoni: Handle<Font>,
+    #[asset(path = "font/simvoni/italic.ttf")]
+    simvoni_italic: Handle<Font>,
+    #[asset(path = "font/simvoni/bold.ttf")]
+    simvoni_bold: Handle<Font>,
+    #[asset(path = "font/simvoni/bolditalic.ttf")]
+    simvoni_bold_italic: Handle<Font>,
+    /// WARNING: DEPRECATED FONT
+    #[asset(path = "font/kreative_square.ttf")]
+    kreative_square: Handle<Font>
 }
 
 #[derive(AssetCollection)]

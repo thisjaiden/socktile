@@ -5,7 +5,7 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-7";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-8";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -15,10 +15,10 @@ pub enum Packet {
     NettyVersion(String),
     /// The server appears to use the same version. Continue.
     /// (No Data)
-    NettyStable,
+    AllSet,
     /// The server is running a newer version. Exit.
-    /// (No Data)
-    Old,
+    /// (Server's Version)
+    WrongVersion(String),
     /// Data was recieved but unable to be deserizalized.
     /// (This occurs on data courruption or a disconnect, usually the latter.)
     /// (No Data)
@@ -31,6 +31,10 @@ pub enum Packet {
     /// profile. Take this into account.
     /// (User)
     CreatedUser(User),
+    /// Unable to create this profile due to too many users existing with this username.
+    /// Usually the correct course of action is to inform the user and get a different username.
+    /// (No Data)
+    OverusedName,
     /// Lets the server know what user is associated with what IP.
     /// (User)
     UserPresence(User),

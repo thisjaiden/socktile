@@ -1,13 +1,14 @@
 use bevy::{prelude::*, utils::HashMap, render::camera::Camera as BevyCam};
 
-use crate::{components::{GamePosition, ldtk::PlayerMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing}, ldtk::LDtkMap, MapAssets, GameState, FontAssets};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing}, ldtk::LDtkMap, MapAssets, GameState, FontAssets, layers::UI_TEXT};
 
-use super::Netty;
+use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
 
 pub struct Reality {
     player_position: GamePosition,
     camera: Camera,
     avalable_servers: Vec<GameListing>,
+    push_servers: bool,
     chunks_to_load: Vec<(isize, isize)>,
     loaded_chunks: Vec<(isize, isize)>,
     buffered_chunks: HashMap<(isize, isize), Vec<(usize, usize, TerrainState)>>
@@ -19,6 +20,7 @@ impl Reality {
             player_position: GamePosition { x: 0.0, y: 0.0 },
             camera: Camera::PlayerPosition,
             avalable_servers: vec![],
+            push_servers: false,
             chunks_to_load: vec![],
             loaded_chunks: vec![],
             buffered_chunks: HashMap::default()
@@ -41,6 +43,14 @@ impl Reality {
     }
     pub fn set_avalable_servers(&mut self, servers: Vec<GameListing>) {
         self.avalable_servers = servers;
+        self.push_servers = true;
+    }
+    pub fn display_servers(&mut self) -> Option<Vec<GameListing>> {
+        if self.push_servers {
+            self.push_servers = false;
+            return Some(self.avalable_servers.clone());
+        }
+        return None;
     }
 
     // Systems
@@ -122,9 +132,41 @@ impl Reality {
         location.translation.y = selfs.player_position.y as f32;
     }
     pub fn system_server_list_renderer(
-        selfs: ResMut<Reality>
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut uiman: ResMut<UIManager>,
+        font_handles: Res<FontAssets>
     ) {
-        
+        if let Some(servers) = selfs.display_servers() {
+            for (index, server) in servers.iter().enumerate() {
+                commands.spawn_bundle(Text2dBundle {
+                    text: Text {
+                        sections: vec![
+                            TextSection {
+                                value: server.public_name.clone(),
+                                style: TextStyle {
+                                    font: font_handles.simvoni.clone(),
+                                    font_size: 35.0,
+                                    color: Color::BLACK
+                                }
+                            }
+                        ],
+                        alignment: TextAlignment {
+                            vertical: VerticalAlign::Center,
+                            horizontal: HorizontalAlign::Center
+                        }
+                    },
+                    transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),
+                    ..Default::default()
+                }).insert(TileMarker {});
+                uiman.add_ui(UIClickable {
+                    action: UIClickAction::JoinWorld(server.internal_id),
+                    location: (-200.0, ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0),
+                    size: (400.0, 128.0),
+                    removed_on_use: false
+                })
+            }
+        }
     }
 }
 

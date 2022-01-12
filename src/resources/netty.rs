@@ -101,7 +101,7 @@ impl Netty {
                     save_user(user);
                     println!("Saved new user information.");
                 }
-                Packet::NettyStable => {
+                Packet::AllSet => {
                     self.connection = ConnectionStatus::Stable;
                 }
                 Packet::CreatedWorld(id) => {
@@ -117,8 +117,8 @@ impl Netty {
                 Packet::ServerList(servers) => {
                     reality.set_avalable_servers(servers);
                 }
-                Packet::Old => {
-                    panic!("YOUR VERSION IS NOT THE SAME AS THE REMOTE GGS! (You're most likely out of date, update!)");
+                Packet::WrongVersion(prefered_version) => {
+                    panic!("Server is running {}, and you're using {} (You're most likely out of date, update!)", prefered_version, NETTY_VERSION);
                 }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);

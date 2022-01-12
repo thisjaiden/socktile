@@ -82,7 +82,8 @@ impl UIClickable {
 #[derive(Clone)]
 pub enum UIClickAction {
     ChangeScene(String),
-    GameplayTrigger(String)
+    GameplayTrigger(String),
+    JoinWorld(usize)
 }
 
 pub fn ui_manager(
