@@ -76,7 +76,7 @@ pub fn load_chunk(
                             (1080.0 / 2.0) - tile.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
                             BACKGROUND),
                         texture_atlas: atlas_handle.clone(),
-                        sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
+                        sprite: TextureAtlasSprite::new(tileset_tile_id as usize),
                         ..Default::default()
                     }).insert(InGameTile { chunk });
                 }
@@ -146,7 +146,7 @@ pub fn load_level(
     mut uimanager: ResMut<UIManager>,
     commands: &mut Commands
 ) {
-    unloads.for_each_mut(|e| {
+    unloads.for_each(|e| {
         commands.entity(e).despawn_recursive();
     });
     let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
@@ -176,7 +176,7 @@ pub fn load_level(
                             (1080.0 / 2.0) - tile.px[1] as f32 - 32.0,
                             BACKGROUND),
                         texture_atlas: atlas_handle.clone(),
-                        sprite: TextureAtlasSprite::new(tileset_tile_id as u32),
+                        sprite: TextureAtlasSprite::new(tileset_tile_id as usize),
                         ..Default::default()
                     }).insert(TileMarker {});
                 }
@@ -255,7 +255,7 @@ pub fn load_level(
 pub struct LDtkPlugin;
 
 impl Plugin for LDtkPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_asset::<LDtkMap>()
             .add_asset_loader(LDtkLoader);
     }
@@ -265,7 +265,7 @@ impl Plugin for LDtkPlugin {
 #[uuid = "e51081d0-6168-4881-a1c6-4249b2000d7f"]
 pub struct LDtkMap {
     pub project: ldtk_rust::Project,
-    pub tilesets: HashMap<i64, Handle<Texture>>
+    pub tilesets: HashMap<i64, Handle<Image>>
 }
 
 impl LDtkMap {

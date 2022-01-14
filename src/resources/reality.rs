@@ -108,7 +108,7 @@ impl Reality {
         selfs: ResMut<Reality>,
         mut camera: Query<&mut Transform, With<BevyCam>>
     ) {
-        let mut cam = camera.single_mut().unwrap();
+        let mut cam = camera.single_mut();
         match &selfs.camera {
             Camera::PlayerPosition => {
                 cam.translation.x = selfs.player_position.x as f32;
@@ -127,7 +127,7 @@ impl Reality {
         selfs: ResMut<Reality>,
         mut player: Query<&mut Transform, With<PlayerMarker>>
     ) {
-        let mut location = player.single_mut().unwrap();
+        let mut location = player.single_mut();
         location.translation.x = selfs.player_position.x as f32;
         location.translation.y = selfs.player_position.y as f32;
     }

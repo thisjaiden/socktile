@@ -126,7 +126,7 @@ pub fn ui_game(
         if let Some(game_id) = man.join_game() {
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
-                material: materials.placeholder.clone(),
+                texture: materials.placeholder.clone(),
                 transform: Transform::from_xyz(
                     0.0,
                     0.0,
@@ -135,7 +135,7 @@ pub fn ui_game(
                 ..Default::default()
             }).insert(PlayerMarker {});
             netty.say(Packet::JoinWorld(game_id));
-            unloads.for_each_mut(|e| {
+            unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();
             });
             man.reset_ui();

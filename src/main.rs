@@ -48,12 +48,13 @@ fn main() {
             }
         }
     }
-    let mut app = App::build();
-    AssetLoader::new(GameState::Load, GameState::NetworkCheck)
-          .with_collection::<MapAssets>()
-          .with_collection::<FontAssets>()
-          .with_collection::<AnimatorAssets>()
-          .build(&mut app);
+    let mut app = App::new();
+    AssetLoader::new(GameState::Load)
+        .continue_to_state(GameState::NetworkCheck)
+        .with_collection::<MapAssets>()
+        .with_collection::<FontAssets>()
+        .with_collection::<AnimatorAssets>()
+        .build(&mut app);
     app
         .add_plugins(DefaultPlugins)
         .add_plugin(benimator::AnimationPlugin)
@@ -148,7 +149,6 @@ pub struct FontAssets {
 
 #[derive(AssetCollection)]
 pub struct AnimatorAssets {
-    #[asset(color_material)]
     #[asset(path = "player/placeholder.png")]
-    placeholder: Handle<ColorMaterial>
+    placeholder: Handle<Image>
 }

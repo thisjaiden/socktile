@@ -19,8 +19,8 @@ impl Animator {
     pub fn system_player_animator(
         selfs: ResMut<Reality>,
         materials: Res<AnimatorAssets>,
-        mut player: Query<&mut Handle<ColorMaterial>, With<PlayerMarker>>
+        mut player: Query<&mut Handle<Image>, With<PlayerMarker>>
     ) {
-        let mut material = player.single_mut().unwrap();
+        let mut material = player.single_mut();
     }
 }

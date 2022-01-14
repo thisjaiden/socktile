@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::PLAYER_CHARACTERS, AnimatorAssets};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::{PLAYER_CHARACTERS, UI_TEXT}, AnimatorAssets};
 
 pub fn text_box(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -22,7 +22,7 @@ pub fn user_creation(
     font_assets: Res<FontAssets>,
     uiman: ResMut<UIManager>
 ) {
-    let (entity, mut text) = tb_q.single_mut().unwrap();
+    let (entity, mut text) = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "#0000";
     if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
         text.sections[0].style.color = Color::RED;
@@ -60,7 +60,7 @@ pub fn game_creation(
     materials: Res<AnimatorAssets>,
     unloads: Query<Entity, With<TileMarker>>
 ) {
-    let (entity, mut text) = tb_q.single_mut().unwrap();
+    let (entity, mut text) = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer();
     if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
         text.sections[0].style.color = Color::RED;
@@ -76,7 +76,7 @@ pub fn game_creation(
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();
             commands.spawn_bundle(SpriteBundle {
-                material: materials.placeholder.clone(),
+                texture: materials.placeholder.clone(),
                 transform: Transform::from_xyz(
                     0.0,
                     0.0,
@@ -85,7 +85,7 @@ pub fn game_creation(
                 ..Default::default()
             }).insert(PlayerMarker {});
 
-            unloads.for_each_mut(|e| {
+            unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();
             });
         }
@@ -113,6 +113,7 @@ pub fn game_creation_once(
                 horizontal: HorizontalAlign::Center
             }
         },
+        transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
         ..Default::default()
     }).insert(TextBox {});
 }
