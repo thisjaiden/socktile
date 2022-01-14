@@ -26,13 +26,13 @@ pub fn load_chunk(
     let mut selected_level = None;
     for level in &map.project.levels {
         let fmta = if chunk.0.is_negative() {
-            format!("M{}", chunk.0 * -1)
+            format!("M{}", -chunk.0)
         }
         else {
             format!("{}", chunk.0)
         };
         let fmtb = if chunk.1.is_negative() {
-            format!("M{}", chunk.1 * -1)
+            format!("M{}", -chunk.1)
         }
         else {
             format!("{}", chunk.1)

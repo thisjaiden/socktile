@@ -1,4 +1,6 @@
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, net::SocketAddr};
+
+use bevy::utils::HashMap;
 
 use crate::{components::GamePosition, server::saves::{Profile, SaveGame, profiles, save, save_folder, save_profile, saves}, shared::{netty::{NETTY_VERSION, Packet, initiate_host}, player::Player, saves::User, world::World, listing::GameListing}};
 
@@ -17,7 +19,9 @@ pub fn startup() -> ! {
     let mut autosave = std::time::Instant::now();
     let mut saves = saves();
     let mut profiles = profiles();
-    let mut ip_accociations = vec![];
+    let mut ip_by_user: HashMap<User, SocketAddr> = HashMap::default();
+    let mut user_by_ip: HashMap<SocketAddr, User> = HashMap::default();
+    let mut server_by_user: HashMap<User, usize> = HashMap::default();
     let mut sorted = vec![];
     println!("{} profiles and {} saves.", profiles.len(), saves.len());
     println!("Sorting saves...");
@@ -84,13 +88,15 @@ pub fn startup() -> ! {
                         profiles.push(new_profile.clone());
                         save_profile(new_profile.clone());
                         let mut func_send = send.lock().unwrap();
-                        ip_accociations.push((from, new_user.clone()));
+                        ip_by_user.insert(new_user.clone(), from);
+                        user_by_ip.insert(from, new_user.clone());
                         func_send.push((Packet::CreatedUser(new_user), from));
                         drop(func_send);
                     }
                     Packet::UserPresence(user) => {
                         if user.tag > 0 {
-                            ip_accociations.push((from, user));
+                            ip_by_user.insert(user.clone(), from);
+                            user_by_ip.insert(from, user);
                         }
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::AllSet, from));
@@ -103,24 +109,13 @@ pub fn startup() -> ! {
                         }
                         let mut path = save_folder();
                         path.push(format!("world_{}.bic", world_id));
-                        let mut owner = User {
-                            username: String::new(),
-                            tag: 0
-                        };
-                        for (address_pair, user_pair) in ip_accociations.clone() {
-                            if address_pair == from {
-                                owner = user_pair;
-                            }
-                        }
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
                         for (index, profile) in profiles.clone().into_iter().enumerate() {
-                            if owner == profile.user {
+                            if owner == &profile.user {
                                 profiles[index].avalable_games.push(world_id);
                             }
                         }
-                        if owner.tag == 0 {
-                            // TODO: Properly handle
-                            panic!("No user found for an IP address used with Packet::CreateWorld(String)");
-                        }
+                        let owner = owner.clone();
                         saves.push(
                             SaveGame {
                                 public_name: name,
@@ -139,19 +134,8 @@ pub fn startup() -> ! {
                         drop(func_send);
                     }
                     Packet::JoinWorld(world_id) => {
-                        let mut owner = User {
-                            username: String::new(),
-                            tag: 0
-                        };
-                        for (address_pair, user_pair) in ip_accociations.clone() {
-                            if address_pair == from {
-                                owner = user_pair;
-                            }
-                        }
-                        if owner.tag == 0 {
-                            // TODO: Properly handle
-                            panic!("No user found for an IP address used with Packet::JoinWorld(usize)");
-                        }
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::JoinWorld(usize)");
+                        
                         let mut world_index = 0;
                         for (index, world) in saves.iter().enumerate() {
                             if world.internal_id == world_id {
@@ -159,42 +143,38 @@ pub fn startup() -> ! {
                                 break;
                             }
                         }
-                        let mut has_joined = false;
                         let mut player_info = None;
                         for (index, player) in saves[world_index].data.offline_players.clone().into_iter().enumerate() {
-                            if player.user == owner {
-                                has_joined = true;
+                            if &player.user == owner {
                                 player_info = Some(saves[world_index].data.offline_players.remove(index));
                                 break;
                             }
                         }
-                        if !has_joined {
+                        if player_info == None {
                             player_info = Some(Player {
-                                user: owner,
+                                user: owner.clone(),
                                 location: GamePosition { x: 0.0, y: 0.0 }
                             });
                         }
+                        saves[world_index].data.players.push(player_info.clone().unwrap());
+                        let owner = owner.clone();
+                        server_by_user.insert(owner, world_index);
                         let spawn_centre_chnks_lack = (
                             (player_info.clone().unwrap().location.x / 32.0).round() as isize,
                             (player_info.clone().unwrap().location.y / 32.0).round() as isize
                         );
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
+                        func_send.push((Packet::OnlinePlayers(saves[world_id].data.players.clone()), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         drop(func_send);
                     }
                     Packet::AvalableServers => {
                         // find assoc user
-                        let mut user = None;
-                        for (address, assoc) in &ip_accociations {
-                            if address == &from {
-                                user = Some(assoc.clone());
-                            }
-                        }
-                        let user = user.unwrap();
+                        let user = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::AvalableServers");
                         let mut profile = None;
                         for tprofile in &profiles {
-                            if tprofile.user == user {
+                            if &tprofile.user == user {
                                 profile = Some(tprofile.clone());
                             }
                         }
@@ -211,7 +191,7 @@ pub fn startup() -> ! {
                                     local: false,
                                     address: String::from("NA/TODO"),
                                     password: false,
-                                    played: this_server.played_before.contains(&user)
+                                    played: this_server.played_before.contains(user)
                                 }
                             )
                         }
@@ -219,6 +199,24 @@ pub fn startup() -> ! {
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::ServerList(listings), from));
                         drop(func_send);
+                    }
+                    Packet::RequestMove(pos) => {
+                        // TODO: buffer moves every 10ms to save net space
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestMove(GamePosition)");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
+
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.user).expect("Online player has no IP for a requested move");
+                            // send data
+                            if this_ip == &from {
+                                // but not to the mover
+                                break;
+                            }
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::PlayerPositionUpdate(owner.clone(), pos), *this_ip));
+                            drop(func_send);
+                        }
                     }
                     _ => {
                         // Ignore this packet, we don't handle it.

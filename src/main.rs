@@ -108,6 +108,7 @@ fn main() {
         .add_system(systems::netty::step.system())
         .insert_resource(resources::ui::UIManager::init())
         .add_system(resources::ui::ui_scene.system())
+        .add_system(resources::ui::ui_game.system())
         .add_system(resources::ui::ui_manager.system())
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())

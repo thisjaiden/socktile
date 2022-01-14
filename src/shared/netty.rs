@@ -2,10 +2,10 @@ use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
 use crate::components::GamePosition;
 
-use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing};
+use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing, player::Player};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-8";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-9";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -59,6 +59,9 @@ pub enum Packet {
     /// A client has been connected. Send them their position.
     /// (Player Position)
     JoinedGame(GamePosition),
+    /// A list of online users for a given world
+    /// (Array (User))
+    OnlinePlayers(Vec<Player>),
     /// The server sends over the information relating to some terrain.
     /// (Chunk, Array (Tile, Tile Override))
     ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
@@ -82,7 +85,7 @@ pub enum Packet {
     RequestMove(GamePosition),
     /// Updates the positions of any players who have moved.
     /// (Array (Player, New Position))
-    PlayerPositionUpdates(Vec<(User, GamePosition)>)
+    PlayerPositionUpdate(User, GamePosition)
 }
 
 impl Packet {

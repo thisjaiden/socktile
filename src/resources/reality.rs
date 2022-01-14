@@ -27,7 +27,7 @@ impl Reality {
         }
     }
     pub fn set_player_position(&mut self, position: GamePosition) {
-        self.player_position = position.clone();
+        self.player_position = position;
         // load visible world
         const ENV_WIDTH: f64 = 1920.0;
         const ENV_HEIGHT: f64 = 1088.0;
@@ -50,7 +50,7 @@ impl Reality {
             self.push_servers = false;
             return Some(self.avalable_servers.clone());
         }
-        return None;
+        None
     }
 
     // Systems
@@ -79,7 +79,7 @@ impl Reality {
         keyboard: Res<Input<KeyCode>>
     ) {
         let mut had_movement = false;
-        let mut new_pos = selfs.player_position.clone();
+        let mut new_pos = selfs.player_position;
         // move
         if keyboard.pressed(KeyCode::W) {
             new_pos.y += 5.0;
@@ -101,7 +101,7 @@ impl Reality {
         // send to server
         if had_movement {
             selfs.set_player_position(new_pos);
-            netty.say(Packet::RequestMove(selfs.player_position.clone()));
+            netty.say(Packet::RequestMove(selfs.player_position));
         }
     }
     pub fn system_camera_updater(

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{components::{CursorMarker, ldtk::TileMarker}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker}}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::netty::Packet, AnimatorAssets};
+
+use super::Netty;
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
@@ -28,21 +30,35 @@ impl UIManager {
             match self.queued_actions[0].clone() {
                 UIClickAction::ChangeScene(scene) => {
                     self.queued_actions.remove(0);
-                    return Some(scene);
+                    Some(scene)
                 }
                 _ => {
-                    return None;
+                    None
                 }
             }
         }
         else {
-            return None;
+            None
+        }
+    }
+    fn join_game(&mut self) -> Option<usize> {
+        if self.queued_actions.get(0).is_some() {
+            match self.queued_actions[0].clone() {
+                UIClickAction::JoinWorld(world) => {
+                    self.queued_actions.remove(0);
+                    Some(world)
+                }
+                _ => {
+                    None
+                }
+            }
+        }
+        else {
+            None
         }
     }
     fn clicked(&mut self, location: (f32, f32)) {
         println!("Click occurred at ({}, {})", location.0, location.1);
-        let approx_loc = (location.0 + (1920.0 / 2.0), location.1 + (1080.0 / 2.0));
-        //println!("Approx to ({}, {})", approx_loc.0, approx_loc.1);
         let mut removed = 0;
         for (index, clickable) in self.active_clickables.clone().iter().enumerate() {
             if clickable.is_contained(location) {
@@ -94,6 +110,35 @@ pub fn ui_manager(
     if btn.just_pressed(MouseButton::Left) {
         for location in cursors.iter_mut() {
             man.clicked((location.translation.x, location.translation.y));
+        }
+    }
+}
+
+pub fn ui_game(
+    mut commands: Commands,
+    unloads: Query<Entity, With<TileMarker>>,
+    target_materials: Option<Res<AnimatorAssets>>,
+    mut state: ResMut<State<GameState>>,
+    mut netty: ResMut<Netty>,
+    mut man: ResMut<UIManager>
+) {
+    if let Some(materials) = target_materials {
+        if let Some(game_id) = man.join_game() {
+            state.replace(GameState::Play).unwrap();
+            commands.spawn_bundle(SpriteBundle {
+                material: materials.placeholder.clone(),
+                transform: Transform::from_xyz(
+                    0.0,
+                    0.0,
+                    PLAYER_CHARACTERS
+                ),
+                ..Default::default()
+            }).insert(PlayerMarker {});
+            netty.say(Packet::JoinWorld(game_id));
+            unloads.for_each_mut(|e| {
+                commands.entity(e).despawn_recursive();
+            });
+            man.reset_ui();
         }
     }
 }

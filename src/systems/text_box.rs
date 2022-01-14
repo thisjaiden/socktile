@@ -71,7 +71,7 @@ pub fn game_creation(
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
-            netty.say(Packet::CreateWorld(mode.clone()));
+            netty.say(Packet::CreateWorld(mode));
             tb.clear_buffer();
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();

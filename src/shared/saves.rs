@@ -25,7 +25,7 @@ pub fn save_user(user: User) {
     std::fs::write(user_location(), enc).unwrap();
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct User {
     pub username: String,
     pub tag: u16
