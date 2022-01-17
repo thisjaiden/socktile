@@ -158,13 +158,13 @@ pub fn startup() -> ! {
                         }
                         saves[world_index].data.players.push(player_info.clone().unwrap());
                         let owner = owner.clone();
-                        server_by_user.insert(owner, world_index);
+                        server_by_user.insert(owner.clone(), world_index);
                         let spawn_centre_chnks_lack = (
                             (player_info.clone().unwrap().location.x / 32.0).round() as isize,
                             (player_info.clone().unwrap().location.y / 32.0).round() as isize
                         );
                         let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location), from));
+                        func_send.push((Packet::JoinedGame(player_info.clone().unwrap().location, saves[world_id].owner == owner), from));
                         func_send.push((Packet::OnlinePlayers(saves[world_id].data.players.clone()), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         drop(func_send);

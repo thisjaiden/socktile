@@ -19,8 +19,8 @@ impl Animator {
     pub fn system_player_animator(
         selfs: ResMut<Reality>,
         materials: Res<AnimatorAssets>,
-        mut player: Query<&mut Handle<Image>, With<PlayerMarker>>
+        mut players: Query<(&mut Handle<Image>, With<PlayerMarker>)>
     ) {
-        let mut material = player.single_mut();
+        // TODO!
     }
 }

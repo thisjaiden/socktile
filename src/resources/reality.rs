@@ -1,29 +1,31 @@
-use bevy::{prelude::*, utils::HashMap, render::camera::Camera as BevyCam};
+use bevy::{prelude::*, render::camera::Camera as BevyCam};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing}, ldtk::LDtkMap, MapAssets, GameState, FontAssets, layers::UI_TEXT};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::LDtkMap, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
 
 pub struct Reality {
     player_position: GamePosition,
-    camera: Camera,
     avalable_servers: Vec<GameListing>,
     push_servers: bool,
     chunks_to_load: Vec<(isize, isize)>,
+    players_to_spawn: Vec<(User, GamePosition)>,
     loaded_chunks: Vec<(isize, isize)>,
-    buffered_chunks: HashMap<(isize, isize), Vec<(usize, usize, TerrainState)>>
+    owns_server: bool,
+    pause_menu: bool,
 }
 
 impl Reality {
     pub fn init() -> Reality {
         Reality {
             player_position: GamePosition { x: 0.0, y: 0.0 },
-            camera: Camera::PlayerPosition,
             avalable_servers: vec![],
             push_servers: false,
             chunks_to_load: vec![],
+            players_to_spawn: vec![],
             loaded_chunks: vec![],
-            buffered_chunks: HashMap::default()
+            owns_server: false,
+            pause_menu: false,
         }
     }
     pub fn set_player_position(&mut self, position: GamePosition) {
@@ -35,11 +37,21 @@ impl Reality {
         let tile_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
         self.chunks_to_load.push((tile_x, tile_y));
     }
-    pub fn update_chunk(&mut self, chunk: (isize, isize)) {
+    pub fn set_ownership(&mut self, ownership: bool) {
+        self.owns_server = ownership;
+    }
+    pub fn update_chunk(&mut self, _chunk: (isize, isize)) {
         println!("Reality::update_chunk needs finishing");
     }
-    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize, TerrainState)>) {
+    pub fn add_chunk(&mut self, _chunk_position: (isize, isize), _chunk_data: Vec<(usize, usize, TerrainState)>) {
         println!("Reality::add_chunk needs finishing");
+    }
+    pub fn add_online_players(&mut self, players: Vec<Player>) {
+        for player in players {
+            if player.user != user().unwrap() {
+                self.players_to_spawn.push((player.user, player.location));
+            }
+        }
     }
     pub fn set_avalable_servers(&mut self, servers: Vec<GameListing>) {
         self.avalable_servers = servers;
@@ -72,6 +84,21 @@ impl Reality {
             }
         }
         selfs.chunks_to_load.clear();
+    }
+    pub fn system_player_loader(
+        mut selfs: ResMut<Reality>,
+        assets: ResMut<AnimatorAssets>,
+        mut commands: Commands,
+
+    ) {
+        for (user, location) in selfs.players_to_spawn.clone() {
+            commands.spawn_bundle(SpriteBundle {
+                transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
+                texture: assets.placeholder.clone(),
+                ..Default::default()
+            }).insert(PlayerMarker { user });
+        }
+        selfs.players_to_spawn.clear();
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
@@ -109,19 +136,8 @@ impl Reality {
         mut camera: Query<&mut Transform, With<BevyCam>>
     ) {
         let mut cam = camera.single_mut();
-        match &selfs.camera {
-            Camera::PlayerPosition => {
-                cam.translation.x = selfs.player_position.x as f32;
-                cam.translation.y = selfs.player_position.y as f32;
-            }
-            Camera::Static(pos) => {
-                cam.translation.x = pos.x as f32;
-                cam.translation.y = pos.y as f32;
-            }
-            Camera::DriftToPlayer => {
-                todo!();
-            }
-        }
+        cam.translation.x = selfs.player_position.x as f32;
+        cam.translation.y = selfs.player_position.y as f32;
     }
     pub fn system_player_locator(
         selfs: ResMut<Reality>,
@@ -168,10 +184,4 @@ impl Reality {
             }
         }
     }
-}
-
-pub enum Camera {
-    PlayerPosition,
-    Static(GamePosition),
-    DriftToPlayer,
 }

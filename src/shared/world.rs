@@ -27,7 +27,7 @@ impl World {
         }
         return vec![];
     }
-    pub fn modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: TerrainState) {
+    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: TerrainState) {
         let mut target_index = 0;
         let mut found_target = false;
         for (index, (loc, _data)) in self.terrain_changes.iter().enumerate() {

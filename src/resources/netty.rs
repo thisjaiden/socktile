@@ -107,8 +107,9 @@ impl Netty {
                 Packet::CreatedWorld(id) => {
                     self.say(Packet::JoinWorld(id));
                 }
-                Packet::JoinedGame(mypos) => {
+                Packet::JoinedGame(mypos, ownership) => {
                     reality.set_player_position(mypos);
+                    reality.set_ownership(ownership);
                 }
                 Packet::ChangesChunk(chunk, changes) => {
                     reality.add_chunk(chunk, changes);
@@ -119,6 +120,9 @@ impl Netty {
                 }
                 Packet::WrongVersion(prefered_version) => {
                     panic!("Server is running {}, and you're using {} (You're most likely out of date, update!)", prefered_version, NETTY_VERSION);
+                }
+                Packet::OnlinePlayers(players) => {
+                    reality.add_online_players(players);
                 }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::{PLAYER_CHARACTERS, UI_TEXT}, AnimatorAssets};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user, user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::{PLAYER_CHARACTERS, UI_TEXT}, AnimatorAssets};
 
 pub fn text_box(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -83,7 +83,7 @@ pub fn game_creation(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker {});
+            }).insert(PlayerMarker { user: user().unwrap() });
 
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();

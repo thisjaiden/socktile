@@ -1,10 +1,14 @@
 use bevy::prelude::Component;
 
+use crate::shared::saves::User;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct TileMarker {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-pub struct PlayerMarker {}
+#[derive(Clone, Debug, Eq, PartialEq, Component)]
+pub struct PlayerMarker {
+    pub user: User
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct InGameTile {

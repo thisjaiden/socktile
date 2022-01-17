@@ -5,7 +5,7 @@ use crate::components::GamePosition;
 use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing, player::Player};
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-9";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-10";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -57,8 +57,8 @@ pub enum Packet {
     /// (No Data)
     LeaveWorld,
     /// A client has been connected. Send them their position.
-    /// (Player Position)
-    JoinedGame(GamePosition),
+    /// (Player Position, Owns Server)
+    JoinedGame(GamePosition, bool),
     /// A list of online users for a given world
     /// (Array (User))
     OnlinePlayers(Vec<Player>),
@@ -83,9 +83,15 @@ pub enum Packet {
     /// Requests moving a player to a new position in a world.
     /// (New Position)
     RequestMove(GamePosition),
-    /// Updates the positions of any players who have moved.
-    /// (Array (Player, New Position))
-    PlayerPositionUpdate(User, GamePosition)
+    /// Updates the position of a players who has moved.
+    /// (Player, New Position)
+    PlayerPositionUpdate(User, GamePosition),
+    /// A player has disconnected.
+    /// (User)
+    PlayerDisconnected(User),
+    /// Requests to add this server to a players's list of joinable servers
+    /// (User)
+    WhitelistUser(User),
 }
 
 impl Packet {

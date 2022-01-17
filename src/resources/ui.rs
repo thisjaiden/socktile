@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker}}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::netty::Packet, AnimatorAssets};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker}}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::{netty::Packet, saves::user}, AnimatorAssets};
 
 use super::Netty;
 
@@ -55,6 +55,26 @@ impl UIManager {
         }
         else {
             None
+        }
+    }
+    fn quick_exit(&mut self) -> bool {
+        if self.queued_actions.get(0).is_some() {
+            match self.queued_actions[0].clone() {
+                UIClickAction::GameplayTrigger(trigger) => {
+                    if trigger == "ExitProgramQuick" {
+                        true
+                    }
+                    else {
+                        false
+                    }
+                }
+                _ => {
+                    false
+                }
+            }
+        }
+        else {
+            false
         }
     }
     fn clicked(&mut self, location: (f32, f32)) {
@@ -133,13 +153,22 @@ pub fn ui_game(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker {});
+            }).insert(PlayerMarker { user: user().unwrap() });
             netty.say(Packet::JoinWorld(game_id));
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();
             });
             man.reset_ui();
         }
+    }
+}
+
+pub fn ui_quick_exit(
+    mut man: ResMut<UIManager>,
+    mut exit: EventWriter<AppExit>
+) {
+    if man.quick_exit() {
+        exit.send(AppExit);
     }
 }
 

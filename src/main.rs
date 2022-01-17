@@ -38,23 +38,29 @@ pub enum GameState {
 
 fn main() {
     if DEV_BUILD {
-        println!("\x1B[40;91mTHIS IS AN INTERNAL BUILD. DO NOT DISTRIBUTE.\x1B[0m");
+        // Allow GGS to be run if it's a dev build, and warn about distribution.
+        println!("\x1B[40;91mWARNING: This is an internal build. All software is property of and (c) Jaiden Bernard. Do not share this software without permission from the property owners.\x1B[0m");
+        println!("Sidenote: if you just built this from GitHub, do as you will. This doesn't apply to you.");
         let mut args = std::env::args();
         args.next();
         if let Some(argument) = args.next() {
             if argument == "--ggs" {
-                println!("\x1B[40;91mRUNNING AS A GLOBAL GAME SERVER. DO NOT RUN FROM THE WRONG LOCATION. DO NOT HAVE MULTIPLE INSTANCES RUNNING.\x1B[0m");
+                println!("\x1B[40;91mWARNING: Running as a GGS. Make sure you know what you're doing!\x1B[0m");
                 server::core::startup();
             }
         }
     }
+
+    // Create our Bevy app!
     let mut app = App::new();
+    // Register all the assets we need loaded.
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
         .with_collection::<MapAssets>()
         .with_collection::<FontAssets>()
         .with_collection::<AnimatorAssets>()
         .build(&mut app);
+    // Add plugins and systems to our app, then run it!
     app
         .add_plugins(DefaultPlugins)
         .add_plugin(benimator::AnimationPlugin)
@@ -63,66 +69,71 @@ fn main() {
         .add_state(GameState::Load)
         .add_system_set(
             SystemSet::on_enter(GameState::Load)
-                .with_system(window_setup::window_setup.system())
+                .with_system(window_setup::window_setup)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
-                .with_system(systems::netty::startup_checks.system())
-                .with_system(systems::cursor::spawn.system())
+                .with_system(systems::netty::startup_checks)
+                .with_system(systems::cursor::spawn)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
-                .with_system(systems::visual::load_title_screen_map.system())
+                .with_system(systems::visual::load_title_screen_map)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::OfflineTitle)
-                .with_system(systems::visual::load_offline_title_map.system())
+                .with_system(systems::visual::load_offline_title_map)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
-                .with_system(systems::visual::load_user_creation_map.system())
+                .with_system(systems::visual::load_user_creation_map)
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeUser)
-                .with_system(systems::text_box::user_creation.system())
+                .with_system(systems::text_box::user_creation)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
-                .with_system(systems::text_box::game_creation_once.system())
+                .with_system(systems::text_box::game_creation_once)
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeGame)
-                .with_system(systems::text_box::game_creation.system())
+                .with_system(systems::text_box::game_creation)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
-                .with_system(systems::netty::server_list.system())
+                .with_system(systems::netty::server_list)
         )
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
-                .with_system(resources::Reality::system_server_list_renderer.system())
+                .with_system(resources::Reality::system_server_list_renderer)
         )
-        .add_system(systems::cursor::cursor.system())
+        .add_system(systems::cursor::cursor)
         .insert_resource(resources::TextBox::init())
-        .add_system(systems::text_box::text_box.system())
+        .add_system(systems::text_box::text_box)
         .insert_resource(resources::Netty::init())
-        .add_system(systems::netty::step.system())
+        .add_system(systems::netty::step)
         .insert_resource(resources::ui::UIManager::init())
-        .add_system(resources::ui::ui_scene.system())
-        .add_system(resources::ui::ui_game.system())
-        .add_system(resources::ui::ui_manager.system())
+        .add_system(resources::ui::ui_scene)
+        .add_system(resources::ui::ui_game)
+        .add_system(resources::ui::ui_manager)
+        .add_system(resources::ui::ui_quick_exit)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
-                .with_system(resources::Reality::system_chunk_loader.system())
-                .with_system(resources::Reality::system_player_controls.system())
-                .with_system(resources::Reality::system_camera_updater.system())
-                .with_system(resources::Reality::system_player_locator.system())
-                .with_system(resources::Animator::system_player_animator.system())
+                .with_system(resources::Reality::system_chunk_loader)
+                .with_system(resources::Reality::system_player_loader)
+                .with_system(resources::Reality::system_player_controls)
+                .with_system(resources::Reality::system_camera_updater)
+                .with_system(resources::Reality::system_player_locator)
+                .with_system(resources::Animator::system_player_animator)
         )
         .run();
 }
+
+// Below are the assets used in this application.
+// TODO: These should probably be moved to assets.rs or something.
 
 #[derive(AssetCollection)]
 pub struct MapAssets {
@@ -133,15 +144,15 @@ pub struct MapAssets {
 #[derive(AssetCollection, Clone)]
 pub struct FontAssets {
     #[asset(path = "font/apple_tea.ttf")]
-    apple_tea: Handle<Font>,
+    _apple_tea: Handle<Font>,
     #[asset(path = "font/simvoni/regular.ttf")]
     simvoni: Handle<Font>,
     #[asset(path = "font/simvoni/italic.ttf")]
-    simvoni_italic: Handle<Font>,
+    _simvoni_italic: Handle<Font>,
     #[asset(path = "font/simvoni/bold.ttf")]
-    simvoni_bold: Handle<Font>,
+    _simvoni_bold: Handle<Font>,
     #[asset(path = "font/simvoni/bolditalic.ttf")]
-    simvoni_bold_italic: Handle<Font>,
+    _simvoni_bold_italic: Handle<Font>,
     /// WARNING: DEPRECATED FONT
     #[asset(path = "font/kreative_square.ttf")]
     kreative_square: Handle<Font>

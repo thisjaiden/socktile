@@ -12,8 +12,8 @@ use bevy::reflect::TypeUuid;
 use std::collections::HashMap;
 
 use crate::FontAssets;
-use crate::components::ldtk::{TileMarker, PlayerMarker, InGameTile};
-use crate::layers::{BACKGROUND, PLAYER_CHARACTERS, UI_TEXT};
+use crate::components::ldtk::{TileMarker, InGameTile};
+use crate::layers::{BACKGROUND, UI_TEXT};
 use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
 
 pub fn load_chunk(
@@ -23,24 +23,29 @@ pub fn load_chunk(
     fonts: FontAssets,
     commands: &mut Commands
 ) {
+    // Create the level name from numbers.
+    let fmta = if chunk.0.is_negative() {
+        format!("M{}", -chunk.0)
+    }
+    else {
+        format!("{}", chunk.0)
+    };
+    let fmtb = if chunk.1.is_negative() {
+        format!("M{}", -chunk.1)
+    }
+    else {
+        format!("{}", chunk.1)
+    };
+
+    // Search for the level in the world.
     let mut selected_level = None;
     for level in &map.project.levels {
-        let fmta = if chunk.0.is_negative() {
-            format!("M{}", -chunk.0)
-        }
-        else {
-            format!("{}", chunk.0)
-        };
-        let fmtb = if chunk.1.is_negative() {
-            format!("M{}", -chunk.1)
-        }
-        else {
-            format!("{}", chunk.1)
-        };
         if level.identifier == format!("Env_{}_{}", fmta, fmtb) {
             selected_level = Some(level);
         }
     }
+    
+    // Use the backup if this level doesn't exist.
     if selected_level.is_none() {
         for level in &map.project.levels {
             if level.identifier == "Env_NONE" {
@@ -48,8 +53,10 @@ pub fn load_chunk(
             }
         }
     }
+
+    // Take the level and load it!
     let level = selected_level.unwrap();
-    let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
+    let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
     for layer in layers {
         match layer.layer_instance_type.as_str() {
             "Tiles" => {
@@ -122,16 +129,16 @@ pub fn load_chunk(
                             }).insert(TileMarker {});
                         }
                         "LoadLevel" => {
-                            println!("WARNING: LDTK ENTITY TYPE LoadLevel DOES NOT WORK FOR ENV");
+                            println!("WARNING: LDtk entity LoadLevel does not work for ENV_ levels.");
                         }
                         ei => {
-                            println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);
+                            println!("WARNING: LDtk file had an entity named {}, which isn't known or supported.", ei);
                         }
                     }
                 }
             }
             it => {
-                panic!("LDTK: INVALID INSTANCE TYPE {}.", it)
+                panic!("FATAL: LDtk file had an invalid instance type {}.", it)
             }
         }
     }
@@ -149,7 +156,7 @@ pub fn load_level(
     unloads.for_each(|e| {
         commands.entity(e).despawn_recursive();
     });
-    let layers = level.layer_instances.as_ref().expect("LDTK: SAVE LEVELS/LAYERS SEPERATELY IS **NOT** SUPPORTED!");
+    let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
     for layer in layers {
         match layer.layer_instance_type.as_str() {
             "Tiles" => {
@@ -238,14 +245,32 @@ pub fn load_level(
                                 size: (entity.width as f32, entity.height as f32)
                             });
                         }
+                        "GameplayTrigger" => {
+                            let mut action = String::new();
+                            for field in &entity.field_instances {
+                                if field.identifier == "Trigger" {
+                                    action = field.value.clone().unwrap().as_str().unwrap().to_string();
+                                }
+                            }
+
+                            uimanager.add_ui(UIClickable {
+                                action: UIClickAction::GameplayTrigger(action),
+                                location: (
+                                    (-1920.0 / 2.0) + entity.px[0] as f32,
+                                    (1080.0 / 2.0) - entity.px[1] as f32
+                                ),
+                                size: (entity.width as f32, entity.height as f32),
+                                removed_on_use: true 
+                            });
+                        }
                         ei => {
-                            println!("WARNING: LDTK ENTITY TYPE {} IS NOT SUPPORTED", ei);
+                            println!("WARNING: LDtk file had an entity named {}, which isn't known or supported.", ei);
                         }
                     }
                 }
             }
             it => {
-                panic!("LDTK: INVALID INSTANCE TYPE {}.", it)
+                panic!("FATAL: LDtk file had an invalid instance type {}.", it)
             }
         }
     }
