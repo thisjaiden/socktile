@@ -2,7 +2,7 @@ use bevy::{prelude::*, app::AppExit};
 
 use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker}}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::{netty::Packet, saves::user}, AnimatorAssets};
 
-use super::Netty;
+use super::{Netty, Reality};
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
@@ -29,7 +29,7 @@ impl UIManager {
         if self.queued_actions.get(0).is_some() {
             match self.queued_actions[0].clone() {
                 UIClickAction::ChangeScene(scene) => {
-                    self.queued_actions.remove(0);
+                    self.next();
                     Some(scene)
                 }
                 _ => {
@@ -45,7 +45,7 @@ impl UIManager {
         if self.queued_actions.get(0).is_some() {
             match self.queued_actions[0].clone() {
                 UIClickAction::JoinWorld(world) => {
-                    self.queued_actions.remove(0);
+                    self.next();
                     Some(world)
                 }
                 _ => {
@@ -76,6 +76,24 @@ impl UIManager {
         else {
             false
         }
+    }
+    fn gameplay_trigger(&mut self) -> Option<String> {
+        if self.queued_actions.get(0).is_some() {
+            match self.queued_actions[0].clone() {
+                UIClickAction::GameplayTrigger(trigger) => {
+                    Some(trigger)
+                }
+                _ => {
+                    None
+                }
+            }
+        }
+        else {
+            None
+        }
+    }
+    fn next(&mut self) {
+        self.queued_actions.remove(0);
     }
     fn clicked(&mut self, location: (f32, f32)) {
         println!("Click occurred at ({}, {})", location.0, location.1);
@@ -125,7 +143,7 @@ pub enum UIClickAction {
 pub fn ui_manager(
     btn: Res<Input<MouseButton>>,
     mut man: ResMut<UIManager>,
-    mut cursors: Query<&mut Transform, With<CursorMarker>>
+    mut cursors: Query<&mut Transform, With<CursorMarker>>,
 ) {
     if btn.just_pressed(MouseButton::Left) {
         for location in cursors.iter_mut() {
@@ -169,6 +187,17 @@ pub fn ui_quick_exit(
 ) {
     if man.quick_exit() {
         exit.send(AppExit);
+    }
+}
+
+pub fn ui_close_pause_menu(
+    mut man: ResMut<UIManager>,
+    mut selfs: ResMut<Reality>,
+) {
+    if man.gameplay_trigger() == Some(String::from("ClosePauseMenu")) {
+        man.next();
+        man.reset_ui();
+        selfs.pause_closed();
     }
 }
 

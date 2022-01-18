@@ -118,6 +118,7 @@ fn main() {
         .add_system(resources::ui::ui_game)
         .add_system(resources::ui::ui_manager)
         .add_system(resources::ui::ui_quick_exit)
+        .add_system(resources::ui::ui_close_pause_menu)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .add_system_set(
@@ -127,6 +128,7 @@ fn main() {
                 .with_system(resources::Reality::system_player_controls)
                 .with_system(resources::Reality::system_camera_updater)
                 .with_system(resources::Reality::system_player_locator)
+                .with_system(resources::Reality::system_pause_renderer)
                 .with_system(resources::Animator::system_player_animator)
         )
         .run();

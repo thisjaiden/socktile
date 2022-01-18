@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera as BevyCam};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::LDtkMap, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::LDtkMap, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
 
@@ -12,7 +12,7 @@ pub struct Reality {
     players_to_spawn: Vec<(User, GamePosition)>,
     loaded_chunks: Vec<(isize, isize)>,
     owns_server: bool,
-    pause_menu: bool,
+    pause_menu: MenuState,
 }
 
 impl Reality {
@@ -25,8 +25,11 @@ impl Reality {
             players_to_spawn: vec![],
             loaded_chunks: vec![],
             owns_server: false,
-            pause_menu: false,
+            pause_menu: MenuState::Closed,
         }
+    }
+    pub fn pause_closed(&mut self) {
+        self.pause_menu = MenuState::Closed;
     }
     pub fn set_player_position(&mut self, position: GamePosition) {
         self.player_position = position;
@@ -87,7 +90,7 @@ impl Reality {
     }
     pub fn system_player_loader(
         mut selfs: ResMut<Reality>,
-        assets: ResMut<AnimatorAssets>,
+        assets: Res<AnimatorAssets>,
         mut commands: Commands,
 
     ) {
@@ -103,6 +106,7 @@ impl Reality {
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
         mut netty: ResMut<Netty>,
+        mut uiman: ResMut<UIManager>,
         keyboard: Res<Input<KeyCode>>
     ) {
         let mut had_movement = false;
@@ -124,11 +128,69 @@ impl Reality {
             new_pos.x += 5.0;
             had_movement = true;
         }
+        if keyboard.just_pressed(KeyCode::Escape) {
+            if selfs.pause_menu == MenuState::Closed {
+                selfs.pause_menu = MenuState::Queued;
+            }
+            else {
+                selfs.pause_menu = MenuState::Closed;
+                uiman.reset_ui();
+            }
+        }
         // TODO: if collided, send back
         // send to server
         if had_movement {
             selfs.set_player_position(new_pos);
             netty.say(Packet::RequestMove(selfs.player_position));
+        }
+    }
+    pub fn system_pause_renderer(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut uiman: ResMut<UIManager>,
+        fonts: Res<FontAssets>,
+        desps: Query<Entity, With<PauseMenuMarker>>
+    ) {
+        match selfs.pause_menu {
+            MenuState::Closed => {
+                // Despawn any alive menu objects/ui
+                desps.for_each(|despawn| {
+                    commands.entity(despawn).despawn();
+                });
+            }
+            MenuState::Queued => {
+                // Spawn menu
+                commands.spawn_bundle(Text2dBundle {
+                    text: Text {
+                        sections: vec![
+                            TextSection {
+                                value: String::from("Resume"),
+                                style: TextStyle {
+                                    font: fonts.simvoni.clone(),
+                                    font_size: 35.0,
+                                    color: Color::BLACK
+                                }
+                            }
+                        ],
+                        alignment: TextAlignment {
+                            vertical: VerticalAlign::Center,
+                            horizontal: HorizontalAlign::Center
+                        }
+                    },
+                    transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                    ..Default::default()
+                }).insert(PauseMenuMarker {});
+                uiman.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
+                    location: (-25.0, 0.0),
+                    size: (50.0, 50.0),
+                    removed_on_use: false
+                });
+                selfs.pause_menu = MenuState::Open;
+            }
+            MenuState::Open => {
+                // Update menu (if applicable)
+            }
         }
     }
     pub fn system_camera_updater(
@@ -140,7 +202,7 @@ impl Reality {
         cam.translation.y = selfs.player_position.y as f32;
     }
     pub fn system_player_locator(
-        selfs: ResMut<Reality>,
+        selfs: Res<Reality>,
         mut player: Query<&mut Transform, With<PlayerMarker>>
     ) {
         let mut location = player.single_mut();
@@ -184,4 +246,11 @@ impl Reality {
             }
         }
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum MenuState {
+    Closed,
+    Queued,
+    Open
 }
