@@ -8,13 +8,90 @@
 use bevy::asset::{AssetLoader, LoadContext, BoxedFuture, LoadedAsset, AssetPath};
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
-
-use std::collections::HashMap;
+use bevy::utils::HashMap;
 
 use crate::FontAssets;
+use crate::components::GamePosition;
 use crate::components::ldtk::{TileMarker, InGameTile};
 use crate::layers::{BACKGROUND, UI_TEXT};
 use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
+
+pub struct CollisionMapPart {
+    pub chunk: (isize, isize),
+    pub states: HashMap<(usize, usize), CollisionState>
+}
+
+impl CollisionMapPart {
+    pub fn new(chunk: (isize, isize)) -> CollisionMapPart {
+        CollisionMapPart {
+            chunk,
+            states: HashMap::default()
+        }
+    }
+}
+
+pub struct CollisionMap {
+    totality: HashMap<(isize, isize), HashMap<(usize, usize), CollisionState>>
+}
+
+impl CollisionMap {
+    pub fn new() -> CollisionMap {
+        CollisionMap {
+            totality: HashMap::default()
+        }
+    }
+    pub fn has_stuff(&mut self) -> bool {
+        self.totality.len() > 0
+    }
+    pub fn add_part(&mut self, part: CollisionMapPart) {
+        println!("Part at ({:?}) added to totality.", part.chunk);
+        self.totality.insert(part.chunk, part.states);
+    }
+    pub fn update_part(&mut self, part: CollisionMapPart) {
+        for (loc, state) in part.states {
+            self.totality.get_mut(&part.chunk).unwrap().insert(loc, state);
+        }
+    }
+    pub fn point_is(&mut self, point: GamePosition) -> CollisionState {
+        let map_x = (point.x / 1920.0).round() as isize;
+        let map_y = (point.y / 1088.0).round() as isize;
+        let inside_x = point.x - (1920.0 * map_x as f64) + (1920.0 / 2.0);
+        let inside_y = point.y - (1088.0 * map_y as f64) + (1088.0 / 2.0);
+        let mut tile_x = (inside_x / 64.0).floor() as usize;
+        let mut tile_y = (inside_y / 64.0).floor() as usize;
+        if tile_y == 17 {
+            tile_y = 16;
+        }
+        if tile_x == 30 {
+            tile_x = 29;
+        }
+        let chunk = self.totality.get(&(map_x, map_y)).unwrap();
+        // println!("tile ({}, {})", tile_x, tile_y);
+        return *chunk.get(&(tile_x, tile_y)).unwrap();
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+pub enum CollisionState {
+    Ground = 1,
+    Water = 2,
+    Wall = 3,
+    Elevated = 4,
+    Transition = 5,
+}
+
+impl CollisionState {
+    pub fn from_i64(val: i64) -> CollisionState {
+        match val {
+            1 => return Self::Ground,
+            2 => return Self::Water,
+            3 => return Self::Wall,
+            4 => return Self::Elevated,
+            5 => return Self::Transition,
+            _ => panic!("FATAL: Invalid CollisionState index {} while reading an LDtk chunk.", val)
+        }
+    }
+}
 
 pub fn load_chunk(
     chunk: (isize, isize),
@@ -22,7 +99,7 @@ pub fn load_chunk(
     texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
     fonts: FontAssets,
     commands: &mut Commands
-) {
+) -> CollisionMapPart {
     // Create the level name from numbers.
     let fmta = if chunk.0.is_negative() {
         format!("M{}", -chunk.0)
@@ -55,6 +132,7 @@ pub fn load_chunk(
     }
 
     // Take the level and load it!
+    let mut collision_part = CollisionMapPart::new(chunk);
     let level = selected_level.unwrap();
     let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
     for layer in layers {
@@ -137,11 +215,24 @@ pub fn load_chunk(
                     }
                 }
             }
+            "IntGrid" => {
+                for x in 0..layer.c_wid {
+                    for y in 0..layer.c_hei {
+                        let tile = layer.int_grid_csv[x as usize + (y * layer.c_wid) as usize];
+                        collision_part.states.insert(
+                            (x as usize, y as usize),
+                            CollisionState::from_i64(tile)
+                        );
+                    }
+                }
+            }
             it => {
                 panic!("FATAL: LDtk file had an invalid instance type {}.", it)
             }
         }
     }
+    println!("Returning part for ({:?})", collision_part.chunk);
+    return collision_part;
 }
 
 pub fn load_level(
@@ -157,7 +248,7 @@ pub fn load_level(
         commands.entity(e).despawn_recursive();
     });
     let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
-    for layer in layers {
+    for layer in layers.iter().rev() {
         match layer.layer_instance_type.as_str() {
             "Tiles" => {
                 let tileset_id = layer.tileset_def_uid.unwrap();
@@ -268,6 +359,9 @@ pub fn load_level(
                         }
                     }
                 }
+            }
+            "IntGrid" => {
+                // we ignore collision maps for non play state levels
             }
             it => {
                 panic!("FATAL: LDtk file had an invalid instance type {}.", it)

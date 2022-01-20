@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera as BevyCam};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::LDtkMap, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
 
@@ -13,6 +13,7 @@ pub struct Reality {
     loaded_chunks: Vec<(isize, isize)>,
     owns_server: bool,
     pause_menu: MenuState,
+    collision_map: CollisionMap
 }
 
 impl Reality {
@@ -26,7 +27,17 @@ impl Reality {
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
+            collision_map: CollisionMap::new()
         }
+    }
+    pub fn no_collision(&mut self) -> bool {
+        !self.collision_map.has_stuff()
+    }
+    pub fn cmappt_new(&mut self, cmappt: CollisionMapPart) {
+        self.collision_map.add_part(cmappt);
+    }
+    pub fn get_point(&mut self, pt: GamePosition) -> CollisionState {
+        self.collision_map.point_is(pt)
     }
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
@@ -39,6 +50,10 @@ impl Reality {
         let tile_x = (self.player_position.x / ENV_WIDTH).round() as isize;
         let tile_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
         self.chunks_to_load.push((tile_x, tile_y));
+        self.chunks_to_load.push((tile_x, tile_y + 1));
+        self.chunks_to_load.push((tile_x, tile_y - 1));
+        self.chunks_to_load.push((tile_x + 1, tile_y));
+        self.chunks_to_load.push((tile_x - 1, tile_y));
     }
     pub fn set_ownership(&mut self, ownership: bool) {
         self.owns_server = ownership;
@@ -80,8 +95,10 @@ impl Reality {
         if !selfs.chunks_to_load.is_empty() {
             for chunk in selfs.chunks_to_load.clone() {
                 if !selfs.loaded_chunks.contains(&chunk) {
+                    println!("Loading chunk at ({:?})", chunk);
                     let a = maps.get_mut(target_maps.player.clone()).unwrap();
-                    crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
+                    let cmappt = crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
+                    selfs.cmappt_new(cmappt);
                     selfs.loaded_chunks.push(chunk);
                 }
             }
@@ -109,6 +126,9 @@ impl Reality {
         mut uiman: ResMut<UIManager>,
         keyboard: Res<Input<KeyCode>>
     ) {
+        if selfs.no_collision() {
+            return;
+        }
         let mut had_movement = false;
         let mut new_pos = selfs.player_position;
         // move
@@ -138,6 +158,36 @@ impl Reality {
             }
         }
         // TODO: if collided, send back
+        let o_l_tl = GamePosition {
+            x: selfs.player_position.x - 32.0,
+            y: selfs.player_position.y + 32.0
+        };
+        let o_l_tr = GamePosition {
+            x: selfs.player_position.x + 32.0,
+            y: selfs.player_position.y + 32.0
+        };
+        let o_l_bl = GamePosition {
+            x: selfs.player_position.x - 32.0,
+            y: selfs.player_position.y - 32.0
+        };
+        let o_l_br = GamePosition {
+            x: selfs.player_position.x + 32.0,
+            y: selfs.player_position.y - 32.0
+        };
+        let o_p_tl = selfs.get_point(o_l_tl);
+        let o_p_tr = selfs.get_point(o_l_tr);
+        let o_p_bl = selfs.get_point(o_l_bl);
+        let o_p_br = selfs.get_point(o_l_br);
+        let o_arr = [o_p_tl, o_p_tr, o_p_bl, o_p_br];
+        let mut o_level = CollisionState::Ground;
+        if !o_arr.contains(&CollisionState::Ground) {
+            if o_arr.contains(&CollisionState::Transition) {
+                o_level = CollisionState::Transition;
+            }
+            if o_arr.contains(&CollisionState::Elevated) {
+                o_level = CollisionState::Elevated;
+            }
+        }
         // send to server
         if had_movement {
             selfs.set_player_position(new_pos);

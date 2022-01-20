@@ -4,6 +4,7 @@ use crate::shared::netty::{NETTY_VERSION, Packet};
 
 pub const GGS: &str = "lumen.place:11111";
 pub const DEV_GGS: &str = "127.0.0.1:11111";
+const DEBUG_SPAM: bool = false;
 
 pub fn startup(connection: TcpStream, recv: Arc<Mutex<Vec<Packet>>>, send: Arc<Mutex<Vec<Packet>>>) {
     println!("Starting client with GGS set to {:?}.", connection.peer_addr());
@@ -18,7 +19,9 @@ fn initiate_slave(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send
         loop {
             let mut send_access = send_buffer.lock().unwrap();
             for packet in send_access.iter() {
-                println!("Sending {:?} to GGS", packet);
+                if DEBUG_SPAM {
+                    println!("Sending {:?} to GGS", packet);
+                }
                 Packet::to_write(&mut con_clone, packet.clone());
             }
             send_access.clear();
