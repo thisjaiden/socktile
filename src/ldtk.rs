@@ -44,7 +44,6 @@ impl CollisionMap {
         self.totality.len() > 0
     }
     pub fn add_part(&mut self, part: CollisionMapPart) {
-        println!("Part at ({:?}) added to totality.", part.chunk);
         self.totality.insert(part.chunk, part.states);
     }
     pub fn update_part(&mut self, part: CollisionMapPart) {
@@ -66,8 +65,7 @@ impl CollisionMap {
             tile_x = 29;
         }
         let chunk = self.totality.get(&(map_x, map_y)).unwrap();
-        // println!("tile ({}, {})", tile_x, tile_y);
-        return *chunk.get(&(tile_x, tile_y)).unwrap();
+        *chunk.get(&(tile_x, tile_y)).unwrap()
     }
 }
 
@@ -135,7 +133,7 @@ pub fn load_chunk(
     let mut collision_part = CollisionMapPart::new(chunk);
     let level = selected_level.unwrap();
     let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
-    for layer in layers {
+    for (lindex, layer) in layers.iter().rev().enumerate() {
         match layer.layer_instance_type.as_str() {
             "Tiles" => {
                 let tileset_id = layer.tileset_def_uid.unwrap();
@@ -159,7 +157,8 @@ pub fn load_chunk(
                         transform: Transform::from_xyz(
                             (-1920.0 / 2.0) + tile.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
                             (1080.0 / 2.0) - tile.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
-                            BACKGROUND),
+                            BACKGROUND + lindex as f32
+                        ),
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as usize),
                         ..Default::default()
@@ -220,7 +219,7 @@ pub fn load_chunk(
                     for y in 0..layer.c_hei {
                         let tile = layer.int_grid_csv[x as usize + (y * layer.c_wid) as usize];
                         collision_part.states.insert(
-                            (x as usize, y as usize),
+                            (x as usize, 16 - y as usize),
                             CollisionState::from_i64(tile)
                         );
                     }
@@ -231,8 +230,7 @@ pub fn load_chunk(
             }
         }
     }
-    println!("Returning part for ({:?})", collision_part.chunk);
-    return collision_part;
+    collision_part
 }
 
 pub fn load_level(

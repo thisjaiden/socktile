@@ -133,19 +133,19 @@ impl Reality {
         let mut new_pos = selfs.player_position;
         // move
         if keyboard.pressed(KeyCode::W) {
-            new_pos.y += 5.0;
+            new_pos.y += 4.0;
             had_movement = true;
         }
         if keyboard.pressed(KeyCode::S) {
-            new_pos.y -= 5.0;
+            new_pos.y -= 4.0;
             had_movement = true;
         }
         if keyboard.pressed(KeyCode::A) {
-            new_pos.x -= 5.0;
+            new_pos.x -= 4.0;
             had_movement = true;
         }
         if keyboard.pressed(KeyCode::D) {
-            new_pos.x += 5.0;
+            new_pos.x += 4.0;
             had_movement = true;
         }
         if keyboard.just_pressed(KeyCode::Escape) {
@@ -159,34 +159,58 @@ impl Reality {
         }
         // TODO: if collided, send back
         let o_l_tl = GamePosition {
-            x: selfs.player_position.x - 32.0,
-            y: selfs.player_position.y + 32.0
+            x: selfs.player_position.x - 30.0,
+            y: selfs.player_position.y + 30.0
         };
         let o_l_tr = GamePosition {
-            x: selfs.player_position.x + 32.0,
-            y: selfs.player_position.y + 32.0
+            x: selfs.player_position.x + 30.0,
+            y: selfs.player_position.y + 30.0
         };
         let o_l_bl = GamePosition {
-            x: selfs.player_position.x - 32.0,
-            y: selfs.player_position.y - 32.0
+            x: selfs.player_position.x - 30.0,
+            y: selfs.player_position.y - 30.0
         };
         let o_l_br = GamePosition {
-            x: selfs.player_position.x + 32.0,
-            y: selfs.player_position.y - 32.0
+            x: selfs.player_position.x + 30.0,
+            y: selfs.player_position.y - 30.0
         };
         let o_p_tl = selfs.get_point(o_l_tl);
         let o_p_tr = selfs.get_point(o_l_tr);
         let o_p_bl = selfs.get_point(o_l_bl);
         let o_p_br = selfs.get_point(o_l_br);
         let o_arr = [o_p_tl, o_p_tr, o_p_bl, o_p_br];
-        let mut o_level = CollisionState::Ground;
-        if !o_arr.contains(&CollisionState::Ground) {
-            if o_arr.contains(&CollisionState::Transition) {
-                o_level = CollisionState::Transition;
-            }
-            if o_arr.contains(&CollisionState::Elevated) {
-                o_level = CollisionState::Elevated;
-            }
+        let n_l_tl = GamePosition {
+            x: new_pos.x - 30.0,
+            y: new_pos.y + 30.0
+        };
+        let n_l_tr = GamePosition {
+            x: new_pos.x + 30.0,
+            y: new_pos.y + 30.0
+        };
+        let n_l_bl = GamePosition {
+            x: new_pos.x - 30.0,
+            y: new_pos.y - 30.0
+        };
+        let n_l_br = GamePosition {
+            x: new_pos.x + 30.0,
+            y: new_pos.y - 30.0
+        };
+        let n_p_tl = selfs.get_point(n_l_tl);
+        let n_p_tr = selfs.get_point(n_l_tr);
+        let n_p_bl = selfs.get_point(n_l_bl);
+        let n_p_br = selfs.get_point(n_l_br);
+        let n_arr = [n_p_tl, n_p_tr, n_p_bl, n_p_br];
+        if n_arr.contains(&CollisionState::Wall) {
+            had_movement = false;
+        }
+        if n_arr.contains(&CollisionState::Elevated) && o_arr.contains(&CollisionState::Ground) {
+            had_movement = false
+        }
+        if n_arr.contains(&CollisionState::Ground) && o_arr.contains(&CollisionState::Elevated) {
+            had_movement = false;
+        }
+        if !o_arr.contains(&CollisionState::Water) && n_arr.contains(&CollisionState::Water) {
+            had_movement = false
         }
         // send to server
         if had_movement {
@@ -217,7 +241,7 @@ impl Reality {
                                 value: String::from("Resume"),
                                 style: TextStyle {
                                     font: fonts.simvoni.clone(),
-                                    font_size: 35.0,
+                                    font_size: 45.0,
                                     color: Color::BLACK
                                 }
                             }
@@ -245,11 +269,12 @@ impl Reality {
     }
     pub fn system_camera_updater(
         selfs: ResMut<Reality>,
-        mut camera: Query<&mut Transform, With<BevyCam>>
+        mut camera: Query<&mut Transform, Or<(With<BevyCam>, With<PauseMenuMarker>)>>
     ) {
-        let mut cam = camera.single_mut();
-        cam.translation.x = selfs.player_position.x as f32;
-        cam.translation.y = selfs.player_position.y as f32;
+        camera.for_each_mut(|mut campos| {
+            campos.translation.x = selfs.player_position.x as f32;
+            campos.translation.y = selfs.player_position.y as f32;
+        });
     }
     pub fn system_player_locator(
         selfs: Res<Reality>,
