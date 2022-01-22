@@ -119,6 +119,7 @@ fn main() {
         .add_system(resources::ui::ui_manager)
         .add_system(resources::ui::ui_quick_exit)
         .add_system(resources::ui::ui_close_pause_menu)
+        .add_system(resources::ui::ui_disconnect_game)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .add_system_set(

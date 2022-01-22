@@ -1,11 +1,13 @@
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
 use crate::components::GamePosition;
-
 use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing, player::Player};
+
 use serde::{Deserialize, Serialize};
 
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-10";
+/// The current version tag for netty. If this is different from whoever you're talking to, they're likely
+/// using an incompatible protocol.
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-11";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -89,9 +91,15 @@ pub enum Packet {
     /// A player has disconnected.
     /// (User)
     PlayerDisconnected(User),
-    /// Requests to add this server to a players's list of joinable servers
+    /// Requests to add this server to a players's list of joinable servers.
     /// (User)
     WhitelistUser(User),
+    /// You don't have permission to whitelist players on this server!
+    /// (No Data)
+    NoWhitelistPermission,
+    /// This user can't be whitelisted. Most likely they are not a real user.
+    /// (No Data)
+    UnwhitelistableUser
 }
 
 impl Packet {
@@ -105,7 +113,7 @@ impl Packet {
 }
 
 pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>) -> ! {
-    println!("NETTY VERSION: {}", NETTY_VERSION);
+    println!("Netty version: {}", NETTY_VERSION);
     let net = std::net::TcpListener::bind(format!("0.0.0.0:{}", crate::server::core::HOST_PORT));
     if let Ok(network) = net {
         for connection in network.incoming() {

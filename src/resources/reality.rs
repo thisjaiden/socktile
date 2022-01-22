@@ -238,10 +238,10 @@ impl Reality {
                     text: Text {
                         sections: vec![
                             TextSection {
-                                value: String::from("Resume"),
+                                value: String::from("Resume\nInvite\nSettings\nExit"),
                                 style: TextStyle {
                                     font: fonts.simvoni.clone(),
-                                    font_size: 45.0,
+                                    font_size: 55.0,
                                     color: Color::BLACK
                                 }
                             }
@@ -256,8 +256,26 @@ impl Reality {
                 }).insert(PauseMenuMarker {});
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
-                    location: (-25.0, 0.0),
-                    size: (50.0, 50.0),
+                    location: (-150.0, 110.0 - 27.5),
+                    size: (300.0, 55.0),
+                    removed_on_use: false
+                });
+                uiman.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
+                    location: (-150.0, 55.0 - 27.5),
+                    size: (300.0, 55.0),
+                    removed_on_use: false
+                });
+                uiman.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("OpenSettings")),
+                    location: (-150.0, -27.5),
+                    size: (300.0, 55.0),
+                    removed_on_use: false
+                });
+                uiman.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
+                    location: (-150.0, -55.0 - 27.5),
+                    size: (300.0, 55.0),
                     removed_on_use: false
                 });
                 selfs.pause_menu = MenuState::Open;

@@ -11,6 +11,7 @@ pub struct Object {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+/// Represents the type of a game object.
 pub enum ObjectType {
 
 }

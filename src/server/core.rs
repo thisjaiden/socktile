@@ -36,9 +36,9 @@ pub fn startup() -> ! {
     println!("Saves sorted. Server started!");
     loop {
         if timer.elapsed() > std::time::Duration::from_millis(50) {
-            // autosave every 30 mins (IMPORTANT: change this to 5 on production)
+            // Save every 30 mins
             if autosave.elapsed() > std::time::Duration::from_secs(60 * 30) {
-                println!("Autosaving...");
+                println!("Saving...");
                 for world in saves.clone() {
                     save(world);
                 }
@@ -108,7 +108,7 @@ pub fn startup() -> ! {
                             world_id = last.internal_id + 1;
                         }
                         let mut path = save_folder();
-                        path.push(format!("world_{}.bic", world_id));
+                        path.push(format!("{}_{}.bic", name, world_id));
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
                         for (index, profile) in profiles.clone().into_iter().enumerate() {
                             if owner == &profile.user {
@@ -205,16 +205,68 @@ pub fn startup() -> ! {
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestMove(GamePosition)");
                         
                         let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
+                        
+                        let mut self_index = None;
 
-                        for player in &saves[*server].data.players {
+                        for (index, player) in saves[*server].data.players.iter().enumerate() {
                             let this_ip = ip_by_user.get(&player.user).expect("Online player has no IP for a requested move");
                             // send data
                             if this_ip == &from {
                                 // but not to the mover
+                                self_index = Some(index);
                                 break;
                             }
                             let mut func_send = send.lock().unwrap();
                             func_send.push((Packet::PlayerPositionUpdate(owner.clone(), pos), *this_ip));
+                            drop(func_send);
+                        }
+                        // save data to server
+                        saves[*server].data.players[self_index.expect("Owner does not have a datablock in a server.")].location = pos;
+                    }
+                    Packet::LeaveWorld => {
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::LeaveWorld");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::LeaveWorld");
+                        
+                        let mut self_index = None;
+
+                        for (index, player) in saves[*server].data.players.iter().enumerate() {
+                            let this_ip = ip_by_user.get(&player.user).expect("Online player has no IP for a requested disconnect");
+                            // send data
+                            if this_ip == &from {
+                                // but not to the disconnector
+                                self_index = Some(index);
+                                break;
+                            }
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::PlayerDisconnected(owner.clone()), *this_ip));
+                            drop(func_send);
+                        }
+                        // save disconnect to server
+                        let p = saves[*server].data.players.swap_remove(self_index.expect("Owner does not have a datablock in a server."));
+                        saves[*server].data.offline_players.push(p);
+                    }
+                    Packet::WhitelistUser(user) => {
+                        let server = server_by_user.get(&user).expect("User is not in a server for Packet::WhitelistUser");
+                        if saves[*server].owner == user {
+                            let mut loc = None;
+                            for (ind, prof) in profiles.iter().enumerate() {
+                                if prof.user == user {
+                                    loc = Some(ind);
+                                }
+                            }
+                            if loc.is_none() {
+                                let mut func_send = send.lock().unwrap();
+                                func_send.push((Packet::UnwhitelistableUser, from));
+                                drop(func_send);
+                            }
+                            else {
+                                profiles[loc.unwrap()].avalable_games.push(*server);
+                            }
+                        }
+                        else {
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::NoWhitelistPermission, from));
                             drop(func_send);
                         }
                     }

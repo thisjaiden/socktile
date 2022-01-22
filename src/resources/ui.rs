@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker}}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::{netty::Packet, saves::user}, AnimatorAssets};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::{netty::Packet, saves::user}, AnimatorAssets};
 
 use super::{Netty, Reality};
 
@@ -143,11 +143,20 @@ pub enum UIClickAction {
 pub fn ui_manager(
     btn: Res<Input<MouseButton>>,
     mut man: ResMut<UIManager>,
-    mut cursors: Query<&mut Transform, With<CursorMarker>>,
+    mut qset: QuerySet<(
+        QueryState<&mut Transform, With<CursorMarker>>,
+        QueryState<&mut Transform, With<Camera>>
+    )>,
 ) {
+    let mut camx = 0.0;
+    let mut camy = 0.0;
+    for transform in qset.q1().iter_mut() {
+        camx = transform.translation.x;
+        camy = transform.translation.y;
+    }
     if btn.just_pressed(MouseButton::Left) {
-        for location in cursors.iter_mut() {
-            man.clicked((location.translation.x, location.translation.y));
+        for location in qset.q0().iter_mut() {
+            man.clicked((location.translation.x - camx, location.translation.y - camy));
         }
     }
 }
@@ -198,6 +207,45 @@ pub fn ui_close_pause_menu(
         man.next();
         man.reset_ui();
         selfs.pause_closed();
+    }
+}
+
+pub fn ui_disconnect_game(
+    mut commands: Commands,
+    mut man: ResMut<UIManager>,
+    mut netty: ResMut<Netty>,
+    mut state: ResMut<State<GameState>>,
+    mut qset: QuerySet<(
+        QueryState<Entity, With<PlayerMarker>>,
+        QueryState<Entity, With<TileMarker>>,
+        QueryState<Entity, With<InGameTile>>,
+        QueryState<Entity, With<PauseMenuMarker>>
+    )>,
+) {
+    if man.gameplay_trigger() == Some(String::from("LeaveGame")) {
+        man.next();
+        man.reset_ui();
+        netty.say(Packet::LeaveWorld);
+        state.set(GameState::TitleScreen).unwrap();
+        qset.q0().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        qset.q1().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        qset.q2().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        qset.q3().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        man.add_ui(UIClickable {
+            action: UIClickAction::ChangeScene(String::from("Title_screen")),
+            location: (-2.5, -2.5),
+            size: (5.0, 5.0),
+            removed_on_use: false
+        });
+        man.clicked((0.0, 0.0));
     }
 }
 
