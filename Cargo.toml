@@ -17,7 +17,7 @@ anyhow = "1.0.52"
 
 [profile.release]
 codegen-units = 1
-panic = "abort"
+panic = "unwind"
 lto = "fat"
 overflow-checks = false
 debug-assertions = false

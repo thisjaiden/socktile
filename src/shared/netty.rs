@@ -1,13 +1,14 @@
-use std::{net::SocketAddr, sync::{Arc, Mutex}};
-
-use crate::components::GamePosition;
-use super::{object::Object, saves::User, terrain::TerrainState, listing::GameListing, player::Player};
+use crate::{
+    components::GamePosition,
+    shared::{
+        object::Object,
+        saves::User,
+        terrain::TerrainState,
+        listing::GameListing
+    }
+};
 
 use serde::{Deserialize, Serialize};
-
-/// The current version tag for netty. If this is different from whoever you're talking to, they're likely
-/// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-11";
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -62,8 +63,8 @@ pub enum Packet {
     /// (Player Position, Owns Server)
     JoinedGame(GamePosition, bool),
     /// A list of online users for a given world
-    /// (Array (User))
-    OnlinePlayers(Vec<Player>),
+    /// (Array (User, Position))
+    OnlinePlayers(Vec<(User, GamePosition)>),
     /// The server sends over the information relating to some terrain.
     /// (Chunk, Array (Tile, Tile Override))
     ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
@@ -99,7 +100,13 @@ pub enum Packet {
     NoWhitelistPermission,
     /// This user can't be whitelisted. Most likely they are not a real user.
     /// (No Data)
-    UnwhitelistableUser
+    UnwhitelistableUser,
+    /// The user was whitelisted!
+    /// (No Data)
+    Whitelisted,
+    /// A user has joined the game.
+    /// (User, Initial Position)
+    PlayerConnected(User, GamePosition)
 }
 
 impl Packet {
@@ -107,68 +114,7 @@ impl Packet {
         bincode::deserialize_from(read).unwrap_or(Packet::FailedDeserialize)
     }
     pub fn to_write<W: std::io::Write>(write: &mut W, packet: Packet) {
-        write.write_all(&bincode::serialize(&packet).unwrap()).unwrap();
-        write.flush().unwrap();
+        write.write_all(&bincode::serialize(&packet).expect("Netty unable to serialize packet")).expect("Netty unable to write serialized packet");
+        write.flush().expect("Netty unable to flush buffer");
     }
-}
-
-pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>) -> ! {
-    println!("Netty version: {}", NETTY_VERSION);
-    let net = std::net::TcpListener::bind(format!("0.0.0.0:{}", crate::server::core::HOST_PORT));
-    if let Ok(network) = net {
-        for connection in network.incoming() {
-            if let Ok(mut stream) = connection {
-                let recv_clone = recv_buffer.clone();
-                let send_clone = send_buffer.clone();
-                let remote_addr = stream.peer_addr().unwrap();
-                let mut stream_clone = stream.try_clone().unwrap();
-                std::thread::spawn(move || {
-                    let recv = recv_clone;
-                    loop {
-                        let pkt = Packet::from_read(&mut stream);
-                        let mut recv_access = recv.lock().unwrap();
-                        println!("Recieved {:?} from {:?}", pkt, remote_addr);
-                        if pkt == Packet::FailedDeserialize {
-                            println!("Dropping connection to {:?}", remote_addr);
-                            break;
-                        }
-                        recv_access.push((pkt, remote_addr));
-                        drop(recv_access);
-                    }
-                });
-                std::thread::spawn(move || {
-                    let send = send_clone;
-                    loop {
-                        let mut destroy_conenction = false;
-                        let mut send_access = send.lock().unwrap();
-                        let mut removed = 0;
-                        for (index, (packet, address)) in send_access.clone().iter().enumerate() {
-                            if packet == &Packet::FailedDeserialize {
-                                destroy_conenction = true;
-                            }
-                            if address == &remote_addr {
-                                println!("Sending {:?} to {}", packet, address);
-                                Packet::to_write(&mut stream_clone, packet.clone());
-                                send_access.remove(index - removed);
-                                removed += 1;
-                            }
-                        }
-                        drop(send_access);
-                        if destroy_conenction {
-                            println!("Dropping connection to {:?}", remote_addr);
-                            break;
-                        }
-                        std::thread::sleep(std::time::Duration::from_millis(20));
-                    }
-                });
-            }
-            else {
-                println!("Warning: Error occured connecting a stream.");
-            }
-        }
-    }
-    else {
-        panic!("Network reads blocked!");
-    }
-    unreachable!();
 }

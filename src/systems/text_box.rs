@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user, user}}, GameState, ldtk::{load_level, LDtkMap}, FontAssets, MapAssets, layers::{PLAYER_CHARACTERS, UI_TEXT}, AnimatorAssets};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user, user}}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
 
 pub fn text_box(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -44,7 +44,7 @@ pub fn user_creation(
             tb.clear_buffer();
             state.replace(GameState::TitleScreen).unwrap();
             commands.entity(entity).despawn_recursive();
-            let a = maps.get_mut(target_maps.player.clone()).unwrap();
+            let a = maps.get_mut(target_maps.core.clone()).unwrap();
             let level = a.get_level("Title_screen");
             load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
         }
@@ -83,7 +83,7 @@ pub fn game_creation(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: user().unwrap() });
+            }).insert(PlayerMarker { user: user().unwrap(), isme: true });
 
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();

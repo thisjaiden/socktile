@@ -2,7 +2,8 @@ use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 
 pub fn user_location() -> PathBuf {
-    let mut dir = std::env::current_dir().unwrap();
+    let mut dir = std::env::current_exe().unwrap();
+    dir.pop();
     dir.push("me.bic");
     dir
 }

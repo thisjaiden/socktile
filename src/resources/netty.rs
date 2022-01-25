@@ -1,6 +1,8 @@
-use crate::{DEV_BUILD, client::core::{DEV_GGS, GGS, startup}, shared::{netty::{NETTY_VERSION, Packet}, saves::save_user}};
+use crate::{GameState, consts::*, shared::{netty::Packet, saves::save_user}};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
+
+use bevy::prelude::*;
 
 use super::Reality;
 
@@ -124,11 +126,38 @@ impl Netty {
                 Packet::OnlinePlayers(players) => {
                     reality.add_online_players(players);
                 }
+                Packet::PlayerPositionUpdate(p, l) => {
+                    reality.queue_player_move(p, l)
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }
             }
         }
+    }
+    pub fn system_startup_checks(
+        mut netty: ResMut<Netty>,
+        mut state: ResMut<State<GameState>>
+    ) {
+        match netty.connection() {
+            ConnectionStatus::Connected | ConnectionStatus::Stable => {
+                state.set(GameState::TitleScreen).unwrap();
+            }
+            _ => {
+                state.set(GameState::OfflineTitle).unwrap();
+            }
+        }
+    }
+    pub fn system_step(
+        mut netty: ResMut<Netty>,
+        mut reality: ResMut<Reality>
+    ) {
+        netty.step(&mut reality);
+    }
+    pub fn system_server_list(
+        mut netty: ResMut<Netty>,
+    ) {
+        netty.say(Packet::AvalableServers)
     }
 }
 
@@ -156,4 +185,33 @@ pub fn remote_exists(ggs: &str) -> bool {
         println!("No internet connection avalable.");
         false
     }
+}
+
+fn startup(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) {
+    println!("Starting client with GGS set to {:?}.", con.peer_addr());
+    println!("GGS | DEV_GGS: {} | {}", GGS, DEV_GGS);
+    println!("NETTY VERSION: {}", NETTY_VERSION);
+    let mut con_clone = con.try_clone().unwrap();
+    std::thread::spawn(move || {
+        loop {
+            let mut send_access = send_buffer.lock().unwrap();
+            for packet in send_access.iter() {
+                Packet::to_write(&mut con_clone, packet.clone());
+            }
+            send_access.clear();
+            drop(send_access);
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+    });
+    std::thread::spawn(move || {
+        loop {
+            let pkt = Packet::from_read(&mut con);
+            let mut recv_access = recv_buffer.lock().unwrap();
+            if pkt == Packet::FailedDeserialize {
+                todo!("Remote dead? Proper handle needed.");
+            }
+            recv_access.push(pkt);
+            drop(recv_access);
+        }
+    });
 }

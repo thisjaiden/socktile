@@ -1,23 +1,22 @@
-use bevy::{prelude::*, window::WindowMode};
-use crate::DEV_BUILD;
+use bevy::prelude::*;
+use crate::resources::Disk;
 
 pub fn window_setup(
     mut commands: Commands,
-    server: Res<AssetServer>,
-    mut windows: ResMut<Windows>
-) {
-    if DEV_BUILD {
-        server.watch_for_changes().unwrap();
-    }
-    
+    mut windows: ResMut<Windows>,
+    conf: Res<Disk>
+) { 
     let window = windows.get_primary_mut().unwrap();
-    window.set_vsync(true);
-    window.set_title(String::from("socktile"));
-    window.set_maximized(true);
-    window.set_mode(WindowMode::BorderlessFullscreen);
-    window.set_resolution(1920.0, 1080.0);
-    window.set_scale_factor_override(Some(1.0));
-    window.set_cursor_visibility(false);
+    let window_conf = conf.window_config();
 
+    window.set_vsync(window_conf.vsync);
+    window.set_title(String::from("socktile"));
+    if window_conf.fullscreen {
+        window.set_mode(bevy::window::WindowMode::BorderlessFullscreen);
+    }
+    window.set_resolution(window_conf.resolution.0, window_conf.resolution.1);
+    window.set_scale_factor_override(Some(window_conf.scale_factor));
+    window.set_cursor_visibility(false);
+    
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }

@@ -1,18 +1,16 @@
 use bevy::prelude::*;
-use bevy_asset_loader::{AssetLoader, AssetCollection};
+use bevy_asset_loader::AssetLoader;
 
 mod components;
 mod systems;
 mod resources;
-mod layers;
+mod consts;
 mod server;
-mod client;
 mod shared;
 mod window_setup;
 mod ldtk;
+mod assets;
 
-// Is this an internal dev build?
-pub const DEV_BUILD: bool = true;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
@@ -37,7 +35,7 @@ pub enum GameState {
 }
 
 fn main() {
-    if DEV_BUILD {
+    if consts::DEV_BUILD {
         // Allow GGS to be run if it's a dev build, and warn about distribution.
         println!("\x1B[40;91mWARNING: This is an internal build. All software is property of and (c) Jaiden Bernard. Do not share this software without permission from the property owners.\x1B[0m");
         println!("Sidenote: if you just built this from GitHub, do as you will. This doesn't apply to you.");
@@ -46,7 +44,7 @@ fn main() {
         if let Some(argument) = args.next() {
             if argument == "--ggs" {
                 println!("\x1B[40;91mWARNING: Running as a GGS. Make sure you know what you're doing!\x1B[0m");
-                server::core::startup();
+                server::startup();
             }
         }
     }
@@ -56,9 +54,9 @@ fn main() {
     // Register all the assets we need loaded.
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
-        .with_collection::<MapAssets>()
-        .with_collection::<FontAssets>()
-        .with_collection::<AnimatorAssets>()
+        .with_collection::<assets::MapAssets>()
+        .with_collection::<assets::FontAssets>()
+        .with_collection::<assets::AnimatorAssets>()
         .build(&mut app);
     // Add plugins and systems to our app, then run it!
     app
@@ -73,7 +71,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
-                .with_system(systems::netty::startup_checks)
+                .with_system(resources::Netty::system_startup_checks)
                 .with_system(systems::cursor::spawn)
         )
         .add_system_set(
@@ -102,26 +100,28 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
-                .with_system(systems::netty::server_list)
+                .with_system(resources::Netty::system_server_list)
         )
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
                 .with_system(resources::Reality::system_server_list_renderer)
         )
         .add_system(systems::cursor::cursor)
-        .insert_resource(resources::TextBox::init())
         .add_system(systems::text_box::text_box)
-        .insert_resource(resources::Netty::init())
-        .add_system(systems::netty::step)
-        .insert_resource(resources::ui::UIManager::init())
+        .add_system(resources::Netty::system_step)
         .add_system(resources::ui::ui_scene)
         .add_system(resources::ui::ui_game)
         .add_system(resources::ui::ui_manager)
         .add_system(resources::ui::ui_quick_exit)
         .add_system(resources::ui::ui_close_pause_menu)
         .add_system(resources::ui::ui_disconnect_game)
+        .add_system(resources::ui::ui_invite_menu)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
+        .insert_resource(resources::TextBox::init())
+        .insert_resource(resources::Netty::init())
+        .insert_resource(resources::ui::UIManager::init())
+        .insert_resource(resources::Disk::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_chunk_loader)
@@ -130,39 +130,8 @@ fn main() {
                 .with_system(resources::Reality::system_camera_updater)
                 .with_system(resources::Reality::system_player_locator)
                 .with_system(resources::Reality::system_pause_renderer)
+                .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Animator::system_player_animator)
         )
         .run();
-}
-
-// Below are the assets used in this application.
-// TODO: These should probably be moved to assets.rs or something.
-
-#[derive(AssetCollection)]
-pub struct MapAssets {
-    #[asset(path = "core.ldtk")]
-    player: Handle<ldtk::LDtkMap>,
-}
-
-#[derive(AssetCollection, Clone)]
-pub struct FontAssets {
-    #[asset(path = "font/apple_tea.ttf")]
-    _apple_tea: Handle<Font>,
-    #[asset(path = "font/simvoni/regular.ttf")]
-    simvoni: Handle<Font>,
-    #[asset(path = "font/simvoni/italic.ttf")]
-    _simvoni_italic: Handle<Font>,
-    #[asset(path = "font/simvoni/bold.ttf")]
-    _simvoni_bold: Handle<Font>,
-    #[asset(path = "font/simvoni/bolditalic.ttf")]
-    _simvoni_bold_italic: Handle<Font>,
-    /// WARNING: DEPRECATED FONT
-    #[asset(path = "font/kreative_square.ttf")]
-    kreative_square: Handle<Font>
-}
-
-#[derive(AssetCollection)]
-pub struct AnimatorAssets {
-    #[asset(path = "player/placeholder.png")]
-    placeholder: Handle<Image>
 }

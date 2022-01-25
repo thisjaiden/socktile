@@ -5,16 +5,38 @@
  * https://github.com/StarArawn/bevy_ecs_tilemap/blob/main/examples/ldtk/ldtk.rs
  * WHICH IS UNDER AN OPEN-SOURCE MIT LICENSE.
  */
-use bevy::asset::{AssetLoader, LoadContext, BoxedFuture, LoadedAsset, AssetPath};
-use bevy::prelude::*;
-use bevy::reflect::TypeUuid;
-use bevy::utils::HashMap;
+use bevy::{
+    utils::HashMap,
+    reflect::TypeUuid,
+    prelude::*,
+    asset::{
+        AssetLoader,
+        LoadContext,
+        BoxedFuture,
+        LoadedAsset,
+        AssetPath
+    }
+};
 
-use crate::FontAssets;
-use crate::components::GamePosition;
-use crate::components::ldtk::{TileMarker, InGameTile};
-use crate::layers::{BACKGROUND, UI_TEXT};
-use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
+use crate::{
+    assets::FontAssets,
+    components::{
+        GamePosition,
+        ldtk::{
+            TileMarker,
+            InGameTile
+        }
+    },
+    consts::{
+        BACKGROUND,
+        UI_TEXT
+    },
+    resources::ui::{
+        UIManager,
+        UIClickable,
+        UIClickAction
+    }
+};
 
 pub struct CollisionMapPart {
     pub chunk: (isize, isize),

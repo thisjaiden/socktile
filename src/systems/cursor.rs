@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy::render::camera::Camera;
-use crate::FontAssets;
+use crate::assets::FontAssets;
 use crate::{components::CursorMarker};
-use crate::layers::CURSOR;
+use crate::consts::CURSOR;
 
 pub fn cursor(
     windows: Res<Windows>,

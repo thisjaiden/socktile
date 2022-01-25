@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::camera::Camera as BevyCam};
+use bevy::{prelude::*, render::camera::Camera as BevyCam, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, player::Player, saves::{user, User}}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, MapAssets, FontAssets, layers::{UI_TEXT, PLAYER_CHARACTERS}, AnimatorAssets};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::{user, User}}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
 
@@ -13,7 +13,8 @@ pub struct Reality {
     loaded_chunks: Vec<(isize, isize)>,
     owns_server: bool,
     pause_menu: MenuState,
-    collision_map: CollisionMap
+    collision_map: CollisionMap,
+    players_to_move: HashMap<User, GamePosition>
 }
 
 impl Reality {
@@ -27,7 +28,8 @@ impl Reality {
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
-            collision_map: CollisionMap::new()
+            collision_map: CollisionMap::new(),
+            players_to_move: HashMap::default()
         }
     }
     pub fn no_collision(&mut self) -> bool {
@@ -41,6 +43,9 @@ impl Reality {
     }
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
+    }
+    pub fn queue_player_move(&mut self, p: User, l: GamePosition) {
+        self.players_to_move.insert(p, l);
     }
     pub fn set_player_position(&mut self, position: GamePosition) {
         self.player_position = position;
@@ -64,10 +69,10 @@ impl Reality {
     pub fn add_chunk(&mut self, _chunk_position: (isize, isize), _chunk_data: Vec<(usize, usize, TerrainState)>) {
         println!("Reality::add_chunk needs finishing");
     }
-    pub fn add_online_players(&mut self, players: Vec<Player>) {
-        for player in players {
-            if player.user != user().unwrap() {
-                self.players_to_spawn.push((player.user, player.location));
+    pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
+        for (euser, pos) in players {
+            if euser != user().unwrap() {
+                self.players_to_spawn.push((euser, pos));
             }
         }
     }
@@ -96,7 +101,7 @@ impl Reality {
             for chunk in selfs.chunks_to_load.clone() {
                 if !selfs.loaded_chunks.contains(&chunk) {
                     println!("Loading chunk at ({:?})", chunk);
-                    let a = maps.get_mut(target_maps.player.clone()).unwrap();
+                    let a = maps.get_mut(target_maps.core.clone()).unwrap();
                     let cmappt = crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
                     selfs.cmappt_new(cmappt);
                     selfs.loaded_chunks.push(chunk);
@@ -109,14 +114,13 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         assets: Res<AnimatorAssets>,
         mut commands: Commands,
-
     ) {
         for (user, location) in selfs.players_to_spawn.clone() {
             commands.spawn_bundle(SpriteBundle {
                 transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
                 texture: assets.placeholder.clone(),
                 ..Default::default()
-            }).insert(PlayerMarker { user });
+            }).insert(PlayerMarker { user, isme: false });
         }
         selfs.players_to_spawn.clear();
     }
@@ -234,11 +238,33 @@ impl Reality {
             }
             MenuState::Queued => {
                 // Spawn menu
+                let m_color = if selfs.owns_server {
+                    Color::BLACK
+                }
+                else {
+                    Color::GRAY
+                };
                 commands.spawn_bundle(Text2dBundle {
                     text: Text {
                         sections: vec![
                             TextSection {
-                                value: String::from("Resume\nInvite\nSettings\nExit"),
+                                value: String::from("Resume\n"),
+                                style: TextStyle {
+                                    font: fonts.simvoni.clone(),
+                                    font_size: 55.0,
+                                    color: Color::BLACK
+                                }
+                            },
+                            TextSection {
+                                value: String::from("Invite\n"),
+                                style: TextStyle {
+                                    font: fonts.simvoni.clone(),
+                                    font_size: 55.0,
+                                    color: m_color
+                                }
+                            },
+                            TextSection {
+                                value: String::from("Settings\nExit"),
                                 style: TextStyle {
                                     font: fonts.simvoni.clone(),
                                     font_size: 55.0,
@@ -285,6 +311,27 @@ impl Reality {
             }
         }
     }
+    pub fn system_pause_invite(
+        mut tb: ResMut<crate::resources::TextBox>,
+        mut netty: ResMut<Netty>,
+        mut selfs: ResMut<Reality>
+    ) {
+        if tb.grab_buffer().contains('\n') {
+            if !tb.grab_buffer().contains('#') {
+                // do nothing, invalid
+                // TODO: tell the user about it
+                return
+            }
+            let mut strs = tb.grab_buffer();
+            strs = String::from(strs.trim_end_matches('\n'));
+            netty.say(Packet::WhitelistUser(User {
+                username: tb.grab_buffer().split('#').nth(0).unwrap().to_string(),
+                tag: strs.split('#').nth(1).unwrap().parse::<u16>().unwrap()
+            }));
+            tb.clear_buffer();
+            selfs.pause_closed();
+        }
+    }
     pub fn system_camera_updater(
         selfs: ResMut<Reality>,
         mut camera: Query<&mut Transform, Or<(With<BevyCam>, With<PauseMenuMarker>)>>
@@ -295,12 +342,21 @@ impl Reality {
         });
     }
     pub fn system_player_locator(
-        selfs: Res<Reality>,
-        mut player: Query<&mut Transform, With<PlayerMarker>>
+        mut selfs: ResMut<Reality>,
+        mut player: Query<(&mut Transform, &mut PlayerMarker)>
     ) {
-        let mut location = player.single_mut();
-        location.translation.x = selfs.player_position.x as f32;
-        location.translation.y = selfs.player_position.y as f32;
+        player.for_each_mut(|(mut l, m)| {
+            if m.isme {
+                l.translation.x = selfs.player_position.x as f32;
+                l.translation.y = selfs.player_position.y as f32;
+            }
+            if selfs.players_to_move.contains_key(&m.user) {
+                let which = selfs.players_to_move.get(&m.user).unwrap();
+                l.translation.x = which.x as f32;
+                l.translation.y = which.y as f32;
+            }
+        });
+        selfs.players_to_move.clear();
     }
     pub fn system_server_list_renderer(
         mut commands: Commands,

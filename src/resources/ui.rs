@@ -1,8 +1,8 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, MapAssets, GameState, FontAssets, layers::PLAYER_CHARACTERS, shared::{netty::Packet, saves::user}, AnimatorAssets};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet, saves::user}};
 
-use super::{Netty, Reality};
+use super::{Netty, Reality, TextBox};
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
@@ -180,7 +180,7 @@ pub fn ui_game(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: user().unwrap() });
+            }).insert(PlayerMarker { user: user().unwrap(), isme: true });
             netty.say(Packet::JoinWorld(game_id));
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();
@@ -207,6 +207,62 @@ pub fn ui_close_pause_menu(
         man.next();
         man.reset_ui();
         selfs.pause_closed();
+    }
+}
+
+pub fn ui_invite_menu(
+    mut commands: Commands,
+    mut man: ResMut<UIManager>,
+    fonts: Option<Res<FontAssets>>,
+    desps: Query<Entity, With<PauseMenuMarker>>,
+    mut tb: ResMut<TextBox>
+) {
+    if man.gameplay_trigger() == Some(String::from("InvitePlayer")) {
+        man.next();
+        man.reset_ui();
+        desps.for_each(|e| {
+            commands.entity(e).despawn();
+        });
+        commands.spawn_bundle(Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::from("What player? (ex PlayerName#1234)\n"),
+                        style: TextStyle {
+                            font: fonts.as_ref().unwrap().simvoni.clone(),
+                            font_size: 55.0,
+                            color: Color::BLACK
+                        }
+                    }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
+                }
+            },
+            transform: Transform::from_xyz(0.0, -100.0, UI_TEXT),
+            ..Default::default()
+        }).insert(PauseMenuMarker {});
+        commands.spawn_bundle(Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: fonts.as_ref().unwrap().simvoni.clone(),
+                            font_size: 55.0,
+                            color: Color::BLACK
+                        }
+                    }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
+                }
+            },
+            ..Default::default()
+        }).insert(crate::components::TextBox {});
+        tb.clear_buffer();
     }
 }
 
@@ -264,7 +320,7 @@ pub fn ui_scene(
             if let Some(mut maps) = mapsatt {
                 if let Some(goto) = man.scene_changes() {
                     man.reset_ui();
-                    let a = maps.get_mut(target_maps.player.clone()).unwrap();
+                    let a = maps.get_mut(target_maps.core.clone()).unwrap();
                     let level = a.get_level(goto.as_str());
                     load_level(unloads, level, a, texture_atlases, font_assets.clone(), man, &mut commands);
                     match goto.as_str() {
