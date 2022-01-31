@@ -171,17 +171,29 @@ pub fn startup() -> ! {
                         if player_info == None {
                             player_info = Some((owner.clone(), GamePosition { x: 0.0, y: 0.0 }));
                         }
-                        saves[world_index].data.players.push(player_info.clone().unwrap());
+                        let player_info = player_info.unwrap();
+                        let mut other_players = vec![];
+                        for (user, _) in saves[world_id].data.players.clone() {
+                            let ip = ip_by_user.get(&user).expect("A user online on a server had no IP address");
+                            other_players.push((Packet::PlayerConnected(owner.clone(), player_info.1), *ip));
+                        }
+                        if !saves[world_index].data.players.contains(&player_info) {
+                            saves[world_index].data.players.push(player_info.clone());
+                        }
+                        else {
+                            println!("Warning: a player joined a server they were already in");
+                        }
                         let owner = owner.clone();
                         server_by_user.insert(owner.clone(), world_index);
                         let spawn_centre_chnks_lack = (
-                            (player_info.clone().unwrap().1.x / 32.0).round() as isize,
-                            (player_info.clone().unwrap().1.y / 32.0).round() as isize
+                            (player_info.1.x / 32.0).round() as isize,
+                            (player_info.1.y / 32.0).round() as isize
                         );
                         let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::JoinedGame(player_info.clone().unwrap().1, saves[world_id].owner == owner), from));
+                        func_send.push((Packet::JoinedGame(player_info.1, saves[world_id].owner == owner), from));
                         func_send.push((Packet::OnlinePlayers(saves[world_id].data.players.clone()), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
+                        func_send.append(&mut other_players);
                         drop(func_send);
                     }
                     Packet::AvalableServers => {
