@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::Camera as BevyCam, utils::HashMap};
+use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
 use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::{user, User}}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
@@ -31,6 +31,9 @@ impl Reality {
             collision_map: CollisionMap::new(),
             players_to_move: HashMap::default()
         }
+    }
+    pub fn reset(&mut self) {
+        *self = Reality::init();
     }
     pub fn no_collision(&mut self) -> bool {
         !self.collision_map.has_stuff()
@@ -334,7 +337,7 @@ impl Reality {
     }
     pub fn system_camera_updater(
         selfs: ResMut<Reality>,
-        mut camera: Query<&mut Transform, Or<(With<BevyCam>, With<PauseMenuMarker>)>>
+        mut camera: Query<&mut Transform, Or<(With<Camera>, With<PauseMenuMarker>)>>
     ) {
         camera.for_each_mut(|mut campos| {
             campos.translation.x = selfs.player_position.x as f32;

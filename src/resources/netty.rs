@@ -16,7 +16,7 @@ impl Netty {
     pub fn init() -> Netty {
         println!("Netty initalizing!");
 
-        let l_ggs = if DEV_BUILD {
+        let l_ggs = if DEV_ADDRS {
             DEV_GGS
         }
         else {
@@ -126,8 +126,14 @@ impl Netty {
                 Packet::OnlinePlayers(players) => {
                     reality.add_online_players(players);
                 }
+                Packet::PlayerConnected(user, pos) => {
+                    reality.add_online_players(vec![(user, pos)]);
+                }
                 Packet::PlayerPositionUpdate(p, l) => {
-                    reality.queue_player_move(p, l)
+                    reality.queue_player_move(p, l);
+                }
+                Packet::Whitelisted => {
+                    // do nothing
                 }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
@@ -172,17 +178,11 @@ pub enum ConnectionStatus {
 }
 
 pub fn remote_exists(ggs: &str) -> bool {
-    if online::sync::check(Some(5)).is_ok() {
-        if std::net::TcpStream::connect_timeout(&ggs.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
-            true
-        }
-        else {
-            println!("No connection to the GGS avalable.");
-            false
-        }
+    if std::net::TcpStream::connect_timeout(&ggs.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
+        true
     }
     else {
-        println!("No internet connection avalable.");
+        println!("No connection to the GGS avalable.");
         false
     }
 }

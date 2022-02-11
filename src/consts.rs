@@ -9,13 +9,17 @@ pub const CURSOR: f32 = 250.0;
 
 /// Is this an internal dev build?
 pub const DEV_BUILD: bool = true;
+/// Should development server addresses be used?
+pub const DEV_ADDRS: bool = false;
+/// Allow a GGS to be run from this build?
+pub const ALLOW_GGS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-12";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-13";
 /// Port for network connections
 pub const NETTY_PORT: &str = "11111";
 /// Standard global game server address
-pub const GGS: &str = "lumen.place:11111";
+pub const GGS: &str = "69.180.176.49:11111";
 /// Global game server address for dev builds (localhost, essentially)
 pub const DEV_GGS: &str = "127.0.0.1:11111";

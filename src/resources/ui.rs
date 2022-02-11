@@ -271,6 +271,7 @@ pub fn ui_disconnect_game(
     mut man: ResMut<UIManager>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
+    mut reality: ResMut<Reality>,
     mut qset: QuerySet<(
         QueryState<Entity, With<PlayerMarker>>,
         QueryState<Entity, With<TileMarker>>,
@@ -302,6 +303,7 @@ pub fn ui_disconnect_game(
             removed_on_use: false
         });
         man.clicked((0.0, 0.0));
+        reality.reset();
     }
 }
 

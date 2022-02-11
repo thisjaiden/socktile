@@ -39,6 +39,8 @@ fn main() {
         // Allow GGS to be run if it's a dev build, and warn about distribution.
         println!("\x1B[40;91mWARNING: This is an internal build. All software is property of and (c) Jaiden Bernard. Do not share this software without permission from the property owners.\x1B[0m");
         println!("Sidenote: if you just built this from GitHub, do as you will. This doesn't apply to you.");
+    }
+    if consts::ALLOW_GGS {
         let mut args = std::env::args();
         args.next();
         if let Some(argument) = args.next() {
@@ -61,7 +63,6 @@ fn main() {
     // Add plugins and systems to our app, then run it!
     app
         .add_plugins(DefaultPlugins)
-        .add_plugin(benimator::AnimationPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(ldtk::LDtkPlugin)
         .add_state(GameState::Load)

@@ -178,7 +178,9 @@ pub fn startup() -> ! {
                             other_players.push((Packet::PlayerConnected(owner.clone(), player_info.1), *ip));
                         }
                         if !saves[world_index].data.players.contains(&player_info) {
+                            println!("{player_info:?} joined server {world_index}.");
                             saves[world_index].data.players.push(player_info.clone());
+                            println!("List of online players: {:?}", saves[world_index].data.players.clone());
                         }
                         else {
                             println!("Warning: a player joined a server they were already in");
@@ -229,26 +231,26 @@ pub fn startup() -> ! {
                     }
                     Packet::RequestMove(pos) => {
                         // TODO: buffer moves every 10ms to save net space
+                        println!("moverequest");
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestMove(GamePosition)");
                         
                         let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
-                        
-                        let mut self_index = None;
 
-                        for (index, player) in saves[*server].data.players.iter().enumerate() {
+                        let tmplist = saves[*server].data.players.clone();
+
+                        let playerindex = tmplist.iter().enumerate().find(|e| {
+                            e.1.0 == *owner
+                        }).expect("Player not online in server they are connected to");
+
+                        for player in saves[*server].data.players.iter() {
                             let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested move");
                             // send data
-                            if this_ip == &from {
-                                // but not to the mover
-                                self_index = Some(index);
-                                break;
-                            }
                             let mut func_send = send.lock().unwrap();
                             func_send.push((Packet::PlayerPositionUpdate(owner.clone(), pos), *this_ip));
                             drop(func_send);
                         }
                         // save data to server
-                        saves[*server].data.players[self_index.expect("Owner does not have a datablock in a server.")].1 = pos;
+                        saves[*server].data.players[playerindex.0].1 = pos;
                     }
                     Packet::LeaveWorld => {
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::LeaveWorld");

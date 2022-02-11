@@ -1,9 +1,7 @@
 pub use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-use crate::{components::{ldtk::PlayerMarker, GamePosition}, assets::AnimatorAssets};
-
-use super::Reality;
+use crate::{components::{ldtk::PlayerMarker}, assets::AnimatorAssets};
 
 pub struct Animator {
     player_prev_pos: HashMap<PlayerMarker, Transform>,
