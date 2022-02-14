@@ -127,6 +127,7 @@ fn main() {
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_chunk_loader)
                 .with_system(resources::Reality::system_player_loader)
+                .with_system(resources::Reality::system_player_unloader)
                 .with_system(resources::Reality::system_player_controls)
                 .with_system(resources::Reality::system_camera_updater)
                 .with_system(resources::Reality::system_player_locator)

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager}, shared::{netty::Packet, saves::{User, save_user, user}}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
 
 pub fn text_box(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -15,6 +15,7 @@ pub fn user_creation(
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
+    mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<TileMarker>>,
     mut maps: ResMut<Assets<LDtkMap>>,
     texture_atlases: ResMut<Assets<TextureAtlas>>,
@@ -37,10 +38,10 @@ pub fn user_creation(
                 username: mode.clone(),
                 tag: 0
             }));
-            save_user(User {
-                username: mode,
+            while !disk.update_user(User {
+                username: mode.clone(),
                 tag: 0
-            });
+            }) {}
             tb.clear_buffer();
             state.replace(GameState::TitleScreen).unwrap();
             commands.entity(entity).despawn_recursive();
@@ -57,6 +58,7 @@ pub fn game_creation(
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
+    disk: Res<Disk>,
     materials: Res<AnimatorAssets>,
     unloads: Query<Entity, With<TileMarker>>
 ) {
@@ -83,7 +85,7 @@ pub fn game_creation(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: user().unwrap(), isme: true });
+            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
 
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();

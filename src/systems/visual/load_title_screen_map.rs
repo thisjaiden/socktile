@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{assets::{MapAssets, FontAssets}, ldtk::{LDtkMap, load_level}, components::ldtk::TileMarker, shared::{saves::user, netty::Packet}, GameState, resources::{ui::UIManager, Netty}};
+use crate::{assets::{MapAssets, FontAssets}, ldtk::{LDtkMap, load_level}, components::ldtk::TileMarker, shared::{netty::Packet}, GameState, resources::{ui::UIManager, Netty, Disk}};
 
 pub fn load_title_screen_map(
     mut commands: Commands,
@@ -10,13 +10,14 @@ pub fn load_title_screen_map(
     mut state: ResMut<State<GameState>>,
     font_assets: Res<FontAssets>,
     uiman: ResMut<UIManager>,
-    mut netty: ResMut<Netty>
+    mut netty: ResMut<Netty>,
+    disk: Res<Disk>
 ) {
-    if user().is_some() {
+    if disk.user().is_some() {
         let a = maps.get_mut(target_maps.core.clone()).unwrap();
         let level = a.get_level("Title_screen");
         load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
-        netty.say(Packet::UserPresence(user().unwrap()));
+        netty.say(Packet::UserPresence(disk.user().unwrap()));
     }
     else {
         state.set(GameState::MakeUser).unwrap();

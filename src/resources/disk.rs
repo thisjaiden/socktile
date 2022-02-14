@@ -16,10 +16,15 @@ impl Disk {
         let user_data = std::fs::read(user_path);
         let user: Option<User>;
         if let Ok(data) = user_data {
-            user = Some(
-                bincode::deserialize(&data)
-                    .expect("Encountered courrupted profile data.")
-            );
+            let att = bincode::deserialize(&data);
+            if let Ok(desered) = att {
+                user = Some(desered);
+            }
+            else {
+                println!("WARNING: Encountered courrupted profile data. Resetting data.");
+                println!("Error causing a faliure: {}", att.expect_err("unreachable condition"));
+                user = None;
+            }
         }
         else {
             user = None;
@@ -52,6 +57,24 @@ impl Disk {
         if let Ok(bytes) = window_config_data {
             if std::fs::write(window_config_path, bytes).is_ok() {
                 self.window_config = new;
+                return true;
+            }
+            false
+        }
+        else {
+            false
+        }
+    }
+    pub fn user(&self) -> Option<User> {
+        self.user.clone()
+    }
+    pub fn update_user(&mut self, new: User) -> bool {
+        let mut user_path = files_dir();
+        user_path.push("user_profile.bic");
+        let user_data = bincode::serialize(&new);
+        if let Ok(bytes) = user_data {
+            if std::fs::write(user_path, bytes).is_ok() {
+                self.user = Some(new);
                 return true;
             }
             false

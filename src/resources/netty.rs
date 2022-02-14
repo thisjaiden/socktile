@@ -1,10 +1,10 @@
-use crate::{GameState, consts::*, shared::{netty::Packet, saves::save_user}};
+use crate::{GameState, consts::*, shared::netty::Packet};
 
 use std::{net::TcpStream, sync::{Arc, Mutex}};
 
 use bevy::prelude::*;
 
-use super::Reality;
+use super::{Reality, Disk};
 
 pub struct Netty {
     connection: ConnectionStatus,
@@ -92,7 +92,7 @@ impl Netty {
         out.push(packet);
         drop(out);
     }
-    pub fn step(&mut self, reality: &mut Reality) {
+    pub fn step(&mut self, reality: &mut Reality, disk: &mut Disk) {
         let mut input = self.input.lock().unwrap();
         let pkts = input.clone();
         input.clear();
@@ -100,7 +100,7 @@ impl Netty {
         for packet in pkts {
             match packet {
                 Packet::CreatedUser(user) => {
-                    save_user(user);
+                    while !disk.update_user(user.clone()) {};
                     println!("Saved new user information.");
                 }
                 Packet::AllSet => {
@@ -129,6 +129,9 @@ impl Netty {
                 Packet::PlayerConnected(user, pos) => {
                     reality.add_online_players(vec![(user, pos)]);
                 }
+                Packet::PlayerDisconnected(user) => {
+                    reality.disconnect_player(user);
+                }
                 Packet::PlayerPositionUpdate(p, l) => {
                     reality.queue_player_move(p, l);
                 }
@@ -156,9 +159,10 @@ impl Netty {
     }
     pub fn system_step(
         mut netty: ResMut<Netty>,
-        mut reality: ResMut<Reality>
+        mut reality: ResMut<Reality>,
+        mut disk: ResMut<Disk>,
     ) {
-        netty.step(&mut reality);
+        netty.step(&mut reality, &mut disk);
     }
     pub fn system_server_list(
         mut netty: ResMut<Netty>,

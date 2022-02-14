@@ -1,8 +1,8 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::{user, User}}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
-use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}};
+use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk};
 
 pub struct Reality {
     player_position: GamePosition,
@@ -10,6 +10,7 @@ pub struct Reality {
     push_servers: bool,
     chunks_to_load: Vec<(isize, isize)>,
     players_to_spawn: Vec<(User, GamePosition)>,
+    players_to_despawn: Vec<User>,
     loaded_chunks: Vec<(isize, isize)>,
     owns_server: bool,
     pause_menu: MenuState,
@@ -25,6 +26,7 @@ impl Reality {
             push_servers: false,
             chunks_to_load: vec![],
             players_to_spawn: vec![],
+            players_to_despawn: vec![],
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
@@ -74,10 +76,11 @@ impl Reality {
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
         for (euser, pos) in players {
-            if euser != user().unwrap() {
-                self.players_to_spawn.push((euser, pos));
-            }
+            self.players_to_spawn.push((euser, pos));
         }
+    }
+    pub fn disconnect_player(&mut self, player: User) {
+        self.players_to_despawn.push(player);
     }
     pub fn set_avalable_servers(&mut self, servers: Vec<GameListing>) {
         self.avalable_servers = servers;
@@ -116,16 +119,31 @@ impl Reality {
     pub fn system_player_loader(
         mut selfs: ResMut<Reality>,
         assets: Res<AnimatorAssets>,
-        mut commands: Commands,
+        disk: Res<Disk>,
+        mut commands: Commands
     ) {
         for (user, location) in selfs.players_to_spawn.clone() {
-            commands.spawn_bundle(SpriteBundle {
-                transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
-                texture: assets.placeholder.clone(),
-                ..Default::default()
-            }).insert(PlayerMarker { user, isme: false });
+            if user != disk.user().unwrap() {
+                commands.spawn_bundle(SpriteBundle {
+                    transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
+                    texture: assets.placeholder.clone(),
+                    ..Default::default()
+                }).insert(PlayerMarker { user, isme: false });
+            }
         }
         selfs.players_to_spawn.clear();
+    }
+    pub fn system_player_unloader(
+        mut selfs: ResMut<Reality>,
+        mut unloads: Query<(Entity, &mut PlayerMarker)>,
+        mut commands: Commands
+    ) {
+        unloads.for_each_mut(|(e, m)| {
+            if selfs.players_to_despawn.contains(&m.user) {
+                commands.entity(e).despawn();
+            }
+        });
+        selfs.players_to_despawn.clear();
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
@@ -342,6 +360,10 @@ impl Reality {
         camera.for_each_mut(|mut campos| {
             campos.translation.x = selfs.player_position.x as f32;
             campos.translation.y = selfs.player_position.y as f32;
+            if selfs.loaded_chunks.is_empty() {
+                campos.translation.x = 0.0;
+                campos.translation.y = 0.0;
+            }
         });
     }
     pub fn system_player_locator(

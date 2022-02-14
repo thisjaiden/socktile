@@ -263,7 +263,7 @@ pub fn startup() -> ! {
                             if this_ip == &from {
                                 // but not to the disconnector
                                 self_index = Some(index);
-                                break;
+                                continue;
                             }
                             let mut func_send = send.lock().unwrap();
                             func_send.push((Packet::PlayerDisconnected(owner.clone()), *this_ip));

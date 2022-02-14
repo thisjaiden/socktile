@@ -1,8 +1,8 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet, saves::user}};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
 
-use super::{Netty, Reality, TextBox};
+use super::{Netty, Reality, TextBox, Disk};
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
@@ -167,7 +167,8 @@ pub fn ui_game(
     target_materials: Option<Res<AnimatorAssets>>,
     mut state: ResMut<State<GameState>>,
     mut netty: ResMut<Netty>,
-    mut man: ResMut<UIManager>
+    mut man: ResMut<UIManager>,
+    disk: Res<Disk>
 ) {
     if let Some(materials) = target_materials {
         if let Some(game_id) = man.join_game() {
@@ -180,7 +181,7 @@ pub fn ui_game(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: user().unwrap(), isme: true });
+            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
             netty.say(Packet::JoinWorld(game_id));
             unloads.for_each(|e| {
                 commands.entity(e).despawn_recursive();
