@@ -19,6 +19,9 @@ pub struct GamePosition {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct PauseMenuMarker {}
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+pub struct TitleScreenUser {}
+
 pub mod ldtk {
     use crate::shared::saves::User;
     use bevy::prelude::Component;

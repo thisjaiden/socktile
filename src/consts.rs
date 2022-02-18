@@ -10,7 +10,7 @@ pub const CURSOR: f32 = 250.0;
 /// Is this an internal dev build?
 pub const DEV_BUILD: bool = true;
 /// Should development server addresses be used?
-pub const DEV_ADDRS: bool = false;
+pub const DEV_ADDRS: bool = true;
 /// Allow a GGS to be run from this build?
 pub const ALLOW_GGS: bool = true;
 

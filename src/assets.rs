@@ -18,7 +18,7 @@ pub struct FontAssets {
     #[asset(path = "font/simvoni/italic.ttf")]
     _simvoni_italic: Handle<Font>,
     #[asset(path = "font/simvoni/bold.ttf")]
-    _simvoni_bold: Handle<Font>,
+    pub simvoni_bold: Handle<Font>,
     #[asset(path = "font/simvoni/bolditalic.ttf")]
     _simvoni_bold_italic: Handle<Font>,
     /// WARNING: DEPRECATED FONT

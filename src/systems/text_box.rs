@@ -24,7 +24,7 @@ pub fn user_creation(
     uiman: ResMut<UIManager>
 ) {
     let (entity, mut text) = tb_q.single_mut();
-    text.sections[0].value = tb.grab_buffer() + "#0000";
+    text.sections[0].value = tb.grab_buffer() + "#????";
     if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
         text.sections[0].style.color = Color::RED;
     }

@@ -135,5 +135,9 @@ fn main() {
                 .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Animator::system_player_animator)
         )
+        .add_system_set(
+            SystemSet::on_update(GameState::TitleScreen)
+                .with_system(systems::visual::update_title_screen_user)
+        )
         .run();
 }

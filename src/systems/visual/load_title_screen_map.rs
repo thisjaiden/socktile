@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{assets::{MapAssets, FontAssets}, ldtk::{LDtkMap, load_level}, components::ldtk::TileMarker, shared::{netty::Packet}, GameState, resources::{ui::UIManager, Netty, Disk}};
+use crate::{assets::{MapAssets, FontAssets}, ldtk::{LDtkMap, load_level}, components::ldtk::TileMarker, components::TitleScreenUser, shared::{netty::Packet}, GameState, resources::{ui::UIManager, Netty, Disk}, consts::UI_TEXT};
 
 pub fn load_title_screen_map(
     mut commands: Commands,
@@ -17,6 +17,30 @@ pub fn load_title_screen_map(
         let a = maps.get_mut(target_maps.core.clone()).unwrap();
         let level = a.get_level("Title_screen");
         load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
+        commands.spawn_bundle(Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: font_assets.simvoni_bold.clone(),
+                            font_size: 44.0,
+                            color: Color::BLACK
+                        }
+                    }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Left
+                }
+            },
+            transform: Transform::from_xyz(
+                -(1920.0 / 2.0),
+                -(1080.0 / 2.0) + 32.0,
+                UI_TEXT
+            ),
+            ..Default::default()
+        }).insert(TitleScreenUser {});
         netty.say(Packet::UserPresence(disk.user().unwrap()));
     }
     else {

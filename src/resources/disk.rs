@@ -12,7 +12,7 @@ pub struct Disk {
 impl Disk {
     pub fn init() -> Disk {
         let mut user_path = files_dir();
-        user_path.push("profile.bic");
+        user_path.push("user_profile.bic");
         let user_data = std::fs::read(user_path);
         let user: Option<User>;
         if let Ok(data) = user_data {
