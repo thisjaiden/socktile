@@ -63,7 +63,7 @@ fn main() {
     // Add plugins and systems to our app, then run it!
     app
         .add_plugins(DefaultPlugins)
-        .add_plugin(bevy_kira_audio::AudioPlugin)
+        //.add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(ldtk::LDtkPlugin)
         .add_state(GameState::Load)
         .add_system_set(
@@ -138,6 +138,7 @@ fn main() {
         .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
                 .with_system(systems::visual::update_title_screen_user)
+                .with_system(systems::visual::update_title_screen_camera)
         )
         .run();
 }

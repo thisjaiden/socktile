@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::{LDtkMap, CollisionMapPart, CollisionMap, CollisionState}, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk};
 
@@ -14,7 +14,6 @@ pub struct Reality {
     loaded_chunks: Vec<(isize, isize)>,
     owns_server: bool,
     pause_menu: MenuState,
-    collision_map: CollisionMap,
     players_to_move: HashMap<User, GamePosition>
 }
 
@@ -30,21 +29,11 @@ impl Reality {
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
-            collision_map: CollisionMap::new(),
             players_to_move: HashMap::default()
         }
     }
     pub fn reset(&mut self) {
         *self = Reality::init();
-    }
-    pub fn no_collision(&mut self) -> bool {
-        !self.collision_map.has_stuff()
-    }
-    pub fn cmappt_new(&mut self, cmappt: CollisionMapPart) {
-        self.collision_map.add_part(cmappt);
-    }
-    pub fn get_point(&mut self, pt: GamePosition) -> CollisionState {
-        self.collision_map.point_is(pt)
     }
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
@@ -108,8 +97,7 @@ impl Reality {
                 if !selfs.loaded_chunks.contains(&chunk) {
                     println!("Loading chunk at ({:?})", chunk);
                     let a = maps.get_mut(target_maps.core.clone()).unwrap();
-                    let cmappt = crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
-                    selfs.cmappt_new(cmappt);
+                    crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
                     selfs.loaded_chunks.push(chunk);
                 }
             }
@@ -151,9 +139,6 @@ impl Reality {
         mut uiman: ResMut<UIManager>,
         keyboard: Res<Input<KeyCode>>
     ) {
-        if selfs.no_collision() {
-            return;
-        }
         let mut had_movement = false;
         let mut new_pos = selfs.player_position;
         // move
@@ -181,61 +166,6 @@ impl Reality {
                 selfs.pause_menu = MenuState::Closed;
                 uiman.reset_ui();
             }
-        }
-        // TODO: if collided, send back
-        let o_l_tl = GamePosition {
-            x: selfs.player_position.x - 30.0,
-            y: selfs.player_position.y + 30.0
-        };
-        let o_l_tr = GamePosition {
-            x: selfs.player_position.x + 30.0,
-            y: selfs.player_position.y + 30.0
-        };
-        let o_l_bl = GamePosition {
-            x: selfs.player_position.x - 30.0,
-            y: selfs.player_position.y - 30.0
-        };
-        let o_l_br = GamePosition {
-            x: selfs.player_position.x + 30.0,
-            y: selfs.player_position.y - 30.0
-        };
-        let o_p_tl = selfs.get_point(o_l_tl);
-        let o_p_tr = selfs.get_point(o_l_tr);
-        let o_p_bl = selfs.get_point(o_l_bl);
-        let o_p_br = selfs.get_point(o_l_br);
-        let o_arr = [o_p_tl, o_p_tr, o_p_bl, o_p_br];
-        let n_l_tl = GamePosition {
-            x: new_pos.x - 30.0,
-            y: new_pos.y + 30.0
-        };
-        let n_l_tr = GamePosition {
-            x: new_pos.x + 30.0,
-            y: new_pos.y + 30.0
-        };
-        let n_l_bl = GamePosition {
-            x: new_pos.x - 30.0,
-            y: new_pos.y - 30.0
-        };
-        let n_l_br = GamePosition {
-            x: new_pos.x + 30.0,
-            y: new_pos.y - 30.0
-        };
-        let n_p_tl = selfs.get_point(n_l_tl);
-        let n_p_tr = selfs.get_point(n_l_tr);
-        let n_p_bl = selfs.get_point(n_l_bl);
-        let n_p_br = selfs.get_point(n_l_br);
-        let n_arr = [n_p_tl, n_p_tr, n_p_bl, n_p_br];
-        if n_arr.contains(&CollisionState::Wall) {
-            had_movement = false;
-        }
-        if n_arr.contains(&CollisionState::Elevated) && o_arr.contains(&CollisionState::Ground) {
-            had_movement = false
-        }
-        if n_arr.contains(&CollisionState::Ground) && o_arr.contains(&CollisionState::Elevated) {
-            had_movement = false;
-        }
-        if !o_arr.contains(&CollisionState::Water) && n_arr.contains(&CollisionState::Water) {
-            had_movement = false
         }
         // send to server
         if had_movement {

@@ -40,7 +40,9 @@ pub fn load_title_screen_map(
                 UI_TEXT
             ),
             ..Default::default()
-        }).insert(TitleScreenUser {});
+        })
+        .insert(TitleScreenUser {})
+        .insert(TileMarker {});
         netty.say(Packet::UserPresence(disk.user().unwrap()));
     }
     else {

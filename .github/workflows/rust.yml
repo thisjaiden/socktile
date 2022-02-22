@@ -21,7 +21,7 @@ jobs:
     - name: Install libudev
       run: sudo apt-get install libudev-dev
     - name: Build
-      run: cargo build --release
+      run: cargo build
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check
@@ -31,7 +31,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: target/release/socktile
+        path: target/debug/socktile
         name: nix_build
         retention-days: 3
   build-macos:
@@ -41,7 +41,7 @@ jobs:
     - name: Install zld
       run: brew install michaeleisel/zld/zld
     - name: Build
-      run: cargo build --release
+      run: cargo build
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check
@@ -51,7 +51,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: target/release/socktile
+        path: target/debug/socktile
         name: macos_build
         retention-days: 3
   build-windows:
@@ -59,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --release
+      run: cargo build
     - name: Install Clippy
       run: rustup component add clippy
     - name: Check
@@ -69,6 +69,6 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: target/release/socktile.exe
+        path: target/debug/socktile.exe
         name: windows_build
         retention-days: 3
