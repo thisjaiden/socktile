@@ -2,83 +2,67 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the state of a single tile of terrain.
-pub enum TerrainState {
-    // tileset_example
-    TEFullGround,
-    TEBottomLine,
-    TELeftBottomLine,
-    TELeftLine,
-    TEWater,
-    TEBottomLeftCorner,
-    TEWall,
-    TERightLine
+pub struct TerrainState {
+    pub tileset: usize,
+    pub tile: usize
 }
 
 impl TerrainState {
-    pub fn from_tile(tileset: usize, tile: usize) -> TerrainState {
-        match tileset {
-            0 => {
-                match tile {
-                    0 => return Self::TEFullGround,
-                    1 => return Self::TEBottomLine,
-                    2 => return Self::TELeftBottomLine,
-                    3 => return Self::TELeftLine,
-                    4 => return Self::TEWater,
-                    5 => return Self::TEBottomLeftCorner,
-                    6 => return Self::TEWall,
-                    7 => return Self::TERightLine,
-                    _ => panic!("an unregistered tile was used.")
-                }
-            }
-            _ => panic!("an unregistered tileset was used.")
-        }
-    }
     pub fn collides(&mut self, other: (f32, f32, f32, f32)) -> bool {
         self.collider_type().is_colliding(other)
     }
     fn collider_type(&mut self) -> ColliderType {
-        match self {
-            Self::TEFullGround => ColliderType::None,
-            Self::TEBottomLine => ColliderType::DownThin,
-            Self::TELeftBottomLine => ColliderType::LeftDownThin,
-            Self::TELeftLine => ColliderType::LeftThin,
-            Self::TEWater => ColliderType::All,
-            Self::TEBottomLeftCorner => ColliderType::None,
-            Self::TEWall => ColliderType::All,
-            Self::TERightLine => ColliderType::RightThin
+        match self.tileset {
+            0 => {
+                match self.tile {
+                    0 => ColliderType::GenericTopLeft,
+                    1 => ColliderType::GenericTop,
+                    2 => ColliderType::GenericTopRight,
+                    3 => ColliderType::GenericInverseTopLeft,
+                    4 => ColliderType::GenericInverseTopRight,
+                    8 => ColliderType::GenericLeft,
+                    10 => ColliderType::GenericRight,
+                    11 => ColliderType::GenericInverseBottomLeft,
+                    12 => ColliderType::GenericInverseBottomRight,
+                    16 => ColliderType::GenericBottomLeft,
+                    17 => ColliderType::GenericBottom,
+                    18 => ColliderType::GenericBottomRight,
+                    9 | 19 | 24..=28 | 32 | 34..=36 | 40..=42 => ColliderType::GenericNone,
+                    _ => panic!("Invalid tile in generic tileset!")
+                }
+            }
+            _ => panic!("Unknown tileset!")
         }
     }
 }
 
 pub enum ColliderType {
     // No collider
-    None,
+    GenericNone,
     // Whole object is a collider
-    All,
+    GenericAll,
     // Thin colliders prevent movement across the respective sides of the tile
-    DownThin,
-    LeftThin,
-    RightThin,
-    UpThin,
-    LeftDownThin,
-    RightDownThin,
-    UpDownThin,
-    LeftUpThin,
-    LeftRightThin,
-    RightUpThin,
+    GenericTopLeft,
+    GenericTop,
+    GenericTopRight,
+    GenericLeft,
+    GenericRight,
+    GenericBottomLeft,
+    GenericBottom,
+    GenericBottomRight,
+    GenericInverseTopLeft,
+    GenericInverseTopRight,
+    GenericInverseBottomLeft,
+    GenericInverseBottomRight,
 }
 
 impl ColliderType {
     fn collider_dimensions(&mut self) -> &[(f32, f32, f32, f32)] {
         match self {
-            Self::None => return &[(0.0, 0.0, 0.0, 0.0)],
-            Self::All => return &[(0.0, 0.0, 64.0, 64.0)],
-            Self::DownThin => return &[(0.0, 0.0, 64.0, 1.0)],
-            Self::LeftThin => return &[(0.0, 0.0, 1.0, 64.0)],
-            Self::RightThin => return &[(63.0, 0.0, 1.0, 64.0)],
-            Self::UpThin => return &[(0.0, 63.0, 64.0, 1.0)],
-            Self::LeftDownThin => return &[(0.0, 0.0, 64.0, 1.0), (0.0, 0.0, 1.0, 64.0)],
-            Self::RightDownThin => return &[(63.0, 0.0, 1.0, 64.0), (0.0, 0.0, 64.0, 1.0)],
+            Self::GenericNone => return &[(0.0, 0.0, 0.0, 0.0)],
+            Self::GenericAll => return &[(0.0, 0.0, 64.0, 64.0)],
+            Self::GenericTopLeft => return &[(26.0, 0.0, 6.0, 64.0), (32.0, 32.0, 32.0, 6.0)],
+            Self::GenericTop => return &[(0.0, 32.0, 64.0, 6.0)],
             _ => todo!()
         }
     }

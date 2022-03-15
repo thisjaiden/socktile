@@ -36,7 +36,10 @@ pub mod ldtk {
     }
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-    pub struct InGameTile {
-        pub chunk: (isize, isize)
+    pub struct Tile {
+        pub chunk: (isize, isize),
+        pub position: (usize, usize),
+        /// (Spritesheet index, Sprite index)
+        pub sprite: (usize, usize)
     }
 }

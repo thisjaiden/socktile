@@ -22,7 +22,7 @@ use crate::{
     assets::FontAssets,
     components::ldtk::{
         TileMarker,
-        InGameTile
+        Tile
     },
     consts::{
         BACKGROUND,
@@ -105,7 +105,14 @@ pub fn load_chunk(
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as usize),
                         ..Default::default()
-                    }).insert(InGameTile { chunk });
+                    }).insert(Tile {
+                        chunk,
+                        position: (
+                            (tile.px[0] / 64) as usize,
+                            17 - (tile.px[1] / 64) as usize
+                        ),
+                        sprite: (tileset_id as usize, tileset_tile_id as usize)
+                    });
                 }
                 
             }

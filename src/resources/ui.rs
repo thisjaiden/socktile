@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, InGameTile}, PauseMenuMarker, TitleScreenUser}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, TitleScreenUser}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
 
 use super::{Netty, Reality, TextBox, Disk};
 
@@ -254,6 +254,14 @@ pub fn ui_invite_menu(
                             font_size: 55.0,
                             color: Color::BLACK
                         }
+                    },
+                    TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: fonts.as_ref().unwrap().simvoni.clone(),
+                            font_size: 55.0,
+                            color: Color::GRAY
+                        }
                     }
                 ],
                 alignment: TextAlignment {
@@ -261,6 +269,7 @@ pub fn ui_invite_menu(
                     horizontal: HorizontalAlign::Center
                 }
             },
+            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()
         }).insert(crate::components::TextBox {});
         tb.clear_buffer();
@@ -276,7 +285,7 @@ pub fn ui_disconnect_game(
     mut qset: QuerySet<(
         QueryState<Entity, With<PlayerMarker>>,
         QueryState<Entity, With<TileMarker>>,
-        QueryState<Entity, With<InGameTile>>,
+        QueryState<Entity, With<Tile>>,
         QueryState<Entity, With<PauseMenuMarker>>
     )>,
 ) {

@@ -125,6 +125,7 @@ fn main() {
         .insert_resource(resources::Disk::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
+                .with_system(resources::Reality::system_pause_menu)
                 .with_system(resources::Reality::system_chunk_loader)
                 .with_system(resources::Reality::system_player_loader)
                 .with_system(resources::Reality::system_player_unloader)

@@ -92,14 +92,12 @@ impl Reality {
         target_maps: Res<MapAssets>,
         fonts: Res<FontAssets>
     ) {
-        if !selfs.chunks_to_load.is_empty() {
-            for chunk in selfs.chunks_to_load.clone() {
-                if !selfs.loaded_chunks.contains(&chunk) {
-                    println!("Loading chunk at ({:?})", chunk);
-                    let a = maps.get_mut(target_maps.core.clone()).unwrap();
-                    crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
-                    selfs.loaded_chunks.push(chunk);
-                }
+        for chunk in selfs.chunks_to_load.clone() {
+            if !selfs.loaded_chunks.contains(&chunk) {
+                println!("Loading chunk at ({:?})", chunk);
+                let a = maps.get_mut(target_maps.core.clone()).unwrap();
+                crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
+                selfs.loaded_chunks.push(chunk);
             }
         }
         selfs.chunks_to_load.clear();
@@ -133,10 +131,24 @@ impl Reality {
         });
         selfs.players_to_despawn.clear();
     }
+    pub fn system_pause_menu(
+        mut selfs: ResMut<Reality>,
+        mut uiman: ResMut<UIManager>,
+        keyboard: Res<Input<KeyCode>>
+    ) {
+        if keyboard.just_pressed(KeyCode::Escape) {
+            if selfs.pause_menu == MenuState::Closed {
+                selfs.pause_menu = MenuState::Queued;
+            }
+            else {
+                selfs.pause_menu = MenuState::Closed;
+                uiman.reset_ui();
+            }
+        }
+    }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
         mut netty: ResMut<Netty>,
-        mut uiman: ResMut<UIManager>,
         keyboard: Res<Input<KeyCode>>
     ) {
         let mut had_movement = false;
@@ -158,15 +170,7 @@ impl Reality {
             new_pos.x += 4.0;
             had_movement = true;
         }
-        if keyboard.just_pressed(KeyCode::Escape) {
-            if selfs.pause_menu == MenuState::Closed {
-                selfs.pause_menu = MenuState::Queued;
-            }
-            else {
-                selfs.pause_menu = MenuState::Closed;
-                uiman.reset_ui();
-            }
-        }
+        
         // send to server
         if had_movement {
             selfs.set_player_position(new_pos);
@@ -265,12 +269,22 @@ impl Reality {
     pub fn system_pause_invite(
         mut tb: ResMut<crate::resources::TextBox>,
         mut netty: ResMut<Netty>,
-        mut selfs: ResMut<Reality>
+        mut selfs: ResMut<Reality>,
+        mut tbe: Query<&mut Text, With<crate::components::TextBox>>
     ) {
+        tbe.for_each_mut(|mut textable| {
+            textable.sections[0].value = tb.grab_buffer();
+            if !tb.grab_buffer().contains('#') {
+                textable.sections[1].value = String::from("#????");
+            }
+            else {
+                textable.sections[1].value = String::new();
+            }
+        });
         if tb.grab_buffer().contains('\n') {
             if !tb.grab_buffer().contains('#') {
-                // do nothing, invalid
-                // TODO: tell the user about it
+                // do nothing, invalid without a tag
+                tb.eat_buffer();
                 return
             }
             let mut strs = tb.grab_buffer();
