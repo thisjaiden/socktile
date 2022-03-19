@@ -46,5 +46,4 @@ pub struct AnimatorAssets {
     pub face_left: Handle<Image>,
     #[asset(path = "player/placeholder.png")]
     pub face_right: Handle<Image>
-
 }

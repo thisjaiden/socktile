@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk};
 
@@ -149,32 +149,112 @@ impl Reality {
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
         mut netty: ResMut<Netty>,
-        keyboard: Res<Input<KeyCode>>
+        keyboard: Res<Input<KeyCode>>,
+        tiles: Query<&mut Tile>
     ) {
-        let mut had_movement = false;
-        let mut new_pos = selfs.player_position;
-        // move
-        if keyboard.pressed(KeyCode::W) {
-            new_pos.y += 4.0;
-            had_movement = true;
-        }
-        if keyboard.pressed(KeyCode::S) {
-            new_pos.y -= 4.0;
-            had_movement = true;
-        }
-        if keyboard.pressed(KeyCode::A) {
-            new_pos.x -= 4.0;
-            had_movement = true;
-        }
-        if keyboard.pressed(KeyCode::D) {
-            new_pos.x += 4.0;
-            had_movement = true;
-        }
-        
-        // send to server
-        if had_movement {
-            selfs.set_player_position(new_pos);
-            netty.say(Packet::RequestMove(selfs.player_position));
+        if keyboard.any_pressed([KeyCode::W, KeyCode::S, KeyCode::A, KeyCode::D]) {
+            let centered_chunk = (
+                ((selfs.player_position.x + (1920.0 / 2.0)) / 1920.0) as isize,
+                ((selfs.player_position.y + (1088.0 / 2.0)) / 1088.0) as isize
+            );
+            let centered_tile = (
+                ((selfs.player_position.x - (1920 * centered_chunk.0) as f64 + (1920.0 / 2.0)) / 64.0) as isize,
+                ((selfs.player_position.y - (1088 * centered_chunk.1) as f64 + (1088.0 / 2.0)) / 64.0) as isize + 1
+            );
+            let needed_tiles = [
+                centered_tile,
+                (centered_tile.0, centered_tile.1 + 1),
+                (centered_tile.0, centered_tile.1 - 1),
+                (centered_tile.0 + 1, centered_tile.1 + 1),
+                (centered_tile.0 + 1, centered_tile.1 - 1),
+                (centered_tile.0 + 1, centered_tile.1),
+                (centered_tile.0 - 1, centered_tile.1 + 1),
+                (centered_tile.0 - 1, centered_tile.1 - 1),
+                (centered_tile.0 - 1, centered_tile.1),
+            ];
+            let mut needed_pairs = vec![];
+            let mut needed_chunks = vec![];
+            for tile in needed_tiles {
+                if tile.0 == -1 && tile.1 != 0 {
+                    needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1), (29, tile.1 as usize)));
+                    if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1)) {
+                        needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1));
+                    }
+                }
+                else if tile.0 != -1 && tile.1 == 0 {
+                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 - 1), (tile.0 as usize, 17)));
+                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 - 1)) {
+                        needed_chunks.push((centered_chunk.0, centered_chunk.1 - 1));
+                    }
+                }
+                else if tile.0 == -1 && tile.1 == 0 {
+                    needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 - 1), (29, 17)));
+                    if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 - 1)) {
+                        needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 - 1));
+                    }
+                }
+                else {
+                    needed_pairs.push((centered_chunk, (tile.0 as usize, tile.1 as usize)));
+                    if !needed_chunks.contains(&centered_chunk) {
+                        needed_chunks.push(centered_chunk);
+                    }
+                }
+            }
+            let mut pulled_tiles = vec![];
+            tiles.for_each(|tile| {
+                if needed_chunks.contains(&tile.chunk) {
+                    for (chunk, n_tile) in &needed_pairs {
+                        if tile.chunk == *chunk && tile.position == *n_tile {
+                            pulled_tiles.push(tile);
+                        }
+                    }
+                }
+            });
+            let mut had_movement = false;
+            let mut new_pos = selfs.player_position;
+            // move
+            if keyboard.pressed(KeyCode::W) {
+                new_pos.y += 4.0;
+                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                    had_movement = true;
+                }
+                else {
+                    new_pos.y -= 4.0;
+                }
+            }
+            if keyboard.pressed(KeyCode::S) {
+                new_pos.y -= 4.0;
+                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                    had_movement = true;
+                }
+                else {
+                    new_pos.y += 4.0;
+                }
+            }
+            if keyboard.pressed(KeyCode::A) {
+                new_pos.x -= 4.0;
+                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                    had_movement = true;
+                }
+                else {
+                    new_pos.x += 4.0;
+                }
+            }
+            if keyboard.pressed(KeyCode::D) {
+                new_pos.x += 4.0;
+                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                    had_movement = true;
+                }
+                else {
+                    new_pos.x -= 4.0;
+                }
+            }
+            
+            // send to server
+            if had_movement {
+                selfs.set_player_position(new_pos);
+                netty.say(Packet::RequestMove(selfs.player_position));
+            }
         }
     }
     pub fn system_pause_renderer(
@@ -371,4 +451,20 @@ pub enum MenuState {
     Closed,
     Queued,
     Open
+}
+
+/// true if collided, false otherwise
+fn calc_player_against_tiles(tiles: &[&Tile], player: (f64, f64)) -> bool {
+    for tile in tiles {
+        let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
+        let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
+        let mut state = TerrainState {
+            tileset: tile.sprite.0,
+            tile: tile.sprite.1
+        };
+        if state.collides(player, offset_x, offset_y) {
+            return true;
+        }
+    }
+    false
 }
