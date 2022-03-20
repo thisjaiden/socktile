@@ -17,7 +17,8 @@ use crate::{
         netty::Packet,
         saves::User,
         world::World,
-        listing::GameListing
+        listing::GameListing,
+        player::PlayerData
     }
 };
 use serde::{
@@ -169,11 +170,11 @@ pub fn startup() -> ! {
                             }
                         }
                         if player_info == None {
-                            player_info = Some((owner.clone(), GamePosition { x: 0.0, y: 0.0 }));
+                            player_info = Some((owner.clone(), GamePosition { x: 0.0, y: 0.0 }, PlayerData::new()));
                         }
                         let player_info = player_info.unwrap();
                         let mut other_players = vec![];
-                        for (user, _) in saves[world_id].data.players.clone() {
+                        for (user, _, _) in saves[world_id].data.players.clone() {
                             let ip = ip_by_user.get(&user).expect("A user online on a server had no IP address");
                             other_players.push((Packet::PlayerConnected(owner.clone(), player_info.1), *ip));
                         }
@@ -189,9 +190,14 @@ pub fn startup() -> ! {
                             (player_info.1.x / 32.0).round() as isize,
                             (player_info.1.y / 32.0).round() as isize
                         );
+                        let mut constructable_players = vec![];
+                        for (us, gp, _) in &saves[world_id].data.players {
+                            constructable_players.push((us.clone(), *gp));
+                        }
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.1, saves[world_id].owner == owner), from));
-                        func_send.push((Packet::OnlinePlayers(saves[world_id].data.players.clone()), from));
+                        func_send.push((Packet::InventoryState(player_info.2.inventory), from));
+                        func_send.push((Packet::OnlinePlayers(constructable_players), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         func_send.append(&mut other_players);
                         drop(func_send);

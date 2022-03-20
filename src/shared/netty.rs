@@ -4,7 +4,8 @@ use crate::{
         object::Object,
         saves::User,
         terrain::TerrainState,
-        listing::GameListing
+        listing::GameListing,
+        player::Inventory
     }
 };
 
@@ -62,6 +63,9 @@ pub enum Packet {
     /// A client has been connected. Send them their position.
     /// (Player Position, Owns Server)
     JoinedGame(GamePosition, bool),
+    /// Inital state of a user's inventory.
+    /// (Inventory)
+    InventoryState(Inventory),
     /// A list of online users for a given world
     /// (Array (User, Position))
     OnlinePlayers(Vec<(User, GamePosition)>),
@@ -106,7 +110,7 @@ pub enum Packet {
     Whitelisted,
     /// A user has joined the game.
     /// (User, Initial Position)
-    PlayerConnected(User, GamePosition)
+    PlayerConnected(User, GamePosition),
 }
 
 impl Packet {

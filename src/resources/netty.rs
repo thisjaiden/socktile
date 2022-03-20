@@ -4,7 +4,7 @@ use std::{net::TcpStream, sync::{Arc, Mutex}};
 
 use bevy::prelude::*;
 
-use super::{Reality, Disk};
+use super::{Reality, Disk, chat::ChatMessage};
 
 pub struct Netty {
     connection: ConnectionStatus,
@@ -136,7 +136,28 @@ impl Netty {
                     reality.queue_player_move(p, l);
                 }
                 Packet::Whitelisted => {
-                    // do nothing
+                    reality.queue_chat(ChatMessage {
+                        text: String::from("User added to whitelist!"),
+                        color: Color::BLACK,
+                        sent_at: std::time::Instant::now()
+                    });
+                }
+                Packet::NoWhitelistPermission => {
+                    reality.queue_chat(ChatMessage {
+                        text: String::from("You don't have permission to whitelist other users."),
+                        color: Color::RED,
+                        sent_at: std::time::Instant::now()
+                    });
+                }
+                Packet::UnwhitelistableUser => {
+                    reality.queue_chat(ChatMessage {
+                        text: String::from("Unable to whitelist user. (Did you spell everything right?)"),
+                        color: Color::RED,
+                        sent_at: std::time::Instant::now()
+                    });
+                }
+                Packet::InventoryState(inventory) => {
+                    reality.set_inventory(inventory);
                 }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);

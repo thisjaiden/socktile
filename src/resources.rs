@@ -10,3 +10,5 @@ mod animator;
 pub use animator::Animator;
 mod disk;
 pub use disk::Disk;
+mod chat;
+pub use chat::Chat;

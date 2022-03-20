@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::components::GamePosition;
 
-use super::{object::Object, terrain::TerrainState, saves::User};
+use super::{object::Object, terrain::TerrainState, saves::User, player::PlayerData};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct World {
-    pub players: Vec<(User, GamePosition)>,
-    pub offline_players: Vec<(User, GamePosition)>,
+    pub players: Vec<(User, GamePosition, PlayerData)>,
+    pub offline_players: Vec<(User, GamePosition, PlayerData)>,
     pub terrain_changes: Vec<((isize, isize), Vec<(usize, usize, TerrainState)>)>,
     pub objects: Vec<Object>
 }

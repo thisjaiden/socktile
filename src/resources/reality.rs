@@ -1,17 +1,28 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
-use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk};
+use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage};
 
 pub struct Reality {
+    /// Player's current position
     player_position: GamePosition,
+    /// Player's data
+    player: PlayerData,
+    /// Queued chat messages
+    chat_messages: Vec<ChatMessage>,
+    /// Servers that can be joined
     avalable_servers: Vec<GameListing>,
     push_servers: bool,
+    /// Chunks that need to be loaded
     chunks_to_load: Vec<(isize, isize)>,
+    /// Players to spawn in and load
     players_to_spawn: Vec<(User, GamePosition)>,
+    /// Players to unload
     players_to_despawn: Vec<User>,
+    /// Chunks that are currently loaded
     loaded_chunks: Vec<(isize, isize)>,
+    /// Is this server owned by the active player?
     owns_server: bool,
     pause_menu: MenuState,
     players_to_move: HashMap<User, GamePosition>
@@ -21,6 +32,8 @@ impl Reality {
     pub fn init() -> Reality {
         Reality {
             player_position: GamePosition { x: 0.0, y: 0.0 },
+            player: PlayerData::new(),
+            chat_messages: vec![],
             avalable_servers: vec![],
             push_servers: false,
             chunks_to_load: vec![],
@@ -40,6 +53,17 @@ impl Reality {
     }
     pub fn queue_player_move(&mut self, p: User, l: GamePosition) {
         self.players_to_move.insert(p, l);
+    }
+    pub fn set_inventory(&mut self, inventory: Inventory) {
+        self.player.inventory = inventory;
+    }
+    pub fn pull_messages(&mut self) -> Vec<ChatMessage> {
+        let a = self.chat_messages.clone();
+        self.chat_messages.clear();
+        return a;
+    }
+    pub fn queue_chat(&mut self, msg: ChatMessage) {
+        self.chat_messages.push(msg);
     }
     pub fn set_player_position(&mut self, position: GamePosition) {
         self.player_position = position;

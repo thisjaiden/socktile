@@ -30,20 +30,28 @@ pub struct FontAssets {
 pub struct AnimatorAssets {
     #[asset(path = "player/placeholder.png")]
     pub placeholder: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/up.png")]
     pub face_up: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/up_right.png")]
     pub face_up_right: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/up_left.png")]
     pub face_up_left: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/down.png")]
     pub face_down: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/down_left.png")]
     pub face_down_left: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/down_right.png")]
     pub face_down_right: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/left.png")]
     pub face_left: Handle<Image>,
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/right.png")]
     pub face_right: Handle<Image>
+}
+
+#[derive(AssetCollection)]
+pub struct UIAssets {
+    #[asset(path = "ui/slot.png")]
+    pub slot: Handle<Image>,
+    #[asset(path = "ui/selected.png")]
+    pub selected: Handle<Image>
 }

@@ -59,6 +59,7 @@ fn main() {
         .with_collection::<assets::MapAssets>()
         .with_collection::<assets::FontAssets>()
         .with_collection::<assets::AnimatorAssets>()
+        .with_collection::<assets::UIAssets>()
         .build(&mut app);
     // Add plugins and systems to our app, then run it!
     app
@@ -123,6 +124,7 @@ fn main() {
         .insert_resource(resources::Netty::init())
         .insert_resource(resources::ui::UIManager::init())
         .insert_resource(resources::Disk::init())
+        .insert_resource(resources::Chat::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_pause_menu)
@@ -135,6 +137,8 @@ fn main() {
                 .with_system(resources::Reality::system_pause_renderer)
                 .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Animator::system_player_animator)
+                .with_system(resources::Chat::system_display_chat)
+                .with_system(resources::Chat::system_pull_messages)
         )
         .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
