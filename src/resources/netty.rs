@@ -28,7 +28,7 @@ impl Netty {
         if !remote_exists(l_ggs) {
             stat = ConnectionStatus::NoGGS;
         }
-        if online::sync::check(Some(5)).is_err() {
+        if !google_exists() {
             stat = ConnectionStatus::NoInternet;
         }
         if stat == ConnectionStatus::NoInternet && DEV_BUILD {
@@ -208,6 +208,15 @@ pub fn remote_exists(ggs: &str) -> bool {
     }
     else {
         println!("No connection to the GGS avalable.");
+        false
+    }
+}
+
+pub fn google_exists() -> bool {
+    if std::net::TcpStream::connect_timeout(&"172.217.1.110:80".parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
+        true
+    }
+    else {
         false
     }
 }

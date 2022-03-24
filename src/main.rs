@@ -141,6 +141,10 @@ fn main() {
                 .with_system(resources::Chat::system_pull_messages)
         )
         .add_system_set(
+            SystemSet::on_enter(GameState::Play)
+                .with_system(resources::Chat::system_init)
+        )
+        .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
                 .with_system(systems::visual::update_title_screen_user)
                 .with_system(systems::visual::update_title_screen_camera)

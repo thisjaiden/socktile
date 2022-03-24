@@ -16,6 +16,11 @@ pub struct GamePosition {
     pub y: f64
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Component)]
+pub struct ChatBox {
+    pub location: usize
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct PauseMenuMarker {}
 

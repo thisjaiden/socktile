@@ -12,7 +12,7 @@ pub struct MapAssets {
 #[derive(AssetCollection, Clone)]
 pub struct FontAssets {
     #[asset(path = "font/apple_tea.ttf")]
-    _apple_tea: Handle<Font>,
+    pub apple_tea: Handle<Font>,
     #[asset(path = "font/simvoni/regular.ttf")]
     pub simvoni: Handle<Font>,
     #[asset(path = "font/simvoni/italic.ttf")]

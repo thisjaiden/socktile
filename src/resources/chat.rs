@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::{components::ChatBox, consts::UI_TEXT, assets::FontAssets};
+
 use super::Reality;
 
 pub struct Chat {
@@ -14,11 +16,57 @@ impl Chat {
     }
     fn add_message(&mut self, msg: ChatMessage) {
         self.history.push(msg);
-        // todo: cleanse pool if needed
+        self.history.sort_by(|a, b| a.sent_at.elapsed().cmp(&b.sent_at.elapsed()));
+        while self.history.len() > 10 {
+            self.history.pop();
+        }
+    }
+    pub fn system_init(
+        mut commands: Commands,
+        fonts: ResMut<FontAssets>
+    ) {
+        for index in 0..10 {
+            commands.spawn_bundle(Text2dBundle {
+                text: Text {
+                    sections: vec![
+                        TextSection {
+                            value: String::new(),
+                            style: TextStyle {
+                                font: fonts.apple_tea.clone(),
+                                font_size: 32.0,
+                                color: Color::BLACK
+                            }
+                        }
+                    ],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Left
+                    }
+                },
+                transform: Transform::from_xyz(-(1920.0 / 2.0), -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32), UI_TEXT),
+                ..Default::default()
+            }).insert(ChatBox { location: index });
+        }
     }
     pub fn system_display_chat(
+        selfs: Res<Chat>,
+        mut boxes: Query<(&mut Text, &mut ChatBox)>
     ) {
-
+        boxes.for_each_mut(|(mut text, thisbox)| {
+            if thisbox.location < selfs.history.len() {
+                let thismsg = &selfs.history[thisbox.location];
+                let mut iso_color = thismsg.color.clone();
+                let midalpha = iso_color.a() - (0.01 * thismsg.sent_at.elapsed().as_secs_f32());
+                if midalpha < 0.0 {
+                    iso_color.set_a(0.0);
+                }
+                else {
+                    iso_color.set_a(midalpha);
+                }
+                text.sections[0].value = thismsg.text.clone();
+                text.sections[0].style.color = iso_color;
+            }
+        });
     }
     pub fn system_pull_messages(
         mut selfs: ResMut<Chat>,
