@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::ChatBox, consts::UI_TEXT, assets::FontAssets};
+use crate::{components::{ChatBox, UILocked}, consts::UI_TEXT, assets::FontAssets};
 
 use super::Reality;
 
@@ -45,14 +45,16 @@ impl Chat {
                 },
                 transform: Transform::from_xyz(-(1920.0 / 2.0), -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32), UI_TEXT),
                 ..Default::default()
-            }).insert(ChatBox { location: index });
+            }).insert(ChatBox { location: index }).insert(UILocked {});
         }
     }
     pub fn system_display_chat(
         selfs: Res<Chat>,
-        mut boxes: Query<(&mut Text, &mut ChatBox)>
+        mut boxes: Query<(&mut Text, &ChatBox, &mut Transform)>
     ) {
-        boxes.for_each_mut(|(mut text, thisbox)| {
+        boxes.for_each_mut(|(mut text, thisbox, mut loc)| {
+            loc.translation.x = -(1920.0 / 2.0);
+            loc.translation.y = -(1080.0 / 2.0) + 12.0 + (40.0 * thisbox.location as f32);
             if thisbox.location < selfs.history.len() {
                 let thismsg = &selfs.history[thisbox.location];
                 let mut iso_color = thismsg.color.clone();

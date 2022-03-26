@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
 
 use super::{Netty, Reality, TextBox, Disk};
 
@@ -143,20 +143,11 @@ pub enum UIClickAction {
 pub fn ui_manager(
     btn: Res<Input<MouseButton>>,
     mut man: ResMut<UIManager>,
-    mut qset: QuerySet<(
-        QueryState<&mut Transform, With<CursorMarker>>,
-        QueryState<&mut Transform, With<Camera>>
-    )>,
+    mut query: Query<&mut Transform, With<CursorMarker>>,
 ) {
-    let mut camx = 0.0;
-    let mut camy = 0.0;
-    for transform in qset.q1().iter_mut() {
-        camx = transform.translation.x;
-        camy = transform.translation.y;
-    }
     if btn.just_pressed(MouseButton::Left) {
-        for location in qset.q0().iter_mut() {
-            man.clicked((location.translation.x - camx, location.translation.y - camy));
+        for location in query.iter_mut() {
+            man.clicked((location.translation.x, location.translation.y));
         }
     }
 }
@@ -313,6 +304,9 @@ pub fn ui_disconnect_game(
             removed_on_use: false
         });
         man.clicked((0.0, 0.0));
+        // We do this so UI doesn't get misaligned
+        reality.set_player_position(GamePosition::zero());
+        // Fully reset because making things not conflict is hard :P
         reality.reset();
     }
 }

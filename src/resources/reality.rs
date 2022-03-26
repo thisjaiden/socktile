@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage};
 
@@ -31,7 +31,7 @@ pub struct Reality {
 impl Reality {
     pub fn init() -> Reality {
         Reality {
-            player_position: GamePosition { x: 0.0, y: 0.0 },
+            player_position: GamePosition::zero(),
             player: PlayerData::new(),
             chat_messages: vec![],
             avalable_servers: vec![],
@@ -402,16 +402,23 @@ impl Reality {
         }
     }
     pub fn system_camera_updater(
-        selfs: ResMut<Reality>,
-        mut camera: Query<&mut Transform, Or<(With<Camera>, With<PauseMenuMarker>)>>
+        selfs: Res<Reality>,
+        mut queries: QuerySet<(
+            QueryState<&mut Transform, Or<(With<Camera>, With<PauseMenuMarker>)>>,
+            QueryState<&mut Transform, With<UILocked>>
+        )>
     ) {
-        camera.for_each_mut(|mut campos| {
+        queries.q0().for_each_mut(|mut campos| {
             campos.translation.x = selfs.player_position.x as f32;
             campos.translation.y = selfs.player_position.y as f32;
             if selfs.loaded_chunks.is_empty() {
                 campos.translation.x = 0.0;
                 campos.translation.y = 0.0;
             }
+        });
+        queries.q1().for_each_mut(|mut transform| {
+            transform.translation.x += selfs.player_position.x as f32;
+            transform.translation.y += selfs.player_position.y as f32;
         });
     }
     pub fn system_player_locator(

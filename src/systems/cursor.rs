@@ -1,29 +1,19 @@
 use bevy::prelude::*;
-use bevy::render::camera::Camera;
 use crate::assets::FontAssets;
+use crate::components::UILocked;
 use crate::{components::CursorMarker};
 use crate::consts::CURSOR;
 
 pub fn cursor(
     windows: Res<Windows>,
-    mut qset: QuerySet<(
-        QueryState<&mut Transform, With<CursorMarker>>,
-        QueryState<&mut Transform, With<Camera>>
-    )>
+    mut query: Query<&mut Transform, With<CursorMarker>>
 ) {
-
-    let mut camx = 0.0;
-    let mut camy = 0.0;
-    for transform in qset.q1().iter_mut() {
-        camx = transform.translation.x;
-        camy = transform.translation.y;
-    }
-    for mut transform in qset.q0().iter_mut() {
+    for mut transform in query.iter_mut() {
         let p_window = windows.get_primary().unwrap();
         let cursor_pos = p_window.cursor_position();
         if let Some(position) = cursor_pos {
-            transform.translation.x = (position.x * 2.0) - (p_window.width() / 2.0) - 7.0 + camx;
-            transform.translation.y = (position.y * 2.0) - (p_window.height() / 2.0) + 5.0 + camy;
+            transform.translation.x = (position.x * 2.0) - (p_window.width() / 2.0) - 7.0;
+            transform.translation.y = (position.y * 2.0) - (p_window.height() / 2.0) + 5.0;
             transform.translation.z = CURSOR;
         }
     }
@@ -49,5 +39,5 @@ pub fn spawn(
         ),
         transform: Transform::from_xyz(0.0, 0.0, CURSOR),
         ..Default::default()
-    }).insert(CursorMarker {});
+    }).insert(CursorMarker {}).insert(UILocked {});
 }

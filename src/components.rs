@@ -16,15 +16,24 @@ pub struct GamePosition {
     pub y: f64
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Component)]
+impl GamePosition {
+    pub fn zero() -> GamePosition {
+        GamePosition { x: 0.0, y: 0.0 }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
 pub struct ChatBox {
     pub location: usize
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, Component)]
+pub struct UILocked {}
+
+#[derive(Clone, Copy, Debug, Component)]
 pub struct PauseMenuMarker {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+#[derive(Clone, Copy, Debug, Component)]
 pub struct TitleScreenUser {}
 
 pub mod ldtk {
