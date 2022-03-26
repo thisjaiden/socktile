@@ -30,8 +30,10 @@ pub struct ChatBox {
 #[derive(Clone, Copy, Debug, Component)]
 pub struct UILocked {}
 
-#[derive(Clone, Copy, Debug, Component)]
-pub struct PauseMenuMarker {}
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
+pub struct PauseMenuMarker {
+    pub type_: usize
+}
 
 #[derive(Clone, Copy, Debug, Component)]
 pub struct TitleScreenUser {}

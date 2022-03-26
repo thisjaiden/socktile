@@ -323,6 +323,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_embedded_assets"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8b2a2cac146732484758e5057609b1bede38b8e873b755a7af5c408d27b1aa1"
+dependencies = [
+ "bevy",
+ "cargo-emit",
+]
+
+[[package]]
 name = "bevy_gltf"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -758,6 +768,12 @@ name = "cache-padded"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
+
+[[package]]
+name = "cargo-emit"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1582e1c9e755dd6ad6b224dcffb135d199399a4568d454bd89fe515ca8425695"
 
 [[package]]
 name = "cargo-manifest"
@@ -2053,6 +2069,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_asset_loader",
+ "bevy_embedded_assets",
  "bincode",
  "ldtk_rust",
  "serde",

@@ -129,7 +129,14 @@ pub fn startup() -> ! {
                             world_id = last.internal_id + 1;
                         }
                         let mut path = save_folder();
-                        path.push(format!("{}_{}.bic", name, world_id));
+
+                        // This replaces invalid characters (ones that would break file paths) with "I".
+                        let mut rname = name.clone();
+                        rname = rname.replace(".", "I");
+                        rname = rname.replace("\\", "I");
+                        rname = rname.replace("/", "I");
+                        
+                        path.push(format!("{}_{}.bic", rname, world_id));
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
                         for (index, profile) in profiles.clone().into_iter().enumerate() {
                             if owner == &profile.user {

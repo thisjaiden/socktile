@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetLoader;
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 
 mod components;
 mod systems;
@@ -53,6 +54,10 @@ fn main() {
 
     // Create our Bevy app!
     let mut app = App::new();
+    // Use embedded assets
+    app.add_plugins_with(DefaultPlugins, |group| {
+        group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+    });
     // Register all the assets we need loaded.
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
@@ -63,7 +68,6 @@ fn main() {
         .build(&mut app);
     // Add plugins and systems to our app, then run it!
     app
-        .add_plugins(DefaultPlugins)
         //.add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(ldtk::LDtkPlugin)
         .add_state(GameState::Load)
@@ -132,9 +136,9 @@ fn main() {
                 .with_system(resources::Reality::system_player_loader)
                 .with_system(resources::Reality::system_player_unloader)
                 .with_system(resources::Reality::system_player_controls)
-                .with_system(resources::Reality::system_camera_updater.after("player"))
+                .with_system(resources::Reality::system_camera_updater.label("ui").after("player"))
                 .with_system(resources::Reality::system_player_locator.label("player"))
-                .with_system(resources::Reality::system_pause_renderer)
+                .with_system(resources::Reality::system_pause_renderer.before("ui"))
                 .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Chat::system_display_chat)

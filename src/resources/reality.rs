@@ -286,12 +286,12 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         mut uiman: ResMut<UIManager>,
         fonts: Res<FontAssets>,
-        desps: Query<Entity, With<PauseMenuMarker>>
+        mut desps: Query<(Entity, &mut Transform, &PauseMenuMarker)>
     ) {
         match selfs.pause_menu {
             MenuState::Closed => {
                 // Despawn any alive menu objects/ui
-                desps.for_each(|despawn| {
+                desps.for_each(|(despawn, _, _)| {
                     commands.entity(despawn).despawn();
                 });
             }
@@ -338,7 +338,7 @@ impl Reality {
                     },
                     transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                     ..Default::default()
-                }).insert(PauseMenuMarker {});
+                }).insert(PauseMenuMarker { type_: 1 }).insert(UILocked {});
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
                     location: (-150.0, 110.0 - 27.5),
@@ -367,6 +367,21 @@ impl Reality {
             }
             MenuState::Open => {
                 // Update menu (if applicable)
+                desps.for_each_mut(|(_, mut loc, type_)| {
+                    match type_.type_ {
+                        1 => {
+                            loc.translation.x = 0.0;
+                            loc.translation.y = 0.0;
+                        }
+                        2 => {
+                            loc.translation.x = 0.0;
+                            loc.translation.y = 100.0;
+                        }
+                        t => {
+                            println!("WARNING: Pause menu component has unkown type {t}!");
+                        }
+                    }
+                });
             }
         }
     }
@@ -393,10 +408,16 @@ impl Reality {
             }
             let mut strs = tb.grab_buffer();
             strs = String::from(strs.trim_end_matches('\n'));
-            netty.say(Packet::WhitelistUser(User {
-                username: tb.grab_buffer().split('#').nth(0).unwrap().to_string(),
-                tag: strs.split('#').nth(1).unwrap().parse::<u16>().unwrap()
-            }));
+            let tag = strs.split('#').nth(1).unwrap().parse::<u16>();
+            if let Ok(val) = tag {
+                netty.say(Packet::WhitelistUser(User {
+                    username: tb.grab_buffer().split('#').nth(0).unwrap().to_string(),
+                    tag: val
+                }));
+            }
+            else {
+                selfs.queue_chat(ChatMessage { text: String::from("Invalid user tag."), color: Color::RED, sent_at: std::time::Instant::now() });
+            }
             tb.clear_buffer();
             selfs.pause_closed();
         }
@@ -404,7 +425,7 @@ impl Reality {
     pub fn system_camera_updater(
         selfs: Res<Reality>,
         mut queries: QuerySet<(
-            QueryState<&mut Transform, Or<(With<Camera>, With<PauseMenuMarker>)>>,
+            QueryState<&mut Transform, With<Camera>>,
             QueryState<&mut Transform, With<UILocked>>
         )>
     ) {

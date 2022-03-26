@@ -10,5 +10,4 @@ Building
 ---
 Make sure you have [Rust](https://rust-lang.org) installed.  
 Clone the project, and run `cargo build --release` in the root directory. (Builds without the `--release` flag are extremely slow.)  
-Make sure to run the final executable from `target/release/socktile` with `/assets` in the same directory.  
 You can run a local gameserver by running the output executable with `--ggs`.
