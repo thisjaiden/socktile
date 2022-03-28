@@ -2,11 +2,30 @@ use bevy::prelude::*;
 
 use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
 
-pub fn text_box(
+pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
-    ra: Res<Input<KeyCode>>
+    mut char_evr: EventReader<ReceivedCharacter>,
+    keys: Res<Input<KeyCode>>
 ) {
-    tb.update_buffer(ra);
+    for char in char_evr.iter() {
+        tb.update_buffer(char.char);
+        if char.char == '\r' {
+            tb.eat_buffer();
+            tb.update_buffer('\n');
+        }
+    }
+    if keys.just_pressed(KeyCode::Back) {
+        tb.eat_buffer();
+    }
+}
+
+pub fn text_backspace(
+    mut tb: ResMut<crate::resources::TextBox>,
+    keys: Res<Input<KeyCode>>
+) {
+    if keys.just_pressed(KeyCode::Back) {
+        tb.eat_buffer();
+    }
 }
 
 pub fn user_creation(
