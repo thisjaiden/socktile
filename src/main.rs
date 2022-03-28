@@ -65,6 +65,7 @@ fn main() {
         .with_collection::<assets::FontAssets>()
         .with_collection::<assets::AnimatorAssets>()
         .with_collection::<assets::UIAssets>()
+        .with_collection::<assets::ItemAssets>()
         .build(&mut app);
     // Add plugins and systems to our app, then run it!
     app
@@ -139,6 +140,8 @@ fn main() {
                 .with_system(resources::Reality::system_camera_updater.label("ui").after("player"))
                 .with_system(resources::Reality::system_player_locator.label("player"))
                 .with_system(resources::Reality::system_pause_renderer.before("ui"))
+                .with_system(resources::Reality::system_position_hotbar.before("ui"))
+                .with_system(resources::Reality::system_scroll_hotbar)
                 .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Chat::system_display_chat)
@@ -146,6 +149,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Play)
+                .with_system(resources::Reality::system_spawn_hotbar)
                 .with_system(resources::Chat::system_init)
         )
         .add_system_set(

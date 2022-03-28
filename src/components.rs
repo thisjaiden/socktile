@@ -35,6 +35,12 @@ pub struct PauseMenuMarker {
     pub type_: usize
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
+pub struct HotbarMarker {
+    pub location: usize,
+    pub type_: usize
+}
+
 #[derive(Clone, Copy, Debug, Component)]
 pub struct TitleScreenUser {}
 

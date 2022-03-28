@@ -21,15 +21,23 @@ impl PlayerData {
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct Inventory {
-
+    pub selected_slot: usize,
+    pub hotbar: [Item; 10]
 }
 
 impl Inventory {
     pub fn empty() -> Inventory {
         Inventory {
-
+            selected_slot: 0,
+            hotbar: [Item::None; 10]
         }
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
+pub enum Item {
+    None,
+    DemoAxe
 }
 
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize, Debug)]

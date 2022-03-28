@@ -2,6 +2,8 @@
 pub const BACKGROUND: f32 = 0.0;
 /// Z-Axis for players
 pub const PLAYER_CHARACTERS: f32 = 50.0;
+/// Z-Axis for ui images
+pub const UI_IMG: f32 = 100.0;
 /// Z-Axis for text
 pub const UI_TEXT: f32 = 101.0;
 /// Z-Axis for the cursor
@@ -16,7 +18,7 @@ pub const ALLOW_GGS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-14";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-15";
 /// Port for network connections
 pub const NETTY_PORT: &str = "11111";
 /// Standard global game server address

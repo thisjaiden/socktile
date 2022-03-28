@@ -55,3 +55,9 @@ pub struct UIAssets {
     #[asset(path = "ui/selected.png")]
     pub selected: Handle<Image>
 }
+
+#[derive(AssetCollection)]
+pub struct ItemAssets {
+    #[asset(path = "item/placeholder.png")]
+    pub demo_axe: Handle<Image>
+}

@@ -5,6 +5,8 @@ cargo build --release
 echo "[2/3] Copying files..."
 rmdir /q /s "testenv"
 mkdir "testenv\server"
+mkdir "testenv\client_a"
+mkdir "testenv\client_b"
 copy "target\release\socktile.exe" "testenv\client_a\socktile.exe"
 copy "target\release\socktile.exe" "testenv\client_b\socktile.exe"
 copy "target\release\socktile.exe" "testenv\server\socktile.exe"

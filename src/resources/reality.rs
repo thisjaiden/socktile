@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::camera::Camera, utils::HashMap};
+use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage};
 
@@ -108,6 +108,79 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_spawn_hotbar(
+        mut commands: Commands,
+        textures: Res<UIAssets>,
+        selfs: Res<Reality>
+    ) {
+        for i in 0..10 {
+            commands.spawn_bundle(SpriteBundle {
+                texture: textures.slot.clone(),
+                transform: Transform::from_xyz(i as f32 * 32.0 - (32.0 * 5.0), -(1080.0 / 2.0) + 16.0, UI_IMG),
+                ..Default::default()
+            }).insert(HotbarMarker { location: i, type_: 1 }).insert(UILocked {});
+        }
+        commands.spawn_bundle(SpriteBundle {
+            texture: textures.selected.clone(),
+            transform: Transform::from_xyz(
+                    selfs.player.inventory.selected_slot as f32 * 32.0 - (32.0 * 5.0),
+                    -(1080.0 / 2.0) + 16.0,
+                    UI_IMG
+                ),
+                ..Default::default()
+        }).insert(HotbarMarker { location: selfs.player.inventory.selected_slot, type_: 2 }).insert(UILocked {});
+    }
+    pub fn system_position_hotbar(
+        mut query: Query<(&mut Transform, &HotbarMarker)>
+    ) {
+        query.for_each_mut(|(mut location, spot)| {
+            location.translation.x = spot.location as f32 * 32.0 - (32.0 * 5.0);
+            location.translation.y = -(1080.0 / 2.0) + 16.0;
+        });
+    }
+    pub fn system_scroll_hotbar(
+        mut query: Query<&mut HotbarMarker>,
+        mut scroll: EventReader<MouseWheel>,
+        mut selfs: ResMut<Reality>
+    ) {
+        for event in scroll.iter() {
+            match event.unit {
+                MouseScrollUnit::Line => {
+                    if event.y.is_sign_positive() {
+                        query.for_each_mut(|mut mark| {
+                            if mark.type_ == 2 {
+                                if mark.location < 9 {
+                                    mark.location += 1;
+                                    selfs.player.inventory.selected_slot += 1;
+                                }
+                                else {
+                                    mark.location = 0;
+                                    selfs.player.inventory.selected_slot = 0;
+                                }
+                            }
+                        });
+                    }
+                    else {
+                        query.for_each_mut(|mut mark| {
+                            if mark.type_ == 2 {
+                                if mark.location > 0 {
+                                    mark.location -= 1;
+                                    selfs.player.inventory.selected_slot -= 1;
+                                }
+                                else {
+                                    mark.location = 9;
+                                    selfs.player.inventory.selected_slot = 9;
+                                }
+                            }
+                        });
+                    }
+                }
+                MouseScrollUnit::Pixel => {
+                    // We don't use trackpads to scroll the hotbar. Consider supporting this in the future.
+                }
+            }
+        }
+    }
     pub fn system_chunk_loader(
         mut selfs: ResMut<Reality>,
         mut commands: Commands,
