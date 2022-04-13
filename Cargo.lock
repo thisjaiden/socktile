@@ -1440,9 +1440,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "ldtk_rust"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7135094ff34d3ccd8d30a2aaf555a51828a41a0d4c7977ae4d2165ca21c3809c"
+checksum = "e51b0e04315f05cf3f2ae43a62f809cea0f4ae20d1bfe2a073a136ed199d7712"
 dependencies = [
  "serde",
  "serde_json",
@@ -2075,6 +2075,7 @@ dependencies = [
  "ldtk_rust",
  "serde",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]

@@ -18,7 +18,7 @@ pub const ALLOW_GGS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-16";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-17";
 /// Port for network connections
 pub const NETTY_PORT: &str = "11111";
 /// Standard global game server address

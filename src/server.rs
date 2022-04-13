@@ -201,13 +201,56 @@ pub fn startup() -> ! {
                         for (us, gp, _) in &saves[world_id].data.players {
                             constructable_players.push((us.clone(), *gp));
                         }
+                        let mut new_objs = saves[world_index].data.try_generating_objects(spawn_centre_chnks_lack);
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1)));
+                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1)));
+                        let mut all_players = vec![];
+                        for object in new_objs {
+                            for (user, _, _) in saves[world_id].data.players.clone() {
+                                let ip = ip_by_user.get(&user).expect("A user online on a server had no IP address");
+                                all_players.push((Packet::CreateObject(object.clone()), *ip));
+                            }
+                        }
                         let mut func_send = send.lock().unwrap();
                         func_send.push((Packet::JoinedGame(player_info.1, saves[world_id].owner == owner), from));
                         func_send.push((Packet::InventoryState(player_info.2.inventory), from));
                         func_send.push((Packet::OnlinePlayers(constructable_players), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1))), from));
+                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1))), from));
                         func_send.append(&mut other_players);
+                        func_send.append(&mut all_players);
                         drop(func_send);
+                    }
+                    Packet::SendChatMessage(msg) => {
+                        // find assoc user
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestMove(GamePosition)");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
+
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested move");
+                            // send message
+                            if this_ip == &from {
+                                // but not to the sender
+                                continue;
+                            }
+                            let mut func_send = send.lock().unwrap();
+                            func_send.push((Packet::ChatMessage(msg.clone(), owner.clone()), *this_ip));
+                            drop(func_send);
+                        }
                     }
                     Packet::AvalableServers => {
                         // find assoc user

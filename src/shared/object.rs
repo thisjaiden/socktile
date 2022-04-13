@@ -9,7 +9,7 @@ use super::player::Item;
 pub struct Object {
     pub pos: GamePosition,
     pub rep: ObjectType,
-    pub id: usize
+    pub uuid: uuid::Uuid
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
