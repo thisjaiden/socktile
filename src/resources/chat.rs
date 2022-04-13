@@ -1,24 +1,43 @@
 use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
 
 use crate::{components::{ChatBox, UILocked}, consts::UI_TEXT, assets::FontAssets};
 
-use super::Reality;
+use super::{Reality, reality::MenuState, TextBox};
 
 pub struct Chat {
-    pub history: Vec<ChatMessage>
+    pub history: Vec<ChatMessage>,
+    pub is_chat_open: MenuState
 }
 
 impl Chat {
     pub fn init() -> Chat {
         Chat {
-            history: vec![]
+            history: vec![],
+            is_chat_open: MenuState::Closed
         }
+    }
+    pub fn is_open(&self) -> bool {
+        self.is_chat_open != MenuState::Closed
+    }
+    pub fn queue_open(&mut self) {
+        self.is_chat_open = MenuState::Queued;
     }
     fn add_message(&mut self, msg: ChatMessage) {
         self.history.push(msg);
         self.history.sort_by(|a, b| a.sent_at.elapsed().cmp(&b.sent_at.elapsed()));
         while self.history.len() > 10 {
             self.history.pop();
+        }
+    }
+    pub fn system_open_chat(
+        mut selfs: ResMut<Chat>,
+        mut tb: ResMut<TextBox>,
+        qs: Query<(&mut Text, &ChatBox, &mut Transform)>
+    ) {
+        if selfs.is_chat_open == MenuState::Queued {
+            tb.clear_buffer();
+            selfs.is_chat_open = MenuState::Open;
         }
     }
     pub fn system_init(
@@ -65,6 +84,9 @@ impl Chat {
                 else {
                     iso_color.set_a(midalpha);
                 }
+                if selfs.is_chat_open == MenuState::Open {
+                    iso_color.set_a(1.0);
+                }
                 text.sections[0].value = thismsg.text.clone();
                 text.sections[0].style.color = iso_color;
             }
@@ -80,9 +102,15 @@ impl Chat {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub text: String,
     pub color: Color,
+    #[serde(skip)]
+    #[serde(default = "getnow")]
     pub sent_at: std::time::Instant
+}
+
+fn getnow() -> std::time::Instant {
+    return std::time::Instant::now();
 }

@@ -296,9 +296,6 @@ pub fn load_level(
                     }
                 }
             }
-            "IntGrid" => {
-                // we ignore collision maps for non play state levels
-            }
             it => {
                 panic!("FATAL: LDtk file had an invalid instance type {}.", it)
             }

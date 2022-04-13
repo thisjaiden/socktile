@@ -12,3 +12,4 @@ mod disk;
 pub use disk::Disk;
 mod chat;
 pub use chat::Chat;
+pub use chat::ChatMessage;

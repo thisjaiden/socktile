@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{Mo
 
 use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG}};
 
-use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage};
+use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
 pub struct Reality {
     /// Player's current position
@@ -231,9 +231,10 @@ impl Reality {
     pub fn system_pause_menu(
         mut selfs: ResMut<Reality>,
         mut uiman: ResMut<UIManager>,
+        disk: Res<Disk>,
         keyboard: Res<Input<KeyCode>>
     ) {
-        if keyboard.just_pressed(KeyCode::Escape) {
+        if keyboard.just_pressed(disk.control_config().close_menu) {
             if selfs.pause_menu == MenuState::Closed {
                 selfs.pause_menu = MenuState::Queued;
             }
@@ -247,9 +248,18 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         mut netty: ResMut<Netty>,
         keyboard: Res<Input<KeyCode>>,
+        mut chat: ResMut<Chat>,
+        disk: Res<Disk>,
         tiles: Query<&mut Tile>
     ) {
-        if keyboard.any_pressed([KeyCode::W, KeyCode::S, KeyCode::A, KeyCode::D]) {
+        let ctrls = disk.control_config();
+        if !chat.is_open() {
+            if keyboard.just_pressed(ctrls.open_chat) {
+                chat.queue_open();
+                return;
+            }
+        }
+        if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
             let centered_chunk = (
                 ((selfs.player_position.x + (1920.0 / 2.0)) / 1920.0) as isize,
                 ((selfs.player_position.y + (1088.0 / 2.0)) / 1088.0) as isize
@@ -310,7 +320,7 @@ impl Reality {
             let mut had_movement = false;
             let mut new_pos = selfs.player_position;
             // move
-            if keyboard.pressed(KeyCode::W) {
+            if keyboard.pressed(ctrls.move_up) {
                 new_pos.y += 4.0;
                 if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
@@ -319,7 +329,7 @@ impl Reality {
                     new_pos.y -= 4.0;
                 }
             }
-            if keyboard.pressed(KeyCode::S) {
+            if keyboard.pressed(ctrls.move_down) {
                 new_pos.y -= 4.0;
                 if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
@@ -328,7 +338,7 @@ impl Reality {
                     new_pos.y += 4.0;
                 }
             }
-            if keyboard.pressed(KeyCode::A) {
+            if keyboard.pressed(ctrls.move_left) {
                 new_pos.x -= 4.0;
                 if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
@@ -337,7 +347,7 @@ impl Reality {
                     new_pos.x += 4.0;
                 }
             }
-            if keyboard.pressed(KeyCode::D) {
+            if keyboard.pressed(ctrls.move_right) {
                 new_pos.x += 4.0;
                 if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;

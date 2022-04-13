@@ -6,7 +6,7 @@ use crate::{
         terrain::TerrainState,
         listing::GameListing,
         player::Inventory
-    }
+    }, resources::ChatMessage
 };
 
 use serde::{Deserialize, Serialize};
@@ -111,6 +111,12 @@ pub enum Packet {
     /// A user has joined the game.
     /// (User, Initial Position)
     PlayerConnected(User, GamePosition),
+    /// Sends a chat message to other players.
+    /// (Message)
+    SendChatMessage(ChatMessage),
+    /// Recieves a chat message.
+    /// (Message, Sender)
+    ChatMessage(ChatMessage, User)
 }
 
 impl Packet {

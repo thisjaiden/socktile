@@ -1,11 +1,13 @@
 use std::path::PathBuf;
 
+use bevy::prelude::KeyCode;
 use serde::{Serialize, Deserialize};
 
 use crate::shared::saves::User;
 
 pub struct Disk {
     window_config: WindowConfig,
+    control_config: ControlConfig,
     user: Option<User>
 }
 
@@ -15,6 +17,7 @@ impl Disk {
         {
             return Disk {
                 window_config: WindowConfig::default(),
+                control_config: ControlConfig::default(),
                 user: None
             }
         }
@@ -51,8 +54,21 @@ impl Disk {
                 window_config = WindowConfig::default();
             }
 
+            let mut control_config_path = files_dir();
+            control_config_path.push("control_config.bic");
+            let control_config_data = std::fs::read(control_config_path);
+            let control_config: ControlConfig;
+            if let Ok(data) = control_config_data {
+                control_config = bincode::deserialize(&data)
+                    .expect("Encountered corrupted control configuration data.");
+            }
+            else {
+                control_config = ControlConfig::default();
+            }
+
             return Disk {
                 window_config,
+                control_config,
                 user
             }
         }
@@ -67,6 +83,24 @@ impl Disk {
         if let Ok(bytes) = window_config_data {
             if std::fs::write(window_config_path, bytes).is_ok() {
                 self.window_config = new;
+                return true;
+            }
+            false
+        }
+        else {
+            false
+        }
+    }
+    pub fn control_config(&self) -> ControlConfig {
+        self.control_config
+    }
+    pub fn _update_control_config(&mut self, new: ControlConfig) -> bool {
+        let mut control_config_path = files_dir();
+        control_config_path.push("control_config.bic");
+        let control_config_data = bincode::serialize(&new);
+        if let Ok(bytes) = control_config_data {
+            if std::fs::write(control_config_path, bytes).is_ok() {
+                self.control_config = new;
                 return true;
             }
             false
@@ -119,6 +153,29 @@ impl Default for WindowConfig {
             fullscreen: false,
             resolution: (1920.0, 1080.0),
             scale_factor: 1.0
+        }
+    }
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub struct ControlConfig {
+    pub move_up: KeyCode,
+    pub move_down: KeyCode,
+    pub move_right: KeyCode,
+    pub move_left: KeyCode,
+    pub open_chat: KeyCode,
+    pub close_menu: KeyCode
+}
+
+impl Default for ControlConfig {
+    fn default() -> Self {
+        ControlConfig {
+            move_up: KeyCode::W,
+            move_down: KeyCode::S,
+            move_right: KeyCode::D,
+            move_left: KeyCode::A,
+            open_chat: KeyCode::T,
+            close_menu: KeyCode::Escape
         }
     }
 }

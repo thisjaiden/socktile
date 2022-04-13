@@ -147,6 +147,7 @@ fn main() {
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Chat::system_display_chat)
                 .with_system(resources::Chat::system_pull_messages)
+                .with_system(resources::Chat::system_open_chat)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Play)
