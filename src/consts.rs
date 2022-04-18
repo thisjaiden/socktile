@@ -2,6 +2,8 @@
 pub const BACKGROUND: f32 = 0.0;
 /// Z-Axis for players
 pub const PLAYER_CHARACTERS: f32 = 50.0;
+/// Z-Axis for objects below the player vertically
+pub const FRONT_OBJECTS: f32 = 51.0;
 /// Z-Axis for ui images
 pub const UI_IMG: f32 = 100.0;
 /// Z-Axis for text

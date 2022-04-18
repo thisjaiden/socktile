@@ -69,6 +69,7 @@ fn main() {
         .with_collection::<assets::AnimatorAssets>()
         .with_collection::<assets::UIAssets>()
         .with_collection::<assets::ItemAssets>()
+        .with_collection::<assets::ObjectAssets>()
         .build(&mut app);
     // Add plugins and systems to our app, then run it!
     app
@@ -136,6 +137,7 @@ fn main() {
         .insert_resource(resources::Chat::init())
         .add_system_set(
             SystemSet::on_update(GameState::Play)
+                .with_system(resources::Reality::system_spawn_objects)
                 .with_system(resources::Reality::system_pause_menu)
                 .with_system(resources::Reality::system_chunk_loader)
                 .with_system(resources::Reality::system_player_loader)

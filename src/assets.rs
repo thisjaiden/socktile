@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetCollection;
 
-use crate::ldtk;
+use crate::{ldtk, shared::player::Item};
 
 #[derive(AssetCollection)]
 pub struct MapAssets {
@@ -60,4 +60,19 @@ pub struct UIAssets {
 pub struct ItemAssets {
     #[asset(path = "item/placeholder.png")]
     pub demo_axe: Handle<Image>
+}
+
+impl ItemAssets {
+    pub fn pick_from_item(&self, item: Item) -> Handle<Image> {
+        match item {
+            Item::None => panic!("You can't pick from no item!"),
+            Item::DemoAxe => self.demo_axe.clone()
+        }
+    }
+}
+
+#[derive(AssetCollection)]
+pub struct ObjectAssets {
+    #[asset(path = "object/placeholder.png")]
+    pub tree: Handle<Image>
 }

@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit};
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet}};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked, HotbarMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet, object::Object}};
 
 use super::{Netty, Reality, TextBox, Disk};
 
@@ -272,9 +272,13 @@ pub fn ui_disconnect_game(
         Query<Entity, With<PlayerMarker>>,
         Query<Entity, With<TileMarker>>,
         Query<Entity, With<Tile>>,
-        Query<Entity, With<PauseMenuMarker>>
+        Query<Entity, With<PauseMenuMarker>>,
+        Query<Entity, With<HotbarMarker>>,
+        Query<Entity, With<Object>>
     )>,
 ) {
+    // TODO: combine all the queries into one big query either using a shared component (PlayOnly?)
+    // or by using something like Query<Entity, Or<Or<Or<With<A>, With<B>>, With<C>>, ect.
     if man.gameplay_trigger() == Some(String::from("LeaveGame")) {
         man.next();
         man.reset_ui();
@@ -290,6 +294,12 @@ pub fn ui_disconnect_game(
             commands.entity(e).despawn();
         });
         qset.p3().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        qset.p4().for_each_mut(|e| {
+            commands.entity(e).despawn();
+        });
+        qset.p5().for_each_mut(|e| {
             commands.entity(e).despawn();
         });
         man.add_ui(UIClickable {

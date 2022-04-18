@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::Object}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -116,6 +116,32 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_spawn_objects(
+        mut selfs: ResMut<Reality>,
+        obj_assets: Res<ObjectAssets>,
+        item_assets: Res<ItemAssets>,
+        mut commands: Commands
+    ) {
+        for object in &selfs.queued_objects {
+            match object.rep {
+                ObjectType::Tree => {
+                    commands.spawn_bundle(SpriteBundle {
+                        texture: obj_assets.tree.clone(),
+                        transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, FRONT_OBJECTS),
+                        ..default()
+                    }).insert(object.clone());
+                }
+                ObjectType::GroundItem(item) => {
+                    commands.spawn_bundle(SpriteBundle {
+                        texture: item_assets.pick_from_item(item),
+                        transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, FRONT_OBJECTS),
+                        ..default()
+                    }).insert(object.clone());
+                }
+            }
+        }
+        selfs.queued_objects.clear();
+    }
     pub fn system_spawn_hotbar(
         mut commands: Commands,
         textures: Res<UIAssets>,
