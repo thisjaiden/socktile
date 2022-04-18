@@ -98,7 +98,7 @@ impl World {
 
         self.generated_objects.push(chunk);
 
-        return dupe_objects;
+        dupe_objects
     }
     pub fn clone_chunk(&mut self, chunk: (isize, isize)) -> Vec<(usize, usize, TerrainState)> {
         for (loc, data) in &self.terrain_changes {

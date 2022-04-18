@@ -132,9 +132,9 @@ pub fn startup() -> ! {
 
                         // This replaces invalid characters (ones that would break file paths) with "I".
                         let mut rname = name.clone();
-                        rname = rname.replace(".", "I");
-                        rname = rname.replace("\\", "I");
-                        rname = rname.replace("/", "I");
+                        rname = rname.replace('.', "I");
+                        rname = rname.replace('\\', "I");
+                        rname = rname.replace('/', "I");
                         
                         path.push(format!("{}_{}.bic", rname, world_id));
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
@@ -340,15 +340,15 @@ pub fn startup() -> ! {
                                     loc = Some(ind);
                                 }
                             }
-                            if loc.is_none() {
+                            if let Some(indexable) = loc {
+                                profiles[indexable].avalable_games.push(*server);
                                 let mut func_send = send.lock().unwrap();
-                                func_send.push((Packet::UnwhitelistableUser, from));
+                                func_send.push((Packet::Whitelisted, from));
                                 drop(func_send);
                             }
                             else {
-                                profiles[loc.unwrap()].avalable_games.push(*server);
                                 let mut func_send = send.lock().unwrap();
-                                func_send.push((Packet::Whitelisted, from));
+                                func_send.push((Packet::UnwhitelistableUser, from));
                                 drop(func_send);
                             }
                         }

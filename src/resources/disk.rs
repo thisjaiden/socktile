@@ -45,28 +45,26 @@ impl Disk {
             let mut window_config_path = files_dir();
             window_config_path.push("window_config.bic");
             let window_config_data = std::fs::read(window_config_path);
-            let window_config: WindowConfig;
-            if let Ok(data) = window_config_data {
-                window_config = bincode::deserialize(&data)
-                    .expect("Encountered corrupted window configuration data.");
+            let window_config = if let Ok(data) = window_config_data {
+                bincode::deserialize(&data)
+                    .expect("Encountered corrupted window configuration data.")
             }
             else {
-                window_config = WindowConfig::default();
-            }
+                WindowConfig::default()
+            };
 
             let mut control_config_path = files_dir();
             control_config_path.push("control_config.bic");
             let control_config_data = std::fs::read(control_config_path);
-            let control_config: ControlConfig;
-            if let Ok(data) = control_config_data {
-                control_config = bincode::deserialize(&data)
-                    .expect("Encountered corrupted control configuration data.");
+            let control_config = if let Ok(data) = control_config_data {
+                bincode::deserialize(&data)
+                    .expect("Encountered corrupted control configuration data.")
             }
             else {
-                control_config = ControlConfig::default();
-            }
+                ControlConfig::default()
+            };
 
-            return Disk {
+            Disk {
                 window_config,
                 control_config,
                 user

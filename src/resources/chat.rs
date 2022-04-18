@@ -33,7 +33,7 @@ impl Chat {
     pub fn system_open_chat(
         mut selfs: ResMut<Chat>,
         mut tb: ResMut<TextBox>,
-        qs: Query<(&mut Text, &ChatBox, &mut Transform)>
+        _qs: Query<(&mut Text, &ChatBox, &mut Transform)>
     ) {
         if selfs.is_chat_open == MenuState::Queued {
             tb.clear_buffer();
@@ -76,7 +76,7 @@ impl Chat {
             loc.translation.y = -(1080.0 / 2.0) + 12.0 + (40.0 * thisbox.location as f32);
             if thisbox.location < selfs.history.len() {
                 let thismsg = &selfs.history[thisbox.location];
-                let mut iso_color = thismsg.color.clone();
+                let mut iso_color = thismsg.color;
                 let midalpha = iso_color.a() - (0.01 * thismsg.sent_at.elapsed().as_secs_f32());
                 if midalpha < 0.0 {
                     iso_color.set_a(0.0);
@@ -102,15 +102,13 @@ impl Chat {
     }
 }
 
+use std::time::Instant;
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub text: String,
     pub color: Color,
     #[serde(skip)]
-    #[serde(default = "getnow")]
-    pub sent_at: std::time::Instant
-}
-
-fn getnow() -> std::time::Instant {
-    return std::time::Instant::now();
+    #[serde(default = "Instant::now")]
+    pub sent_at: Instant
 }

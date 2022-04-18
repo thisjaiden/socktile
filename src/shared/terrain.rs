@@ -10,25 +10,25 @@ pub struct TerrainState {
 impl TerrainState {
     pub fn collides(&mut self, player: (f64, f64), offset_x: f64, offset_y: f64) -> bool {
         // TODO: properly define player hitbox beyond arbitrary numbers here
-        self.collider_type().is_colliding((player.0 - 32.0, player.1 - 28.0, 64.0, 64.0), offset_x, offset_y)
+        self.collider_type().does_collide_with((player.0 - 32.0, player.1 - 28.0, 64.0, 64.0), offset_x, offset_y)
     }
     fn collider_type(&mut self) -> ColliderType {
         match self.tileset {
             58 => {
                 match self.tile {
-                    0 => ColliderType::GenericTopLeft,
-                    1 => ColliderType::GenericTop,
-                    2 => ColliderType::GenericTopRight,
-                    3 => ColliderType::GenericInverseTopLeft,
-                    4 => ColliderType::GenericInverseTopRight,
-                    8 => ColliderType::GenericLeft,
-                    10 => ColliderType::GenericRight,
-                    11 => ColliderType::GenericInverseBottomLeft,
-                    12 => ColliderType::GenericInverseBottomRight,
-                    16 => ColliderType::GenericBottomLeft,
-                    17 => ColliderType::GenericBottom,
-                    18 => ColliderType::GenericBottomRight,
-                    9 | 19 | 24..=28 | 32 | 34..=36 | 40..=42 => ColliderType::GenericNone,
+                    0 => ColliderType::TopLeft,
+                    1 => ColliderType::Top,
+                    2 => ColliderType::TopRight,
+                    3 => ColliderType::InverseTopLeft,
+                    4 => ColliderType::InverseTopRight,
+                    8 => ColliderType::Left,
+                    10 => ColliderType::Right,
+                    11 => ColliderType::InverseBottomLeft,
+                    12 => ColliderType::InverseBottomRight,
+                    16 => ColliderType::BottomLeft,
+                    17 => ColliderType::Bottom,
+                    18 => ColliderType::BottomRight,
+                    9 | 19 | 24..=28 | 32 | 34..=36 | 40..=42 => ColliderType::None,
                     n => panic!("Invalid tile in generic tileset! ({}:{})", self.tileset, n)
                 }
             }
@@ -40,38 +40,38 @@ impl TerrainState {
 #[derive(Debug)]
 pub enum ColliderType {
     // No collider
-    GenericNone,
+    None,
     // Thin colliders prevent movement across the respective sides of the tile
-    GenericTopLeft,
-    GenericTop,
-    GenericTopRight,
-    GenericLeft,
-    GenericRight,
-    GenericBottomLeft,
-    GenericBottom,
-    GenericBottomRight,
-    GenericInverseTopLeft,
-    GenericInverseTopRight,
-    GenericInverseBottomLeft,
-    GenericInverseBottomRight,
+    TopLeft,
+    Top,
+    TopRight,
+    Left,
+    Right,
+    BottomLeft,
+    Bottom,
+    BottomRight,
+    InverseTopLeft,
+    InverseTopRight,
+    InverseBottomLeft,
+    InverseBottomRight,
 }
 
 impl ColliderType {
     fn collider_dimensions(&mut self) -> &[(f64, f64, f64, f64)] {
         match self {
-            Self::GenericNone => return &[],
-            Self::GenericTopLeft => return &[(26.0, 0.0, 6.0, 32.0), (32.0, 32.0, 32.0, 6.0)],
-            Self::GenericTop => return &[(0.0, 32.0, 64.0, 6.0)],
-            Self::GenericTopRight => return &[(0.0, 32.0, 32.0, 6.0), (32.0, 0.0, 6.0, 32.0)],
-            Self::GenericLeft => return &[(26.0, 0.0, 6.0, 64.0)],
-            Self::GenericRight => return &[(32.0, 0.0, 6.0, 64.0)],
-            Self::GenericBottomLeft => return &[(26.0, 32.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::GenericBottom => return &[(0.0, 26.0, 64.0, 6.0)],
-            Self::GenericBottomRight => return &[(0.0, 26.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::GenericInverseTopLeft => return &[(32.0, 0.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::GenericInverseTopRight => return &[(0.0, 26.0, 32.0, 6.0), (26.0, 0.0, 6.0, 32.0)],
-            Self::GenericInverseBottomLeft => return &[(32.0, 32.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::GenericInverseBottomRight => return &[(0.0, 32.0, 32.0, 6.0), (26.0, 32.0, 6.0, 32.0)]
+            Self::None => &[],
+            Self::TopLeft => &[(26.0, 0.0, 6.0, 32.0), (32.0, 32.0, 32.0, 6.0)],
+            Self::Top => &[(0.0, 32.0, 64.0, 6.0)],
+            Self::TopRight => &[(0.0, 32.0, 32.0, 6.0), (32.0, 0.0, 6.0, 32.0)],
+            Self::Left => &[(26.0, 0.0, 6.0, 64.0)],
+            Self::Right => &[(32.0, 0.0, 6.0, 64.0)],
+            Self::BottomLeft => &[(26.0, 32.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
+            Self::Bottom => &[(0.0, 26.0, 64.0, 6.0)],
+            Self::BottomRight => &[(0.0, 26.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
+            Self::InverseTopLeft => &[(32.0, 0.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
+            Self::InverseTopRight => &[(0.0, 26.0, 32.0, 6.0), (26.0, 0.0, 6.0, 32.0)],
+            Self::InverseBottomLeft => &[(32.0, 32.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
+            Self::InverseBottomRight => &[(0.0, 32.0, 32.0, 6.0), (26.0, 32.0, 6.0, 32.0)]
         }
     }
     fn cube_colliders(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> bool {
@@ -80,7 +80,7 @@ impl ColliderType {
         (a.1 + a.3) > b.1 &&
         a.1 < (b.1 + b.3)
     }
-    pub fn is_colliding(&mut self, other: (f64, f64, f64, f64), offset_x: f64, offset_y: f64) -> bool {
+    pub fn does_collide_with(&mut self, other: (f64, f64, f64, f64), offset_x: f64, offset_y: f64) -> bool {
         let mut checks = vec![];
         for collider in self.collider_dimensions() {
             checks.push(Self::cube_colliders(
@@ -93,6 +93,6 @@ impl ColliderType {
                 other
             ));
         }
-        return checks.contains(&true)
+        checks.contains(&true)
     }
 }

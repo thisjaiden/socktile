@@ -1,3 +1,6 @@
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
+
 use bevy::prelude::*;
 use bevy_asset_loader::AssetLoader;
 use bevy_embedded_assets::EmbeddedAssetPlugin;

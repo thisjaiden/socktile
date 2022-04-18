@@ -68,7 +68,7 @@ impl Reality {
     pub fn pull_messages(&mut self) -> Vec<ChatMessage> {
         let a = self.chat_messages.clone();
         self.chat_messages.clear();
-        return a;
+        a
     }
     pub fn queue_chat(&mut self, msg: ChatMessage) {
         self.chat_messages.push(msg);
@@ -261,11 +261,9 @@ impl Reality {
         tiles: Query<&mut Tile>
     ) {
         let ctrls = disk.control_config();
-        if !chat.is_open() {
-            if keyboard.just_pressed(ctrls.open_chat) {
-                chat.queue_open();
-                return;
-            }
+        if !chat.is_open() && keyboard.just_pressed(ctrls.open_chat) {
+            chat.queue_open();
+            return;
         }
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
             let centered_chunk = (
@@ -502,7 +500,7 @@ impl Reality {
             let tag = strs.split('#').nth(1).unwrap().parse::<u16>();
             if let Ok(val) = tag {
                 netty.say(Packet::WhitelistUser(User {
-                    username: tb.grab_buffer().split('#').nth(0).unwrap().to_string(),
+                    username: tb.grab_buffer().split('#').next().unwrap().to_string(),
                     tag: val
                 }));
             }

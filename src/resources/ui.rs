@@ -61,12 +61,7 @@ impl UIManager {
         if self.queued_actions.get(0).is_some() {
             match self.queued_actions[0].clone() {
                 UIClickAction::GameplayTrigger(trigger) => {
-                    if trigger == "ExitProgramQuick" {
-                        true
-                    }
-                    else {
-                        false
-                    }
+                    trigger == "ExitProgramQuick"
                 }
                 _ => {
                     false
