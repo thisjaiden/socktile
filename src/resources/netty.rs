@@ -159,6 +159,9 @@ impl Netty {
                 Packet::InventoryState(inventory) => {
                     reality.set_inventory(inventory);
                 }
+                Packet::CreateObject(object) => {
+                    reality.spawn_object(object);
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

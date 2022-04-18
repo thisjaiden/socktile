@@ -341,22 +341,23 @@ impl AssetLoader for LDtkLoader {
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             let project: ldtk_rust::Project = serde_json::from_slice(bytes)?;
-            let dependencies: Vec<(i64, AssetPath)> = project
-                .defs
-                .tilesets
-                .iter()
-                .map(|tileset| {
-                    (
-                        tileset.uid,
-                        load_context
-                            .path()
-                            .parent()
-                            .unwrap()
-                            .join(tileset.rel_path.clone())
-                            .into(),
-                    )
-                })
-                .collect();
+            
+            let mut dependencies: Vec<(i64, AssetPath)> = vec![];
+            for tileset in project.defs.tilesets.iter() {
+                if let Some(path) = &tileset.rel_path {
+                    dependencies.push(
+                        (
+                            tileset.uid,
+                            load_context
+                                .path()
+                                .parent()
+                                .unwrap()
+                                .join(path)
+                                .into()
+                        )
+                    );
+                }
+            }
 
             let loaded_asset = LoadedAsset::new(LDtkMap {
                 project,

@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::Object}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -24,8 +24,12 @@ pub struct Reality {
     loaded_chunks: Vec<(isize, isize)>,
     /// Is this server owned by the active player?
     owns_server: bool,
+    /// The state of the pause menu
     pause_menu: MenuState,
-    players_to_move: HashMap<User, GamePosition>
+    /// A list of players that have location changes and their new locations
+    players_to_move: HashMap<User, GamePosition>,
+    /// Objects that need to be spawned into the bevy world before usage
+    queued_objects: Vec<Object>
 }
 
 impl Reality {
@@ -42,11 +46,15 @@ impl Reality {
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
-            players_to_move: HashMap::default()
+            players_to_move: HashMap::default(),
+            queued_objects: vec![]
         }
     }
     pub fn reset(&mut self) {
         *self = Reality::init();
+    }
+    pub fn spawn_object(&mut self, object: Object) {
+        self.queued_objects.push(object);
     }
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
@@ -507,12 +515,12 @@ impl Reality {
     }
     pub fn system_camera_updater(
         selfs: Res<Reality>,
-        mut queries: QuerySet<(
-            QueryState<&mut Transform, With<Camera>>,
-            QueryState<&mut Transform, With<UILocked>>
+        mut queries: ParamSet<(
+            Query<&mut Transform, With<Camera>>,
+            Query<&mut Transform, With<UILocked>>
         )>
     ) {
-        queries.q0().for_each_mut(|mut campos| {
+        queries.p0().for_each_mut(|mut campos| {
             campos.translation.x = selfs.player_position.x as f32;
             campos.translation.y = selfs.player_position.y as f32;
             if selfs.loaded_chunks.is_empty() {
@@ -520,7 +528,7 @@ impl Reality {
                 campos.translation.y = 0.0;
             }
         });
-        queries.q1().for_each_mut(|mut transform| {
+        queries.p1().for_each_mut(|mut transform| {
             transform.translation.x += selfs.player_position.x as f32;
             transform.translation.y += selfs.player_position.y as f32;
         });

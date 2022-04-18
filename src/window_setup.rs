@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PresentMode};
 use crate::resources::Disk;
 
 pub fn window_setup(
@@ -9,7 +9,13 @@ pub fn window_setup(
     let window = windows.get_primary_mut().unwrap();
     let window_conf = conf.window_config();
 
-    window.set_vsync(window_conf.vsync);
+    if window_conf.vsync {
+        window.set_present_mode(PresentMode::Fifo);
+    }
+    else {
+        window.set_present_mode(PresentMode::Mailbox);
+    }
+    
     window.set_title(String::from("socktile"));
     if window_conf.fullscreen {
         window.set_mode(bevy::window::WindowMode::BorderlessFullscreen);

@@ -273,11 +273,11 @@ pub fn ui_disconnect_game(
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
-    mut qset: QuerySet<(
-        QueryState<Entity, With<PlayerMarker>>,
-        QueryState<Entity, With<TileMarker>>,
-        QueryState<Entity, With<Tile>>,
-        QueryState<Entity, With<PauseMenuMarker>>
+    mut qset: ParamSet<(
+        Query<Entity, With<PlayerMarker>>,
+        Query<Entity, With<TileMarker>>,
+        Query<Entity, With<Tile>>,
+        Query<Entity, With<PauseMenuMarker>>
     )>,
 ) {
     if man.gameplay_trigger() == Some(String::from("LeaveGame")) {
@@ -285,16 +285,16 @@ pub fn ui_disconnect_game(
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
         state.set(GameState::TitleScreen).unwrap();
-        qset.q0().for_each_mut(|e| {
+        qset.p0().for_each_mut(|e| {
             commands.entity(e).despawn();
         });
-        qset.q1().for_each_mut(|e| {
+        qset.p1().for_each_mut(|e| {
             commands.entity(e).despawn();
         });
-        qset.q2().for_each_mut(|e| {
+        qset.p2().for_each_mut(|e| {
             commands.entity(e).despawn();
         });
-        qset.q3().for_each_mut(|e| {
+        qset.p3().for_each_mut(|e| {
             commands.entity(e).despawn();
         });
         man.add_ui(UIClickable {
