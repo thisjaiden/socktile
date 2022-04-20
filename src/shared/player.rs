@@ -32,6 +32,14 @@ impl Inventory {
             hotbar: [Item::None; 10]
         }
     }
+    pub fn hotbar_empty_space(&self) -> Option<usize> {
+        for (index, item) in self.hotbar.iter().enumerate() {
+            if item == &Item::None {
+                return Some(index);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]

@@ -20,6 +20,10 @@ impl GamePosition {
     pub fn zero() -> GamePosition {
         GamePosition { x: 0.0, y: 0.0 }
     }
+    pub fn distance(&self, other: GamePosition) -> f64 {
+        // d=√((x_2-x_1)²+(y_2-y_1)²)
+        (((other.x - self.x).powi(2))+((other.y - self.y).powi(2))).sqrt()
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]

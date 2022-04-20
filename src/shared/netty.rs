@@ -63,7 +63,7 @@ pub enum Packet {
     /// A client has been connected. Send them their position.
     /// (Player Position, Owns Server)
     JoinedGame(GamePosition, bool),
-    /// Inital state of a user's inventory.
+    /// State of a user's inventory.
     /// (Inventory)
     InventoryState(Inventory),
     /// A list of online users for a given world
@@ -81,9 +81,9 @@ pub enum Packet {
     /// Updates a given object on the client.
     /// (Updated Object)
     UpdateObject(Object),
-    /// Removes an object on the client by id.
-    /// (Object ID)
-    RemoveObject(usize),
+    /// Removes an object on the client by UUID.
+    /// (Object UUID)
+    RemoveObject(uuid::Uuid),
     /// Creates an object on the client.
     /// (New Object)
     CreateObject(Object),

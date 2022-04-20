@@ -26,6 +26,8 @@ use serde::{
     Deserialize
 };
 
+mod tick;
+
 /// Starts the game server!
 pub fn startup() -> ! {
     println!("GGS using port *:{}", NETTY_PORT);
@@ -68,7 +70,12 @@ pub fn startup() -> ! {
                 }
                 autosave = std::time::Instant::now();
             }
-            // rest of tick
+            // logic tick
+            let mut func_send = send.lock().unwrap();
+            func_send.append(&mut tick::tick(&mut saves, &ip_by_user));
+            drop(func_send);
+
+            // packet instant response and incoming handler
             let mut func_recv = recv.lock().unwrap();
             let incoming_data = func_recv.clone();
             func_recv.clear();
