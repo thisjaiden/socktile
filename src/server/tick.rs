@@ -2,10 +2,11 @@ use std::net::SocketAddr;
 
 use bevy::utils::HashMap;
 
-use crate::{shared::{object::ObjectType, netty::Packet, saves::User}, consts::ITEM_PICKUP_DISTANCE};
+use crate::{shared::{object::ObjectType, netty::Packet, saves::User}, consts::{ITEM_PICKUP_DISTANCE, ITEM_MAGNET_DISTANCE}, components::GamePosition};
 
 use super::SaveGame;
 
+#[allow(non_snake_case)]
 pub fn tick(servers: &mut Vec<SaveGame>, ips: &HashMap<User, SocketAddr>) -> Vec<(Packet, SocketAddr)> {
     let mut outgoing: Vec<(Packet, SocketAddr)> = vec![];
     for server in servers {
@@ -36,8 +37,32 @@ pub fn tick(servers: &mut Vec<SaveGame>, ips: &HashMap<User, SocketAddr>) -> Vec
                     }
                 }
                 // Item magnet
+                // reinit for new ref
+                let server_players = &server.data.players;
                 if !picked_up {
-                    // TODO
+                    // If not picked up, for every player...
+                    for (_user, pos, data) in server_players.iter() {
+                        // If they are in magnet distance...
+                        if object.pos.distance(*pos) < ITEM_MAGNET_DISTANCE.into() {
+                            // And have avalable hotbar space...
+                            if let Some(_slot) = data.inventory.hotbar_empty_space() {
+                                let dx = pos.x - object.pos.x;
+                                let dy = pos.x - object.pos.y;
+                                let Δx = (1.0 / dx) * 20.0;
+                                let Δy = (1.0 / dy) * 20.0;
+                                let new_pos = GamePosition { x: object.pos.x + Δx, y: object.pos.y + Δy };
+                                let mut new_object = object.clone();
+                                new_object.pos = new_pos;
+                                // Update entity for every player
+                                for player in server_players {
+                                    outgoing.push((Packet::UpdateObject(new_object.clone()), *ips.get(&player.0).expect("No IP found for a user connected to a server")));
+                                }
+                                // Update entity on the server side
+                                server.data.objects[object_index].pos = new_pos;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
