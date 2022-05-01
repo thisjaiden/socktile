@@ -23,6 +23,10 @@ impl Chat {
     pub fn queue_open(&mut self) {
         self.is_chat_open = MenuState::Queued;
     }
+    pub fn escape_close(&mut self) {
+        // Close chat immediately, without sending message.
+        self.is_chat_open = MenuState::Closed;
+    }
     fn add_message(&mut self, msg: ChatMessage) {
         self.history.push(msg);
         self.history.sort_by(|a, b| a.sent_at.elapsed().cmp(&b.sent_at.elapsed()));

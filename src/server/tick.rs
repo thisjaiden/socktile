@@ -47,7 +47,7 @@ pub fn tick(servers: &mut Vec<SaveGame>, ips: &HashMap<User, SocketAddr>) -> Vec
                             // And have avalable hotbar space...
                             if let Some(_slot) = data.inventory.hotbar_empty_space() {
                                 let dx = pos.x - object.pos.x;
-                                let dy = pos.x - object.pos.y;
+                                let dy = pos.y - object.pos.y;
                                 let Δx = (1.0 / dx) * 20.0;
                                 let Δy = (1.0 / dy) * 20.0;
                                 let new_pos = GamePosition { x: object.pos.x + Δx, y: object.pos.y + Δy };

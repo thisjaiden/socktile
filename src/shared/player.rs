@@ -45,7 +45,18 @@ impl Inventory {
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Item {
     None,
-    DemoAxe
+    DemoAxe,
+    DemoRod
+}
+
+impl Item {
+    pub fn from_str(from: &str) -> Item {
+        match from {
+            "DemoAxe" => Item::DemoAxe,
+            "DemoRod" => Item::DemoRod,
+            _ => panic!("No item with name {from}")
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize, Debug)]

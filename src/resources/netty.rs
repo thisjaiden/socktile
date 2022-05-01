@@ -162,6 +162,12 @@ impl Netty {
                 Packet::CreateObject(object) => {
                     reality.spawn_object(object);
                 }
+                Packet::UpdateObject(object) => {
+                    reality.update_object(object);
+                }
+                Packet::RemoveObject(uuid) => {
+                    reality.remove_object(uuid);
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

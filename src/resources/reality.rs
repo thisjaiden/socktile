@@ -1,4 +1,5 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
+use uuid::Uuid;
 
 use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS}};
 
@@ -29,7 +30,11 @@ pub struct Reality {
     /// A list of players that have location changes and their new locations
     players_to_move: HashMap<User, GamePosition>,
     /// Objects that need to be spawned into the bevy world before usage
-    queued_objects: Vec<Object>
+    queued_objects: Vec<Object>,
+    /// Objects that need to be changed in some way
+    objects_to_update: Vec<Object>,
+    /// Objects that need to be removed
+    objects_to_remove: Vec<Uuid>
 }
 
 impl Reality {
@@ -47,7 +52,9 @@ impl Reality {
             owns_server: false,
             pause_menu: MenuState::Closed,
             players_to_move: HashMap::default(),
-            queued_objects: vec![]
+            queued_objects: vec![],
+            objects_to_update: vec![],
+            objects_to_remove: vec![],
         }
     }
     pub fn reset(&mut self) {
@@ -55,6 +62,12 @@ impl Reality {
     }
     pub fn spawn_object(&mut self, object: Object) {
         self.queued_objects.push(object);
+    }
+    pub fn update_object(&mut self, object: Object) {
+        self.objects_to_update.push(object);
+    }
+    pub fn remove_object(&mut self, object: Uuid) {
+        self.objects_to_remove.push(object);
     }
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
@@ -116,6 +129,35 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_remove_objects(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut objects: Query<(Entity, &Object)>
+    ) {
+        for removable in &selfs.objects_to_remove {
+            objects.for_each_mut(|(entity, object)| {
+                if object.uuid == *removable {
+                    commands.entity(entity).despawn();
+                }
+            });
+        }
+        selfs.objects_to_remove.clear();
+    }
+    pub fn system_update_objects(
+        mut selfs: ResMut<Reality>,
+        mut objects: Query<(&mut Transform, &mut Object)>
+    ) {
+        for updateable in &selfs.objects_to_update {
+            objects.for_each_mut(|(mut transform, mut object)| {
+                if object.uuid == updateable.uuid {
+                    object.update(updateable.clone());
+                    transform.translation.x = object.pos.x as f32;
+                    transform.translation.y = object.pos.y as f32;
+                }
+            });
+        }
+        selfs.objects_to_update.clear();
+    }
     pub fn system_spawn_objects(
         mut selfs: ResMut<Reality>,
         obj_assets: Res<ObjectAssets>,
@@ -287,8 +329,12 @@ impl Reality {
         tiles: Query<&mut Tile>
     ) {
         let ctrls = disk.control_config();
-        if !chat.is_open() && keyboard.just_pressed(ctrls.open_chat) {
+        if !chat.is_open() && selfs.pause_menu == MenuState::Closed && keyboard.just_pressed(ctrls.open_chat) {
             chat.queue_open();
+            return;
+        }
+        if chat.is_open() && keyboard.just_pressed(ctrls.close_menu) {
+            chat.escape_close();
             return;
         }
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {

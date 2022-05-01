@@ -59,14 +59,17 @@ pub struct UIAssets {
 #[derive(AssetCollection)]
 pub struct ItemAssets {
     #[asset(path = "item/placeholder.png")]
-    pub demo_axe: Handle<Image>
+    pub demo_axe: Handle<Image>,
+    #[asset(path = "item/placeholder.png")]
+    pub demo_rod: Handle<Image>
 }
 
 impl ItemAssets {
     pub fn pick_from_item(&self, item: Item) -> Handle<Image> {
         match item {
             Item::None => panic!("You can't pick from no item!"),
-            Item::DemoAxe => self.demo_axe.clone()
+            Item::DemoAxe => self.demo_axe.clone(),
+            Item::DemoRod => self.demo_rod.clone()
         }
     }
 }

@@ -13,6 +13,13 @@ pub struct Object {
     pub uuid: uuid::Uuid
 }
 
+impl Object {
+    pub fn update(&mut self, updated: Object) {
+        self.pos = updated.pos;
+        self.rep = updated.rep;
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the type of a game object.
 pub enum ObjectType {
