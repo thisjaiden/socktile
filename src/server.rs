@@ -228,6 +228,7 @@ pub fn startup() -> ! {
                         func_send.push((Packet::JoinedGame(player_info.1, saves[world_id].owner == owner), from));
                         func_send.push((Packet::InventoryState(player_info.2.inventory), from));
                         func_send.push((Packet::OnlinePlayers(constructable_players), from));
+                        func_send.push((Packet::AllObjects(saves[world_index].data.objects.clone()), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1))), from));
                         func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1))), from));

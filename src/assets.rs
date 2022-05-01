@@ -58,7 +58,9 @@ pub struct UIAssets {
 
 #[derive(AssetCollection)]
 pub struct ItemAssets {
-    #[asset(path = "item/placeholder.png")]
+    #[asset(path = "nothing.png")]
+    pub none: Handle<Image>,
+    #[asset(path = "item/demo_axe.png")]
     pub demo_axe: Handle<Image>,
     #[asset(path = "item/placeholder.png")]
     pub demo_rod: Handle<Image>
@@ -67,7 +69,7 @@ pub struct ItemAssets {
 impl ItemAssets {
     pub fn pick_from_item(&self, item: Item) -> Handle<Image> {
         match item {
-            Item::None => panic!("You can't pick from no item!"),
+            Item::None => self.none.clone(),
             Item::DemoAxe => self.demo_axe.clone(),
             Item::DemoRod => self.demo_rod.clone()
         }

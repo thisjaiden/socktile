@@ -187,31 +187,48 @@ impl Reality {
     pub fn system_spawn_hotbar(
         mut commands: Commands,
         textures: Res<UIAssets>,
+        items: Res<ItemAssets>,
         selfs: Res<Reality>
     ) {
         for i in 0..10 {
             commands.spawn_bundle(SpriteBundle {
                 texture: textures.slot.clone(),
-                transform: Transform::from_xyz(i as f32 * 32.0 - (32.0 * 5.0), -(1080.0 / 2.0) + 16.0, UI_IMG),
+                transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG),
                 ..Default::default()
             }).insert(HotbarMarker { location: i, type_: 1 }).insert(UILocked {});
+            commands.spawn_bundle(SpriteBundle {
+                texture: items.none.clone(),
+                transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG + 0.01),
+                ..Default::default()
+            }).insert(HotbarMarker { location: i, type_: 3 }).insert(UILocked {});
         }
         commands.spawn_bundle(SpriteBundle {
             texture: textures.selected.clone(),
             transform: Transform::from_xyz(
-                    selfs.player.inventory.selected_slot as f32 * 32.0 - (32.0 * 5.0),
-                    -(1080.0 / 2.0) + 16.0,
-                    UI_IMG
+                    selfs.player.inventory.selected_slot as f32 * 64.0 - (64.0 * 5.0),
+                    -(1080.0 / 2.0) + 32.0,
+                    UI_IMG + 0.02
                 ),
                 ..Default::default()
         }).insert(HotbarMarker { location: selfs.player.inventory.selected_slot, type_: 2 }).insert(UILocked {});
+    }
+    pub fn system_update_hotbar(
+        selfs: Res<Reality>,
+        textures: Res<ItemAssets>,
+        mut query: Query<(&HotbarMarker, &mut Handle<Image>)>
+    ) {
+        query.for_each_mut(|(marker, mut texture)| {
+            if marker.type_ == 3 {
+                texture.set(Box::new(textures.pick_from_item(selfs.player.inventory.hotbar[marker.location]))).unwrap();
+            }
+        });
     }
     pub fn system_position_hotbar(
         mut query: Query<(&mut Transform, &HotbarMarker)>
     ) {
         query.for_each_mut(|(mut location, spot)| {
-            location.translation.x = spot.location as f32 * 32.0 - (32.0 * 5.0);
-            location.translation.y = -(1080.0 / 2.0) + 16.0;
+            location.translation.x = spot.location as f32 * 64.0 - (64.0 * 5.0);
+            location.translation.y = -(1080.0 / 2.0) + 32.0;
         });
     }
     pub fn system_scroll_hotbar(
@@ -222,7 +239,7 @@ impl Reality {
         for event in scroll.iter() {
             match event.unit {
                 MouseScrollUnit::Line => {
-                    if event.y.is_sign_positive() {
+                    if event.y.is_sign_negative() {
                         query.for_each_mut(|mut mark| {
                             if mark.type_ == 2 {
                                 if mark.location < 9 {

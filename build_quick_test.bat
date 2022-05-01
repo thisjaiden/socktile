@@ -8,8 +8,12 @@ mkdir "testenv\server"
 mkdir "testenv\client"
 copy "target\debug\socktile.exe" "testenv\client\socktile.exe"
 copy "target\debug\socktile.exe" "testenv\server\socktile.exe"
+echo socktile.exe --ggs > testenv\server\launch.bat
+echo pause >> testenv\server\launch.bat
+echo socktile.exe > testenv\client\crash_debug.bat
+echo pause >> testenv\client\crash_debug.bat
 echo "[3/3] Starting programs..."
-start /d "testenv\server" socktile.exe --ggs
+start /d "testenv\server" launch.bat
 timeout /t 5 /nobreak
-start /d "testenv\client" socktile.exe
+start /d "testenv\client" crash_debug.bat
 echo "All done!"

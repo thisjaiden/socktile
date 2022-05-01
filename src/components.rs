@@ -42,6 +42,10 @@ pub struct PauseMenuMarker {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
 pub struct HotbarMarker {
     pub location: usize,
+    /// Represents the type of hotbar object this is.
+    /// 1 = slot background
+    /// 2 = selected slot
+    /// 3 = slot contents
     pub type_: usize
 }
 

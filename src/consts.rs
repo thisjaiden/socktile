@@ -29,6 +29,6 @@ pub const GGS: &str = "69.180.176.49:11111";
 pub const DEV_GGS: &str = "127.0.0.1:11111";
 
 /// The distance before an item on the ground is drawn to players
-pub const ITEM_MAGNET_DISTANCE: f32 = 128.0;
+pub const ITEM_MAGNET_DISTANCE: f32 = 192.0;
 /// The distance before an item on the ground is picked up by players
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;

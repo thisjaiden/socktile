@@ -168,6 +168,11 @@ impl Netty {
                 Packet::RemoveObject(uuid) => {
                     reality.remove_object(uuid);
                 }
+                Packet::AllObjects(objects) => {
+                    for object in objects {
+                        reality.spawn_object(object);
+                    }
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

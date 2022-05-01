@@ -151,6 +151,7 @@ fn main() {
                 .with_system(resources::Reality::system_pause_invite)
                 .with_system(resources::Reality::system_update_objects)
                 .with_system(resources::Reality::system_remove_objects)
+                .with_system(resources::Reality::system_update_hotbar)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Chat::system_display_chat)
                 .with_system(resources::Chat::system_pull_messages)
