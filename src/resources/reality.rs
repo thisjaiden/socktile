@@ -17,6 +17,8 @@ pub struct Reality {
     push_servers: bool,
     /// Chunks that need to be loaded
     chunks_to_load: Vec<(isize, isize)>,
+    /// Chunks that need to be unloaded
+    chunks_to_unload: Vec<(isize, isize)>,
     /// Players to spawn in and load
     players_to_spawn: Vec<(User, GamePosition)>,
     /// Players to unload
@@ -46,6 +48,7 @@ impl Reality {
             avalable_servers: vec![],
             push_servers: false,
             chunks_to_load: vec![],
+            chunks_to_unload: vec![],
             players_to_spawn: vec![],
             players_to_despawn: vec![],
             loaded_chunks: vec![],
@@ -91,13 +94,26 @@ impl Reality {
         // load visible world
         const ENV_WIDTH: f64 = 1920.0;
         const ENV_HEIGHT: f64 = 1088.0;
+        // Get the player's chunk
         let tile_x = (self.player_position.x / ENV_WIDTH).round() as isize;
         let tile_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
+        
+        // Add chunks that should be loaded
         self.chunks_to_load.push((tile_x, tile_y));
         self.chunks_to_load.push((tile_x, tile_y + 1));
         self.chunks_to_load.push((tile_x, tile_y - 1));
         self.chunks_to_load.push((tile_x + 1, tile_y));
         self.chunks_to_load.push((tile_x - 1, tile_y));
+
+        // Grab all loaded chunks
+        self.chunks_to_unload.append(&mut self.loaded_chunks.clone());
+        self.chunks_to_unload.sort();
+        // Mark every chunk that isn't about to be loaded to unload
+        for chunk in &self.chunks_to_load {
+            if let Ok(index) = self.chunks_to_unload.binary_search(chunk) {
+                self.chunks_to_unload.remove(index);
+            }
+        }
     }
     pub fn set_ownership(&mut self, ownership: bool) {
         self.owns_server = ownership;
@@ -284,13 +300,35 @@ impl Reality {
     ) {
         for chunk in selfs.chunks_to_load.clone() {
             if !selfs.loaded_chunks.contains(&chunk) {
-                println!("Loading chunk at ({:?})", chunk);
                 let a = maps.get_mut(target_maps.core.clone()).unwrap();
                 crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
                 selfs.loaded_chunks.push(chunk);
+                // sorted order is needed for .binary_search() used in `system_chunk_unloader`
+                selfs.loaded_chunks.sort();
             }
         }
         selfs.chunks_to_load.clear();
+    }
+    pub fn system_chunk_unloader(
+        mut selfs: ResMut<Reality>,
+        mut commands: Commands,
+        mut query: Query<(Entity, &Tile)>
+    ) {
+        for chunk in selfs.chunks_to_unload.clone() {
+            // remove chunk from loaded chunks list, if found
+            if let Ok(index) = selfs.loaded_chunks.binary_search(&chunk) {
+                selfs.loaded_chunks.remove(index);
+            }
+            else {
+                println!("WARN: A chunk was queued to be removed but isn't loaded!");
+            }
+            query.for_each_mut(|(entity, tile)| {
+                if tile.chunk == chunk {
+                    commands.entity(entity).despawn();
+                }
+            });
+        }
+        selfs.chunks_to_unload.clear();
     }
     pub fn system_player_loader(
         mut selfs: ResMut<Reality>,
@@ -356,8 +394,8 @@ impl Reality {
         }
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
             let centered_chunk = (
-                ((selfs.player_position.x + (1920.0 / 2.0)) / 1920.0) as isize,
-                ((selfs.player_position.y + (1088.0 / 2.0)) / 1088.0) as isize
+                ((selfs.player_position.x + (1920.0 / 2.0)) / 1920.0).floor() as isize,
+                ((selfs.player_position.y + (1088.0 / 2.0)) / 1088.0).floor() as isize
             );
             let centered_tile = (
                 ((selfs.player_position.x - (1920 * centered_chunk.0) as f64 + (1920.0 / 2.0)) / 64.0) as isize,

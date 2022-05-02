@@ -14,7 +14,7 @@ impl TerrainState {
     }
     fn collider_type(&mut self) -> ColliderType {
         match self.tileset {
-            58 => {
+            58 | 85 => {
                 match self.tile {
                     0 => ColliderType::TopLeft,
                     1 => ColliderType::Top,
