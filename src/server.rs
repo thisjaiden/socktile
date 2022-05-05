@@ -11,7 +11,7 @@ use crate::{
     components::GamePosition,
     consts::{
         NETTY_VERSION,
-        NETTY_PORT
+        NETTY_PORT, TICK_TIME, SAVE_TIME
     },
     shared::{
         netty::Packet,
@@ -58,9 +58,9 @@ pub fn startup() -> ! {
     saves = sorted;
     println!("Saves sorted. Server started!");
     loop {
-        if timer.elapsed() > std::time::Duration::from_millis(50) {
+        if timer.elapsed() > std::time::Duration::from_millis(TICK_TIME) {
             // Save every 30 mins
-            if autosave.elapsed() > std::time::Duration::from_secs(60 * 30) {
+            if autosave.elapsed() > std::time::Duration::from_secs(60 * SAVE_TIME) {
                 println!("Saving...");
                 for world in saves.clone() {
                     save(world);
@@ -374,7 +374,7 @@ pub fn startup() -> ! {
             timer = std::time::Instant::now();
         }
         else {
-            std::thread::sleep(std::time::Duration::from_millis(50) - timer.elapsed());
+            std::thread::sleep(std::time::Duration::from_millis(TICK_TIME) - timer.elapsed());
         }
     }
 }

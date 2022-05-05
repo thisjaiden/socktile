@@ -14,6 +14,5 @@ echo socktile.exe > testenv\client\crash_debug.bat
 echo pause >> testenv\client\crash_debug.bat
 echo "[3/3] Starting programs..."
 start /d "testenv\server" launch.bat
-timeout /t 5 /nobreak
 start /d "testenv\client" crash_debug.bat
 echo "All done!"

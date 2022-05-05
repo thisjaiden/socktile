@@ -57,6 +57,22 @@ impl Item {
             _ => panic!("No item with name {from}")
         }
     }
+    pub fn action(&self) -> ItemAction {
+        match self {
+            Item::None => ItemAction::None,
+            Item::DemoAxe => ItemAction::Chop(1),
+            Item::DemoRod => ItemAction::Fish(1),
+        }
+    }
+}
+
+pub enum ItemAction {
+    /// Item has no action.
+    None,
+    /// Item chops materials (power multiplier)
+    Chop(usize),
+    /// Item fishes (power multiplier)
+    Fish(usize)
 }
 
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize, Debug)]

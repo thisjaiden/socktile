@@ -16,69 +16,33 @@ impl Netty {
     pub fn init() -> Netty {
         println!("Netty initalizing!");
 
-        let l_ggs = if DEV_ADDRS {
-            DEV_GGS
-        }
-        else {
-            GGS
-        };
-
-        let connection = TcpStream::connect(l_ggs);
-        let mut stat = ConnectionStatus::NotConnected;
-        if !remote_exists(l_ggs) {
-            stat = ConnectionStatus::NoGGS;
-        }
-        if !google_exists() {
-            stat = ConnectionStatus::NoInternet;
-        }
-        if stat == ConnectionStatus::NoInternet && DEV_BUILD {
-            if let Ok(good_con) = connection {
-                let inp = Arc::new(Mutex::new(vec![]));
-                let out = Arc::new(Mutex::new(vec![]));
-                println!("Good connection to GGS (LOCAL-DEV), starting up client.");
-                startup(good_con, inp.clone(), out.clone());
-                let mut fin = Netty {
-                    connection: ConnectionStatus::Connected,
-                    input: inp,
-                    output: out
-                };
-                fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
-                return fin;
-            }
-            else {
-                println!("GGS refused a connection. Not starting client. (NO_INTERNET)");
-                return Netty {
-                    connection: ConnectionStatus::Refused,
-                    input: Arc::new(Mutex::new(vec![])),
-                    output: Arc::new(Mutex::new(vec![]))
-                };
-            }
-        }
-        else if stat != ConnectionStatus::NotConnected {
-            println!("Unable to connect to GGS, not starting client. (ERR: {:?})", stat);
-            return Netty {
-                connection: stat,
-                input: Arc::new(Mutex::new(vec![])),
-                output: Arc::new(Mutex::new(vec![]))
-            };
-        }
-        if let Ok(good_con) = connection {
+        let connection = TcpStream::connect_timeout(
+            &std::net::SocketAddr::from((GGS, NETTY_PORT)),
+            std::time::Duration::from_secs(TIMEOUT_DURATION)
+        );
+        if let Ok(con) = connection {
             let inp = Arc::new(Mutex::new(vec![]));
             let out = Arc::new(Mutex::new(vec![]));
-            println!("Good connection to GGS, starting up client.");
-            startup(good_con, inp.clone(), out.clone());
+            println!("Good connection to GGS (LOCAL-DEV), starting up client.");
+            startup(con, inp.clone(), out.clone());
             let mut fin = Netty {
                 connection: ConnectionStatus::Connected,
                 input: inp,
                 output: out
             };
             fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
-            fin
+            return fin;
         }
         else {
-            println!("GGS refused a connection. Not starting client.");
-            Netty {
-                connection: ConnectionStatus::Refused,
+            if !google_exists() {
+                return Netty {
+                    connection: ConnectionStatus::NoInternet,
+                    input: Arc::new(Mutex::new(vec![])),
+                    output: Arc::new(Mutex::new(vec![]))
+                };
+            }
+            return Netty {
+                connection: ConnectionStatus::NoGGS,
                 input: Arc::new(Mutex::new(vec![])),
                 output: Arc::new(Mutex::new(vec![]))
             }
@@ -210,20 +174,8 @@ impl Netty {
 pub enum ConnectionStatus {
     NoInternet,
     NoGGS,
-    Refused,
-    NotConnected,
     Connected,
     Stable
-}
-
-pub fn remote_exists(ggs: &str) -> bool {
-    if std::net::TcpStream::connect_timeout(&ggs.parse().unwrap(), std::time::Duration::from_secs(5)).is_ok() {
-        true
-    }
-    else {
-        println!("No connection to the GGS avalable.");
-        false
-    }
 }
 
 pub fn google_exists() -> bool {
@@ -235,7 +187,7 @@ pub fn google_exists() -> bool {
 
 fn startup(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) {
     println!("Starting client with GGS set to {:?}.", con.peer_addr());
-    println!("GGS | DEV_GGS: {} | {}", GGS, DEV_GGS);
+    println!("GGS located at {:?}:{}", GGS, NETTY_PORT);
     println!("NETTY VERSION: {}", NETTY_VERSION);
     let mut con_clone = con.try_clone().unwrap();
     std::thread::spawn(move || {

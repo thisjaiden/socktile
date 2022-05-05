@@ -6,14 +6,16 @@ use super::{Netty, Reality, TextBox, Disk};
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
-    queued_actions: Vec<UIClickAction>
+    queued_actions: Vec<UIClickAction>,
+    queue_player_action: bool
 }
 
 impl UIManager {
     pub fn init() -> UIManager {
         UIManager {
             active_clickables: vec![],
-            queued_actions: vec![]
+            queued_actions: vec![],
+            queue_player_action: false
         }
     }
     pub fn add_ui(&mut self, new: UIClickable) {
@@ -91,11 +93,11 @@ impl UIManager {
         self.queued_actions.remove(0);
     }
     fn clicked(&mut self, location: (f32, f32)) {
-        println!("Click occurred at ({}, {})", location.0, location.1);
         let mut removed = 0;
+        let mut did_action = false;
         for (index, clickable) in self.active_clickables.clone().iter().enumerate() {
             if clickable.is_contained(location) {
-                println!("Queued an action.");
+                did_action = true;
                 self.queued_actions.push(clickable.action.clone());
                 if clickable.removed_on_use {
                     self.active_clickables.remove(index - removed);
@@ -103,6 +105,16 @@ impl UIManager {
                 }
             }
         }
+        if !did_action {
+            self.queue_player_action = true;
+        }
+    }
+    fn grab_player_action(&mut self) -> bool {
+        if self.queue_player_action {
+            self.queue_player_action = false;
+            return true;
+        }
+        false
     }
 }
 
@@ -133,6 +145,15 @@ pub enum UIClickAction {
     ChangeScene(String),
     GameplayTrigger(String),
     JoinWorld(usize)
+}
+
+pub fn ui_forward(
+    mut man: ResMut<UIManager>,
+    mut reality: ResMut<Reality>
+) {
+    if man.grab_player_action() {
+        reality.queue_action();
+    }
 }
 
 pub fn ui_manager(

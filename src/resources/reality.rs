@@ -36,7 +36,9 @@ pub struct Reality {
     /// Objects that need to be changed in some way
     objects_to_update: Vec<Object>,
     /// Objects that need to be removed
-    objects_to_remove: Vec<Uuid>
+    objects_to_remove: Vec<Uuid>,
+    /// Should do an action if the player's selected item supports one
+    waiting_for_action: bool
 }
 
 impl Reality {
@@ -58,10 +60,14 @@ impl Reality {
             queued_objects: vec![],
             objects_to_update: vec![],
             objects_to_remove: vec![],
+            waiting_for_action: false,
         }
     }
     pub fn reset(&mut self) {
         *self = Reality::init();
+    }
+    pub fn queue_action(&mut self) {
+        self.waiting_for_action = true;
     }
     pub fn spawn_object(&mut self, object: Object) {
         self.queued_objects.push(object);
@@ -260,12 +266,11 @@ impl Reality {
                             if mark.type_ == 2 {
                                 if mark.location < 9 {
                                     mark.location += 1;
-                                    selfs.player.inventory.selected_slot += 1;
                                 }
                                 else {
                                     mark.location = 0;
-                                    selfs.player.inventory.selected_slot = 0;
                                 }
+                                selfs.player.inventory.selected_slot = mark.location;
                             }
                         });
                     }
@@ -274,12 +279,11 @@ impl Reality {
                             if mark.type_ == 2 {
                                 if mark.location > 0 {
                                     mark.location -= 1;
-                                    selfs.player.inventory.selected_slot -= 1;
                                 }
                                 else {
                                     mark.location = 9;
-                                    selfs.player.inventory.selected_slot = 9;
                                 }
+                                selfs.player.inventory.selected_slot = mark.location;
                             }
                         });
                     }

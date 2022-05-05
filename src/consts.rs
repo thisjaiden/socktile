@@ -13,8 +13,6 @@ pub const CURSOR: f32 = 250.0;
 
 /// Is this an internal dev build?
 pub const DEV_BUILD: bool = true;
-/// Should development server addresses be used?
-pub const DEV_ADDRS: bool = false;
 /// Allow a GGS to be run from this build?
 pub const ALLOW_GGS: bool = true;
 
@@ -22,13 +20,17 @@ pub const ALLOW_GGS: bool = true;
 /// using an incompatible protocol.
 pub const NETTY_VERSION: &str = "closed-alpha-iteration-18";
 /// Port for network connections
-pub const NETTY_PORT: &str = "11111";
-/// Standard global game server address
-pub const GGS: &str = "69.180.176.49:11111";
-/// Global game server address for dev builds (localhost, essentially)
-pub const DEV_GGS: &str = "127.0.0.1:11111";
+pub const NETTY_PORT: u16 = 11111;
+/// Global game server address
+pub const GGS: [u8; 4] = [69, 180, 176, 49];
+/// Time in seconds before a connection is considered unable to connect
+pub const TIMEOUT_DURATION: u64 = 3;
+/// Time in ms between game ticks on the server
+pub const TICK_TIME: u64 = 25;
+/// Time in minutes between game saves on the server
+pub const SAVE_TIME: u64 = 30;
 
 /// The distance before an item on the ground is drawn to players
-pub const ITEM_MAGNET_DISTANCE: f32 = 192.0;
+pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 /// The distance before an item on the ground is picked up by players
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
