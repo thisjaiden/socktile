@@ -162,7 +162,8 @@ pub struct ControlConfig {
     pub move_right: KeyCode,
     pub move_left: KeyCode,
     pub open_chat: KeyCode,
-    pub close_menu: KeyCode
+    pub close_menu: KeyCode,
+    pub send_chat: KeyCode,
 }
 
 impl Default for ControlConfig {
@@ -173,7 +174,8 @@ impl Default for ControlConfig {
             move_right: KeyCode::D,
             move_left: KeyCode::A,
             open_chat: KeyCode::T,
-            close_menu: KeyCode::Escape
+            close_menu: KeyCode::Escape,
+            send_chat: KeyCode::Return
         }
     }
 }

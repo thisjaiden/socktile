@@ -157,6 +157,8 @@ fn main() {
                 .with_system(resources::Chat::system_display_chat)
                 .with_system(resources::Chat::system_pull_messages)
                 .with_system(resources::Chat::system_open_chat)
+                .with_system(resources::Chat::system_type_chat)
+                .with_system(resources::Chat::system_send_chat)
                 .with_system(resources::ui::ui_forward)
         )
         .add_system_set(

@@ -18,10 +18,13 @@ pub const ALLOW_GGS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-18";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-19";
 /// Port for network connections
 pub const NETTY_PORT: u16 = 11111;
 /// Global game server address
+#[cfg(debug_assertions)]
+pub const GGS: [u8; 4] = [127, 0, 0, 1];
+#[cfg(not(debug_assertions))]
 pub const GGS: [u8; 4] = [69, 180, 176, 49];
 /// Time in seconds before a connection is considered unable to connect
 pub const TIMEOUT_DURATION: u64 = 3;

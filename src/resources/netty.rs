@@ -137,6 +137,9 @@ impl Netty {
                         reality.spawn_object(object);
                     }
                 }
+                Packet::ChatMessage(message) => {
+                    reality.queue_chat(message);
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }

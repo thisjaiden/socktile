@@ -248,15 +248,13 @@ pub fn startup() -> ! {
                         
                         let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
 
+                        let mut sendable_message = msg.clone();
+                        sendable_message.text.insert_str(0, &format!("[{}] ", owner.username));
                         for player in &saves[*server].data.players {
                             let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested move");
                             // send message
-                            if this_ip == &from {
-                                // but not to the sender
-                                continue;
-                            }
                             let mut func_send = send.lock().unwrap();
-                            func_send.push((Packet::ChatMessage(msg.clone(), owner.clone()), *this_ip));
+                            func_send.push((Packet::ChatMessage(sendable_message.clone()), *this_ip));
                             drop(func_send);
                         }
                     }

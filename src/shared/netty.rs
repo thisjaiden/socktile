@@ -115,8 +115,8 @@ pub enum Packet {
     /// (Message)
     SendChatMessage(ChatMessage),
     /// Recieves a chat message.
-    /// (Message, Sender)
-    ChatMessage(ChatMessage, User)
+    /// (Message)
+    ChatMessage(ChatMessage)
 }
 
 impl Packet {
