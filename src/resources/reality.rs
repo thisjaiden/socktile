@@ -385,7 +385,10 @@ impl Reality {
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
-        tiles: Query<&mut Tile>
+        mut queries: ParamSet<(
+            Query<&Tile>,
+            Query<&Object>,
+        )>
     ) {
         let ctrls = disk.control_config();
         if !chat.is_open() && selfs.pause_menu == MenuState::Closed && keyboard.just_pressed(ctrls.open_chat) {
@@ -445,21 +448,26 @@ impl Reality {
                 }
             }
             let mut pulled_tiles = vec![];
-            tiles.for_each(|tile| {
+            queries.p0().for_each(|tile| {
                 if needed_chunks.contains(&tile.chunk) {
                     for (chunk, n_tile) in &needed_pairs {
                         if tile.chunk == *chunk && tile.position == *n_tile {
-                            pulled_tiles.push(tile);
+                            pulled_tiles.push(tile.clone());
                         }
                     }
                 }
+            });
+            let mut objects = vec![];
+            queries.p1().for_each(|object| {
+                objects.push(object.clone());
             });
             let mut had_movement = false;
             let mut new_pos = selfs.player_position;
             // move
             if keyboard.pressed(ctrls.move_up) {
                 new_pos.y += 4.0;
-                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
                 }
                 else {
@@ -468,7 +476,8 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_down) {
                 new_pos.y -= 4.0;
-                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)){
                     had_movement = true;
                 }
                 else {
@@ -477,7 +486,8 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_left) {
                 new_pos.x -= 4.0;
-                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
                 }
                 else {
@@ -486,7 +496,8 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_right) {
                 new_pos.x += 4.0;
-                if !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) {
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
                     had_movement = true;
                 }
                 else {
@@ -726,7 +737,7 @@ pub enum MenuState {
 }
 
 /// true if collided, false otherwise
-fn calc_player_against_tiles(tiles: &[&Tile], player: (f64, f64)) -> bool {
+fn calc_player_against_tiles(tiles: &[Tile], player: (f64, f64)) -> bool {
     for tile in tiles {
         let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
         let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
@@ -736,6 +747,29 @@ fn calc_player_against_tiles(tiles: &[&Tile], player: (f64, f64)) -> bool {
         };
         if state.collides(player, offset_x, offset_y) {
             return true;
+        }
+    }
+    false
+}
+
+fn calc_player_against_objects(objects: &[Object], player: (f64, f64)) -> bool {
+    for object in objects {
+        if let Some(obj_size) = object.rep.collider() {
+            let obj_left = object.pos.x - (obj_size.0 / 2.0);
+            let obj_right = obj_left + obj_size.0;
+            let obj_bottom = object.pos.y - (obj_size.1 / 2.0);
+            let obj_top = obj_bottom + obj_size.1;
+            let player_left = player.0 - 32.0;
+            let player_right = player.0 + 32.0;
+            let player_top = player.1 + 32.0;
+            let player_bottom = player.1 - 32.0;
+            if  player_right > obj_left &&
+                player_left < obj_right &&
+                player_bottom < obj_top &&
+                player_top > obj_bottom
+            {
+                return true;
+            }
         }
     }
     false
