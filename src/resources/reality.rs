@@ -583,7 +583,7 @@ impl Reality {
                     removed_on_use: false
                 });
                 uiman.add_ui(UIClickable {
-                    action: UIClickAction::GameplayTrigger(String::from("OpenSettings")),
+                    action: UIClickAction::ChangeScene(String::from("Settings")),
                     location: (-150.0, -27.5),
                     size: (300.0, 55.0),
                     removed_on_use: false

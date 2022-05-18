@@ -283,6 +283,60 @@ pub fn ui_invite_menu(
     }
 }
 
+pub fn ui_settings_camera(
+    mut query: Query<&mut Transform, With<Camera>>
+) {
+    query.for_each_mut(|mut position| {
+        position.translation.x = 0.0;
+        position.translation.y = 0.0;
+    });
+}
+
+pub fn ui_close_settings(
+    mut commands: Commands,
+    mut man: ResMut<UIManager>,
+    mut state: ResMut<State<GameState>>,
+    query: Query<Entity, With<TileMarker>>
+) {
+    if man.gameplay_trigger() == Some(String::from("LeaveSettings")) {
+        query.for_each(|e| {
+            commands.entity(e).despawn();
+        });
+        man.next();
+        man.reset_ui();
+        state.pop().unwrap();
+    }
+}
+
+pub fn ui_resume_game_settings(
+    mut uiman: ResMut<UIManager>
+) {
+    uiman.add_ui(UIClickable {
+        action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
+        location: (-150.0, 110.0 - 27.5),
+        size: (300.0, 55.0),
+        removed_on_use: false
+    });
+    uiman.add_ui(UIClickable {
+        action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
+        location: (-150.0, 55.0 - 27.5),
+        size: (300.0, 55.0),
+        removed_on_use: false
+    });
+    uiman.add_ui(UIClickable {
+        action: UIClickAction::ChangeScene(String::from("Settings")),
+        location: (-150.0, -27.5),
+        size: (300.0, 55.0),
+        removed_on_use: false
+    });
+    uiman.add_ui(UIClickable {
+        action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
+        location: (-150.0, -55.0 - 27.5),
+        size: (300.0, 55.0),
+        removed_on_use: false
+    });
+}
+
 pub fn ui_disconnect_game(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
@@ -357,19 +411,19 @@ pub fn ui_scene(
                     load_level(unloads, level, a, texture_atlases, font_assets.clone(), man, &mut commands);
                     match goto.as_str() {
                         "Settings" => {
-                            state.set(GameState::Settings).unwrap();
+                            state.push(GameState::Settings).unwrap();
                         }
                         "Create_world" => {
-                            state.set(GameState::MakeGame).unwrap();
+                            state.replace(GameState::MakeGame).unwrap();
                         }
                         "Create_profile" => {
-                            state.set(GameState::MakeUser).unwrap();
+                            state.replace(GameState::MakeUser).unwrap();
                         }
                         "Server_list" => {
-                            state.set(GameState::ServerList).unwrap();
+                            state.replace(GameState::ServerList).unwrap();
                         }
                         "Title_screen" => {
-                            state.set(GameState::TitleScreen).unwrap();
+                            state.replace(GameState::TitleScreen).unwrap();
                         }
                         _ => {}
                     }
