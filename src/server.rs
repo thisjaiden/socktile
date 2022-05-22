@@ -29,14 +29,16 @@ use serde::{
 mod tick;
 
 /// Starts the game server!
-pub fn startup() -> ! {
-    println!("GGS using port *:{}", NETTY_PORT);
+pub fn startup(arguments: Vec<String>) -> ! {
+    // Create our shared packet buffers
     let recv = Arc::new(Mutex::new(vec![]));
     let send = Arc::new(Mutex::new(vec![]));
+    // Create a clone of these buffers to move into another thread
     let recv_clone = recv.clone();
     let send_clone = send.clone();
     std::thread::spawn(move || {
-        initiate_host(recv_clone, send_clone);
+        // Start the actual network watching and communication part of the server
+        initiate_host(recv_clone, send_clone, arguments);
     });
     let mut timer = std::time::Instant::now();
     let mut autosave = std::time::Instant::now();
@@ -138,10 +140,26 @@ pub fn startup() -> ! {
                         let mut path = save_folder();
 
                         // This replaces invalid characters (ones that would break file paths) with "I".
+                        // On windows these are \ / : * ? " < > |
+                        // I've also included  . and ' just in case
                         let mut rname = name.clone();
-                        rname = rname.replace('.', "I");
-                        rname = rname.replace('\\', "I");
-                        rname = rname.replace('/', "I");
+                        rname = rname
+                            .replace('\\', "I")
+                            .replace('/', "I")
+                            .replace(':', "I")
+                            .replace('*', "I")
+                            .replace('?', "I")
+                            .replace('"', "I")
+                            .replace('<', "I")
+                            .replace('>', "I")
+                            .replace('|', "I")
+                            .replace('.', "I")
+                            .replace('\'', "I");
+                        // Don't allow world names to be longer than 10 characters
+                        if rname.chars().count() > 10 {
+                            // dirty code to grab the first 10 characters
+                            rname = rname.chars().collect::<Vec<char>>().split_at(10).0.iter().collect();
+                        }
                         
                         path.push(format!("{}_{}.bic", rname, world_id));
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
@@ -456,24 +474,40 @@ pub struct SaveGame {
     pub owner: User,
 }
 
-pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>) -> ! {
+pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, arguments: Vec<String>) -> ! {
+    println!("Preparing network functions.");
     println!("Netty version: {}", NETTY_VERSION);
-    let net = std::net::TcpListener::bind(format!("0.0.0.0:{}", NETTY_PORT));
-    if let Ok(network) = net {
+    let mut net = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "port" {
+            if arguments.len() > index + 1 {
+                println!("Using port {} (overridden)", arguments[index + 1]);
+                net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", arguments[index + 1])));
+            }
+            else {
+                println!("Invalid argument for port. (none)");
+            }
+        }
+    }
+    if net.is_none() {
+        println!("Using port {NETTY_PORT} (default)");
+        net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", NETTY_PORT)));
+    }
+    
+    if let Some(Ok(network)) = net {
         for connection in network.incoming() {
             if let Ok(mut stream) = connection {
                 let recv_clone = recv_buffer.clone();
                 let send_clone = send_buffer.clone();
-                let remote_addr = stream.peer_addr().unwrap();
+                let remote_addr = stream.peer_addr().expect("Unable to get the remote address of a client.");
                 let mut stream_clone = stream.try_clone().unwrap();
                 std::thread::spawn(move || {
                     let recv = recv_clone;
                     loop {
                         let pkt = Packet::from_read(&mut stream);
                         let mut recv_access = recv.lock().unwrap();
-                        println!("Recieved {:?} from {:?}", pkt, remote_addr);
                         if pkt == Packet::FailedDeserialize {
-                            println!("Dropping connection to {:?}", remote_addr);
+                            // TODO: Signal to disconnect from any services
                             break;
                         }
                         recv_access.push((pkt, remote_addr));
@@ -491,7 +525,6 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                                 destroy_conenction = true;
                             }
                             if address == &remote_addr {
-                                println!("Sending {:?} to {}", packet, address);
                                 Packet::to_write(&mut stream_clone, packet.clone());
                                 send_access.remove(index - removed);
                                 removed += 1;
@@ -499,7 +532,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                         }
                         drop(send_access);
                         if destroy_conenction {
-                            println!("Dropping connection to {:?}", remote_addr);
+                            // println!("Dropping connection to {:?}", remote_addr);
                             break;
                         }
                         std::thread::sleep(std::time::Duration::from_millis(20));
@@ -512,7 +545,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
         }
     }
     else {
-        panic!("Network reads blocked!");
+        panic!("Unable to bind to network effectively. Check that nothing else is running on the same port.");
     }
     unreachable!();
 }

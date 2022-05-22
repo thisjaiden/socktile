@@ -208,7 +208,7 @@ pub fn load_level(
                         transform: Transform::from_xyz(
                             (-1920.0 / 2.0) + tile.px[0] as f32 + 32.0,
                             (1080.0 / 2.0) - tile.px[1] as f32 - 32.0,
-                            BACKGROUND),
+                            BACKGROUND + 1.0),
                         texture_atlas: atlas_handle.clone(),
                         sprite: TextureAtlasSprite::new(tileset_tile_id as usize),
                         ..Default::default()
@@ -234,7 +234,7 @@ pub fn load_level(
                                 transform: Transform::from_xyz(
                                     (-1920.0 / 2.0) + entity.px[0] as f32 + (entity.width as f32 / 2.0),
                                     (1080.0 / 2.0) - entity.px[1] as f32 - (entity.height as f32 / 2.0),
-                                    UI_TEXT
+                                    UI_TEXT + 1.0
                                 ),
                                 text: Text {
                                     alignment: TextAlignment {

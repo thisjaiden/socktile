@@ -15,7 +15,7 @@ mod window_setup;
 mod ldtk;
 mod assets;
 
-
+/// Represents the state the game is currently in. Used to keep track of what systems to run.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     /// Loads assets from disk
@@ -39,29 +39,35 @@ pub enum GameState {
 }
 
 fn main() {
+    // Warn about distribution of internal builds
     if consts::DEV_BUILD {
-        // Allow GGS to be run if it's a dev build, and warn about distribution.
-        println!("\x1B[40;91mWARNING: This is an internal build. All software is property of and (c) Jaiden Bernard. Do not share this software without permission from the property owners.\x1B[0m");
-        println!("Sidenote: if you just built this from GitHub, do as you will. This doesn't apply to you.");
+        println!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021. Do not share this software without permission from the property owners.");
     }
+    // If starting a server is allowed...
     if consts::ALLOW_GGS {
+        // Grab CLI arguments
         let mut args = std::env::args();
+        // Throw away the caller path, we don't need it
         args.next();
-        if let Some(argument) = args.next() {
-            if argument == "--ggs" {
-                println!("\x1B[40;91mWARNING: Running as a GGS. Make sure you know what you're doing!\x1B[0m");
-                server::startup();
-            }
+        // Collect the rest of the arguments
+        let arguments: Vec<String> = args.collect();
+        // If one of the arguments is `server`...
+        if arguments.contains(&String::from("server")) {
+            // Run a server
+            // `server::startup();` returns a never type and should never proceed to launching a normal game.
+            println!("WARNING: Running as a server. Make sure you know what you're doing!");
+            server::startup(arguments);
         }
     }
 
     // Create our Bevy app!
     let mut app = App::new();
-    // Use embedded assets
+
+    // Enable embedded assets through `bevy_embedded_assets`
     app.add_plugins_with(DefaultPlugins, |group| {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     });
-    // Register all the assets we need loaded.
+    // Register all the assets we need loaded
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
         .with_collection::<assets::MapAssets>()
@@ -71,9 +77,9 @@ fn main() {
         .with_collection::<assets::ItemAssets>()
         .with_collection::<assets::ObjectAssets>()
         .build(&mut app);
-    // Add plugins and systems to our app, then run it!
+    
+    // Add plugins and systems to our app, then run it
     app
-        //.add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(ldtk::LDtkPlugin)
         .add_state(GameState::Load)
         .add_system_set(

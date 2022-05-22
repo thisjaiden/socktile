@@ -8,4 +8,4 @@ cp target/debug/socktile testenv/client/socktile
 cp target/debug/socktile testenv/server/socktile
 echo "[3/3] Starting programs..."
 open testenv/client/socktile
-./testenv/server/socktile --ggs
+./testenv/server/socktile server
