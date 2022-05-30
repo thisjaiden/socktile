@@ -1,6 +1,6 @@
 /// Z-Axis for terrain and other background objects
 pub const BACKGROUND: f32 = 0.0;
-/// Z-Axis for players
+/// Z-Axis for players and NPCs
 pub const PLAYER_CHARACTERS: f32 = 50.0;
 /// Z-Axis for objects below the player vertically
 pub const FRONT_OBJECTS: f32 = 51.0;
@@ -18,7 +18,7 @@ pub const ALLOW_GGS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-19";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-20";
 /// Port for network connections
 pub const NETTY_PORT: u16 = 11111;
 /// Global game server address

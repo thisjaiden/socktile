@@ -76,6 +76,7 @@ fn main() {
         .with_collection::<assets::UIAssets>()
         .with_collection::<assets::ItemAssets>()
         .with_collection::<assets::ObjectAssets>()
+        .with_collection::<assets::NPCAssets>()
         .build(&mut app);
     
     // Add plugins and systems to our app, then run it

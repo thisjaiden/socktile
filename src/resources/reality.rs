@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -110,6 +110,10 @@ impl Reality {
         self.chunks_to_load.push((tile_x, tile_y - 1));
         self.chunks_to_load.push((tile_x + 1, tile_y));
         self.chunks_to_load.push((tile_x - 1, tile_y));
+        self.chunks_to_load.push((tile_x + 1, tile_y + 1));
+        self.chunks_to_load.push((tile_x + 1, tile_y - 1));
+        self.chunks_to_load.push((tile_x - 1, tile_y + 1));
+        self.chunks_to_load.push((tile_x - 1, tile_y - 1));
 
         // Grab all loaded chunks
         self.chunks_to_unload.append(&mut self.loaded_chunks.clone());
@@ -184,10 +188,11 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         obj_assets: Res<ObjectAssets>,
         item_assets: Res<ItemAssets>,
+        npc_assets: Res<NPCAssets>,
         mut commands: Commands
     ) {
         for object in &selfs.queued_objects {
-            match object.rep {
+            match &object.rep {
                 ObjectType::Tree => {
                     commands.spawn_bundle(SpriteBundle {
                         texture: obj_assets.tree.clone(),
@@ -197,8 +202,15 @@ impl Reality {
                 }
                 ObjectType::GroundItem(item) => {
                     commands.spawn_bundle(SpriteBundle {
-                        texture: item_assets.pick_from_item(item),
+                        texture: item_assets.pick_from_item(*item),
                         transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, FRONT_OBJECTS),
+                        ..default()
+                    }).insert(object.clone());
+                }
+                ObjectType::NPC(_who) => {
+                    commands.spawn_bundle(SpriteBundle {
+                        texture: npc_assets.unloaded.clone(),
+                        transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, PLAYER_CHARACTERS),
                         ..default()
                     }).insert(object.clone());
                 }

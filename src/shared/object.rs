@@ -1,7 +1,7 @@
 use bevy::prelude::Component;
 use serde::{Deserialize, Serialize};
 
-use crate::components::GamePosition;
+use crate::{components::GamePosition, server::npc::NPC};
 
 use super::player::Item;
 
@@ -20,11 +20,12 @@ impl Object {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 /// Represents the type of a game object.
 pub enum ObjectType {
     Tree,
-    GroundItem(Item)
+    GroundItem(Item),
+    NPC(NPC)
 }
 
 impl ObjectType {

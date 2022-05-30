@@ -27,6 +27,7 @@ use serde::{
 };
 
 mod tick;
+pub mod npc;
 
 /// Starts the game server!
 pub fn startup(arguments: Vec<String>) -> ! {

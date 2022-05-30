@@ -49,6 +49,14 @@ pub struct AnimatorAssets {
 }
 
 #[derive(AssetCollection)]
+pub struct NPCAssets {
+    #[asset(path = "nothing.png")]
+    pub unloaded: Handle<Image>,
+    #[asset(path = "npc/thomas_kontos/down.png")]
+    pub thomas_kontos_face_down: Handle<Image>,
+}
+
+#[derive(AssetCollection)]
 pub struct UIAssets {
     #[asset(path = "ui/slot.png")]
     pub slot: Handle<Image>,

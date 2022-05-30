@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::components::GamePosition;
+use crate::{components::GamePosition, server::npc::NPC};
 
 use super::{object::{Object, ObjectType}, terrain::TerrainState, saves::User, player::{PlayerData, Item}};
 
@@ -97,6 +97,25 @@ impl World {
                                                 y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
                                             },
                                             rep: ObjectType::GroundItem(item),
+                                            uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                        });
+                                        dupe_objects.push(self.objects[self.objects.len() - 1].clone());
+                                    }
+                                }
+                            }
+                            "NPC" => {
+                                for dataseg in &entity.field_instances {
+                                    if dataseg.identifier == "NPCName" {
+                                        let npc = NPC::from_name_str(dataseg.value.as_ref()
+                                            .expect("FATAL: LDtk entity of type NPC had no NPCName")
+                                            .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
+                                        );
+                                        self.objects.push(Object {
+                                            pos: GamePosition {
+                                                x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
+                                                y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
+                                            },
+                                            rep: ObjectType::NPC(npc),
                                             uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                                         });
                                         dupe_objects.push(self.objects[self.objects.len() - 1].clone());

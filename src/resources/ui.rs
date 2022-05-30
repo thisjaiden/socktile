@@ -343,38 +343,24 @@ pub fn ui_disconnect_game(
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
-    mut qset: ParamSet<(
-        Query<Entity, With<PlayerMarker>>,
-        Query<Entity, With<TileMarker>>,
-        Query<Entity, With<Tile>>,
-        Query<Entity, With<PauseMenuMarker>>,
-        Query<Entity, With<HotbarMarker>>,
-        Query<Entity, With<Object>>
-    )>,
+    mut query: Query<
+        Entity,
+        Or<(
+            With<PlayerMarker>,
+            With<TileMarker>,
+            With<Tile>,
+            With<PauseMenuMarker>,
+            With<HotbarMarker>,
+            With<Object>
+        )>
+    >
 ) {
-    // TODO: combine all the queries into one big query either using a shared component (PlayOnly?)
-    // or by using something like Query<Entity, Or<Or<Or<With<A>, With<B>>, With<C>>, ect.
     if man.gameplay_trigger() == Some(String::from("LeaveGame")) {
         man.next();
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
         state.set(GameState::TitleScreen).unwrap();
-        qset.p0().for_each_mut(|e| {
-            commands.entity(e).despawn();
-        });
-        qset.p1().for_each_mut(|e| {
-            commands.entity(e).despawn();
-        });
-        qset.p2().for_each_mut(|e| {
-            commands.entity(e).despawn();
-        });
-        qset.p3().for_each_mut(|e| {
-            commands.entity(e).despawn();
-        });
-        qset.p4().for_each_mut(|e| {
-            commands.entity(e).despawn();
-        });
-        qset.p5().for_each_mut(|e| {
+        query.for_each_mut(|e| {
             commands.entity(e).despawn();
         });
         man.add_ui(UIClickable {
