@@ -82,6 +82,7 @@ fn main() {
     // Add plugins and systems to our app, then run it
     app
         .add_plugin(ldtk::LDtkPlugin)
+        .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         .add_state(GameState::Load)
         .add_system_set(
             SystemSet::on_enter(GameState::Load)
@@ -122,6 +123,10 @@ fn main() {
                 .with_system(resources::ui::ui_settings_camera)
         )
         .add_system_set(
+            SystemSet::on_update(GameState::Settings)
+                .with_system(resources::ui::ui_settings_page)
+        )
+        .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
                 .with_system(systems::text_box::game_creation_once)
         )
@@ -149,6 +154,7 @@ fn main() {
         .add_system(resources::ui::ui_disconnect_game)
         .add_system(resources::ui::ui_invite_menu)
         .add_system(resources::ui::ui_close_settings)
+        .add_system(resources::ui::ui_debug_lines)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())

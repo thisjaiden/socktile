@@ -10,11 +10,15 @@ pub const UI_IMG: f32 = 100.0;
 pub const UI_TEXT: f32 = 101.0;
 /// Z-Axis for the cursor
 pub const CURSOR: f32 = 250.0;
+/// Z-Axis for debug lines
+pub const DEBUG: f32 = 400.0;
 
 /// Is this an internal dev build?
 pub const DEV_BUILD: bool = true;
 /// Allow a GGS to be run from this build?
 pub const ALLOW_GGS: bool = true;
+/// Show debug lines over UI hitboxes?
+pub const UI_DEBUG: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
@@ -37,3 +41,5 @@ pub const SAVE_TIME: u64 = 30;
 pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 /// The distance before an item on the ground is picked up by players
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
+/// The offset between the cursor's render location and actual location
+pub const CURSOR_OFFSET: [f32; 2] = [-25.0, 31.0];

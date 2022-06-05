@@ -208,9 +208,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_asset_loader"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5200da755326dce03c414e53d0ac3cd3242a6ddc9a89ac3e43cf5f776587d429"
+checksum = "f2a78d8801db4a317b8a165ad0ceb2eba12250914799d1b6afa9c61e4da861a4"
 dependencies = [
  "bevy",
  "bevy_asset_loader_derive",
@@ -218,9 +218,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_asset_loader_derive"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5560b79168910c1264911388ee10cca7315f0cf3b04615eebbac515bdc54af3"
+checksum = "1d300dbfd5a2b6c202902e7e2be12003cb52493a9fa7278f4f95e4698ad4fd57"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -473,6 +473,14 @@ dependencies = [
  "bevy_window",
  "bitflags",
  "bytemuck",
+]
+
+[[package]]
+name = "bevy_prototype_debug_lines"
+version = "0.7.1"
+source = "git+https://github.com/Toqozz/bevy_debug_lines.git#9066fb8e4da8292cc38349f519108ee68cdc5fe3"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
@@ -2092,6 +2100,7 @@ dependencies = [
  "bevy",
  "bevy_asset_loader",
  "bevy_embedded_assets",
+ "bevy_prototype_debug_lines",
  "bincode",
  "ldtk_rust",
  "serde",

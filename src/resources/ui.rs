@@ -1,13 +1,22 @@
 use bevy::{prelude::*, app::AppExit};
+use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked, HotbarMarker}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT}, shared::{netty::Packet, object::Object}};
+use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}};
 
 use super::{Netty, Reality, TextBox, Disk};
+
+pub enum SettingsPage {
+    Sound,
+    Video,
+    Gameplay,
+    Online
+}
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
     queued_actions: Vec<UIClickAction>,
-    queue_player_action: bool
+    queue_player_action: bool,
+    settings_page: SettingsPage
 }
 
 impl UIManager {
@@ -15,7 +24,8 @@ impl UIManager {
         UIManager {
             active_clickables: vec![],
             queued_actions: vec![],
-            queue_player_action: false
+            queue_player_action: false,
+            settings_page: SettingsPage::Video
         }
     }
     pub fn add_ui(&mut self, new: UIClickable) {
@@ -26,6 +36,15 @@ impl UIManager {
     pub fn reset_ui(&mut self) {
         self.active_clickables.clear();
         self.queued_actions.clear();
+    }
+    pub fn remove_tag(&mut self, tag: &str) {
+        let mut removed = 0;
+        for (index, object) in self.active_clickables.clone().iter().enumerate() {
+            if object.tag == Some(tag.to_string()) {
+                self.active_clickables.remove(index - removed);
+                removed += 1;
+            }
+        }
     }
     fn scene_changes(&mut self) -> Option<String> {
         if self.queued_actions.get(0).is_some() {
@@ -123,7 +142,8 @@ pub struct UIClickable {
     pub action: UIClickAction,
     pub location: (f32, f32),
     pub size: (f32, f32),
-    pub removed_on_use: bool
+    pub removed_on_use: bool,
+    pub tag: Option<String>
 }
 
 impl UIClickable {
@@ -147,6 +167,40 @@ pub enum UIClickAction {
     JoinWorld(usize)
 }
 
+pub fn ui_debug_lines(
+    man: Res<UIManager>,
+    mut lines: ResMut<DebugLines>,
+) {
+    if UI_DEBUG {
+        for clickable in &man.active_clickables {
+            lines.line_colored(
+                Vec3::new(clickable.location.0, clickable.location.1, DEBUG),
+                Vec3::new(clickable.location.0 + clickable.size.0, clickable.location.1, DEBUG),
+                0.0,
+                Color::RED
+            );
+            lines.line_colored(
+                Vec3::new(clickable.location.0, clickable.location.1, DEBUG),
+                Vec3::new(clickable.location.0, clickable.location.1 - clickable.size.1, DEBUG),
+                0.0,
+                Color::RED
+            );
+            lines.line_colored(
+                Vec3::new(clickable.location.0 + clickable.size.0, clickable.location.1, DEBUG),
+                Vec3::new(clickable.location.0 + clickable.size.0, clickable.location.1 - clickable.size.1, DEBUG),
+                0.0,
+                Color::RED
+            );
+            lines.line_colored(
+                Vec3::new(clickable.location.0, clickable.location.1 - clickable.size.1, DEBUG),
+                Vec3::new(clickable.location.0 + clickable.size.0, clickable.location.1 - clickable.size.1, DEBUG),
+                0.0,
+                Color::RED
+            );
+        }
+    }
+}
+
 pub fn ui_forward(
     mut man: ResMut<UIManager>,
     mut reality: ResMut<Reality>
@@ -163,7 +217,7 @@ pub fn ui_manager(
 ) {
     if btn.just_pressed(MouseButton::Left) {
         for location in query.iter_mut() {
-            man.clicked((location.translation.x, location.translation.y));
+            man.clicked((location.translation.x + CURSOR_OFFSET[0], location.translation.y + CURSOR_OFFSET[1]));
         }
     }
 }
@@ -292,6 +346,77 @@ pub fn ui_settings_camera(
     });
 }
 
+pub fn ui_settings_page(
+    mut commands: Commands,
+    despawns: Query<Entity, With<SettingsPageComp>>,
+    mut man: ResMut<UIManager>,
+    fonts: Res<FontAssets>,
+    disk: Res<Disk>
+) {
+    if let Some(trigger) = man.gameplay_trigger() {
+        match trigger.as_str() {
+            "SoundSettings" => {
+                man.settings_page = SettingsPage::Sound;
+                despawns.for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+            }
+            "VideoSettings" => {
+                despawns.for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+                man.settings_page = SettingsPage::Video;
+                man.remove_tag("Settings");
+                man.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("ToggleFullscreen")),
+                    location: (0.0, 0.0),
+                    size: (200.0, 36.0),
+                    removed_on_use: false,
+                    tag: Some(String::from("Settings"))
+                });
+                commands.spawn_bundle(Text2dBundle {
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: format!("Fullscreen: {}", disk.window_config().fullscreen),
+                            style: TextStyle {
+                                font: fonts.simvoni.clone(),
+                                font_size: 36.0,
+                                color: Color::BLACK
+                            }
+                        }],
+                        alignment: TextAlignment {
+                            vertical: VerticalAlign::Top,
+                            horizontal: HorizontalAlign::Left
+                        }
+                    },
+                    transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                    ..default()
+                });
+            }
+            "GameplaySettings" => {
+                man.settings_page = SettingsPage::Gameplay;
+                despawns.for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+            }
+            "OnlineSettings" => {
+                man.settings_page = SettingsPage::Online;
+                despawns.for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+            }
+            "LeaveSettings" => {
+                man.settings_page = SettingsPage::Video;
+                despawns.for_each(|entity| {
+                    commands.entity(entity).despawn();
+                });
+            }
+            _ => { return } // do nothing
+        }
+        man.next();
+    }
+}
+
 pub fn ui_close_settings(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
@@ -315,25 +440,29 @@ pub fn ui_resume_game_settings(
         action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
         location: (-150.0, 110.0 - 27.5),
         size: (300.0, 55.0),
-        removed_on_use: false
+        removed_on_use: false,
+        tag: None
     });
     uiman.add_ui(UIClickable {
         action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
         location: (-150.0, 55.0 - 27.5),
         size: (300.0, 55.0),
-        removed_on_use: false
+        removed_on_use: false,
+        tag: None
     });
     uiman.add_ui(UIClickable {
         action: UIClickAction::ChangeScene(String::from("Settings")),
         location: (-150.0, -27.5),
         size: (300.0, 55.0),
-        removed_on_use: false
+        removed_on_use: false,
+        tag: None
     });
     uiman.add_ui(UIClickable {
         action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
         location: (-150.0, -55.0 - 27.5),
         size: (300.0, 55.0),
-        removed_on_use: false
+        removed_on_use: false,
+        tag: None
     });
 }
 
@@ -367,7 +496,8 @@ pub fn ui_disconnect_game(
             action: UIClickAction::ChangeScene(String::from("Title_screen")),
             location: (-2.5, -2.5),
             size: (5.0, 5.0),
-            removed_on_use: false
+            removed_on_use: false,
+            tag: None
         });
         man.clicked((0.0, 0.0));
         // We do this so UI doesn't get misaligned

@@ -52,6 +52,9 @@ pub struct HotbarMarker {
 #[derive(Clone, Copy, Debug, Component)]
 pub struct TitleScreenUser {}
 
+#[derive(Clone, Copy, Debug, Component)]
+pub struct SettingsPageComp {}
+
 pub mod ldtk {
     use crate::shared::saves::User;
     use bevy::prelude::Component;

@@ -586,25 +586,29 @@ impl Reality {
                     action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
                     location: (-150.0, 110.0 - 27.5),
                     size: (300.0, 55.0),
-                    removed_on_use: false
+                    removed_on_use: false,
+                    tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
                     location: (-150.0, 55.0 - 27.5),
                     size: (300.0, 55.0),
-                    removed_on_use: false
+                    removed_on_use: false,
+                    tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::ChangeScene(String::from("Settings")),
                     location: (-150.0, -27.5),
                     size: (300.0, 55.0),
-                    removed_on_use: false
+                    removed_on_use: false,
+                    tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
                     location: (-150.0, -55.0 - 27.5),
                     size: (300.0, 55.0),
-                    removed_on_use: false
+                    removed_on_use: false,
+                    tag: None
                 });
                 selfs.pause_menu = MenuState::Open;
             }
@@ -734,7 +738,8 @@ impl Reality {
                     action: UIClickAction::JoinWorld(server.internal_id),
                     location: (-200.0, ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0),
                     size: (400.0, 128.0),
-                    removed_on_use: false
+                    removed_on_use: false,
+                    tag: None
                 })
             }
         }
