@@ -5,12 +5,14 @@ use crate::{components::{ldtk::PlayerMarker}, assets::AnimatorAssets};
 
 pub struct Animator {
     player_prev_pos: HashMap<PlayerMarker, Transform>,
+    last_dir_left: HashMap<PlayerMarker, bool>
 }
 
 impl Animator {
     pub fn init() -> Animator {
         Animator {
-            player_prev_pos: HashMap::default()
+            player_prev_pos: HashMap::default(),
+            last_dir_left: HashMap::default()
         }
     }
     pub fn system_player_animator(
@@ -18,11 +20,21 @@ impl Animator {
         materials: Res<AnimatorAssets>,
         mut players: Query<(&mut Handle<Image>, &mut Transform, &mut PlayerMarker)>
     ) {
-        players.for_each_mut(|(mut tex, loc, mark)| {
+        players.for_each_mut(|(mut tex, mut loc, mark)| {
+            if selfs.last_dir_left.contains_key(&mark) {
+                if *selfs.last_dir_left.get(&mark).unwrap() {
+                    if loc.scale.x > -1.0 {
+                        loc.scale.x -= 0.1;
+                    }
+                }
+                else {
+                    if loc.scale.x < 1.0 {
+                        loc.scale.x += 0.1;
+                    }
+                }
+            }
             let mut left = false;
-            let mut down = false;
             let mut right = false;
-            let mut up = false;
             if selfs.player_prev_pos.contains_key(&mark) {
                 let trans = selfs.player_prev_pos.get(&mark).unwrap().translation;
                 if loc.translation.x > trans.x {
@@ -31,35 +43,12 @@ impl Animator {
                 if loc.translation.x < trans.x {
                     left = true;
                 }
-                if loc.translation.y > trans.y {
-                    up = true;
-                }
-                if loc.translation.y < trans.y {
-                    down = true;
-                }
-                if up && left {
-                    tex.set(Box::new(materials.face_up_left.clone())).unwrap();
-                }
-                else if up && right {
-                    tex.set(Box::new(materials.face_up_right.clone())).unwrap();
-                }
-                else if down && right {
-                    tex.set(Box::new(materials.face_down_right.clone())).unwrap();
-                }
-                else if down && left {
-                    tex.set(Box::new(materials.face_down_left.clone())).unwrap();
-                }
-                else if up {
-                    tex.set(Box::new(materials.face_up.clone())).unwrap();
-                }
-                else if right {
-                    tex.set(Box::new(materials.face_right.clone())).unwrap();
+                tex.set(Box::new(materials.forward_idle.clone())).unwrap();
+                if right && !left {
+                    selfs.last_dir_left.insert(mark.clone(), false);
                 }
                 else if left {
-                    tex.set(Box::new(materials.face_left.clone())).unwrap();
-                }
-                else if down {
-                    tex.set(Box::new(materials.face_down.clone())).unwrap();
+                    selfs.last_dir_left.insert(mark.clone(), true);
                 }
             }
             selfs.player_prev_pos.insert(mark.clone(), *loc);

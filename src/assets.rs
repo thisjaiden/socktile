@@ -28,24 +28,12 @@ pub struct FontAssets {
 
 #[derive(AssetCollection)]
 pub struct AnimatorAssets {
-    #[asset(path = "player/placeholder.png")]
+    #[asset(path = "player/uk_idle.png")]
     pub placeholder: Handle<Image>,
-    #[asset(path = "player/up.png")]
-    pub face_up: Handle<Image>,
-    #[asset(path = "player/up_right.png")]
-    pub face_up_right: Handle<Image>,
-    #[asset(path = "player/up_left.png")]
-    pub face_up_left: Handle<Image>,
-    #[asset(path = "player/down.png")]
-    pub face_down: Handle<Image>,
-    #[asset(path = "player/down_left.png")]
-    pub face_down_left: Handle<Image>,
-    #[asset(path = "player/down_right.png")]
-    pub face_down_right: Handle<Image>,
-    #[asset(path = "player/left.png")]
-    pub face_left: Handle<Image>,
-    #[asset(path = "player/right.png")]
-    pub face_right: Handle<Image>
+    #[asset(path = "player/fw_idle.png")]
+    pub forward_idle: Handle<Image>,
+    #[asset(path = "player/bw_idle.png")]
+    pub backward_idle: Handle<Image>
 }
 
 #[derive(AssetCollection)]
