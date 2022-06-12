@@ -129,10 +129,10 @@ impl Reality {
         self.owns_server = ownership;
     }
     pub fn update_chunk(&mut self, _chunk: (isize, isize)) {
-        println!("Reality::update_chunk needs finishing");
+        warn!("update_chunk needs finishing");
     }
     pub fn add_chunk(&mut self, _chunk_position: (isize, isize), _chunk_data: Vec<(usize, usize, TerrainState)>) {
-        println!("Reality::add_chunk needs finishing");
+        warn!("add_chunk needs finishing");
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
         for (euser, pos) in players {
@@ -336,7 +336,7 @@ impl Reality {
                 selfs.loaded_chunks.remove(index);
             }
             else {
-                println!("WARN: A chunk was queued to be removed but isn't loaded!");
+                warn!("A chunk was queued to be removed but isn't loaded");
             }
             query.for_each_mut(|(entity, tile)| {
                 if tile.chunk == chunk {
@@ -624,8 +624,8 @@ impl Reality {
                             loc.translation.x = 0.0;
                             loc.translation.y = 100.0;
                         }
-                        t => {
-                            println!("WARNING: Pause menu component has unkown type {t}!");
+                        component_id => {
+                            warn!("Pause menu component has unkown type id {component_id}");
                         }
                     }
                 });

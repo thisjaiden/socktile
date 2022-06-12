@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetCollection;
+use bevy_kira_audio::AudioSource;
 
 use crate::{ldtk, shared::player::Item};
 
@@ -76,4 +77,12 @@ impl ItemAssets {
 pub struct ObjectAssets {
     #[asset(path = "object/placeholder.png")]
     pub tree: Handle<Image>
+}
+
+#[derive(AssetCollection)]
+pub struct AudioAssets {
+    #[asset(path = "audio/silence.ogg")]
+    pub title_screen_loop: Handle<AudioSource>,
+    #[asset(path = "audio/silence.ogg")]
+    pub menu_click: Handle<AudioSource>
 }

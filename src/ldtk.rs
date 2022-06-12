@@ -26,7 +26,8 @@ use crate::{
     },
     consts::{
         BACKGROUND,
-        UI_TEXT
+        UI_TEXT,
+        FATAL_ERROR
     },
     resources::ui::{
         UIManager,
@@ -156,16 +157,17 @@ pub fn load_chunk(
                             }).insert(TileMarker {});
                         }
                         "LoadLevel" => {
-                            println!("WARNING: LDtk entity LoadLevel does not work for ENV_ levels.");
+                            warn!("LDtk entity LoadLevel does not work for ENV_* levels");
                         }
-                        ei => {
-                            println!("WARNING: LDtk file had an entity named {}, which isn't known or supported.", ei);
+                        unknown_entity => {
+                            warn!("LDtk file had an entity named {unknown_entity}, which isn't known or supported");
                         }
                     }
                 }
             }
-            it => {
-                panic!("FATAL: LDtk file had an invalid instance type {}.", it)
+            invalid_instance => {
+                error!("LDtk file had an invalid instance type {invalid_instance}");
+                panic!("{FATAL_ERROR}");
             }
         }
     }
@@ -292,14 +294,15 @@ pub fn load_level(
                                 tag: None
                             });
                         }
-                        ei => {
-                            println!("WARNING: LDtk file had an entity named {}, which isn't known or supported.", ei);
+                        unknown_entity => {
+                            warn!("LDtk file had an entity named {unknown_entity}, which isn't known or supported");
                         }
                     }
                 }
             }
-            it => {
-                panic!("FATAL: LDtk file had an invalid instance type {}.", it)
+            invalid_instance => {
+                error!("LDtk file had an invalid instance type {invalid_instance}");
+                panic!("{FATAL_ERROR}");
             }
         }
     }
@@ -329,7 +332,8 @@ impl LDtkMap {
                 return level;
             }
         }
-        panic!("no level exists for identifier {}!", identifier);
+        error!("No level exists with name {identifier}");
+        panic!("{FATAL_ERROR}");
     }
 }
 

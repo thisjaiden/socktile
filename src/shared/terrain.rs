@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use bevy::prelude::*;
+
+use crate::consts::FATAL_ERROR;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the state of a single tile of terrain.
 pub struct TerrainState {
@@ -29,10 +33,16 @@ impl TerrainState {
                     17 => ColliderType::Bottom,
                     18 => ColliderType::BottomRight,
                     9 | 19 | 24..=28 | 32 | 34..=36 | 40..=42 => ColliderType::None,
-                    n => panic!("Invalid tile in generic tileset! ({}:{})", self.tileset, n)
+                    invalid_id => {
+                        error!("Unknown tile id in generic style tilesheet ({}:{invalid_id})", self.tileset);
+                        panic!("{FATAL_ERROR}");
+                    }
                 }
             }
-            n => panic!("Unknown tileset! ({n})")
+            invalid_id => {
+                error!("Unknown tileset id {invalid_id}");
+                panic!("{FATAL_ERROR}");
+            }
         }
     }
 }

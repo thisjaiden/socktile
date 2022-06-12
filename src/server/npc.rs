@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
+use bevy::prelude::*;
 
+use crate::consts::FATAL_ERROR;
 use crate::shared::saves::User;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -51,13 +53,16 @@ impl Who {
             "Anzhela Bristlesquack" => Who::AnzhelaBristlesquack,
             "Cora Ranlor" => Who::CoraRanlor,
             "Thomas Kontos" => Who::ThomasKontos,
-            _ => panic!("Unable to construct enum type for impl Who")
+            invalid_name => {
+                error!("No NPC with name {invalid_name}");
+                panic!("{FATAL_ERROR}");
+            }
         }
     }
     fn get_inital_home(&self) -> GridPosition {
         match self {
             _ => {
-                println!("TODO: home position for {:?}", self);
+                warn!("TODO: home position for {:?}", self);
                 return GridPosition {
                     chunk: (0, 0),
                     tile: (0, 0)

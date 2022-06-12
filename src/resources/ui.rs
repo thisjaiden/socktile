@@ -29,8 +29,8 @@ impl UIManager {
         }
     }
     pub fn add_ui(&mut self, new: UIClickable) {
-        println!("UI component added.");
-        println!("x: {}, y: {}, w: {}, h: {}", new.location.0, new.location.1, new.size.0, new.size.1);
+        trace!("UI component added.");
+        trace!("x: {}, y: {}, w: {}, h: {}", new.location.0, new.location.1, new.size.0, new.size.1);
         self.active_clickables.push(new);
     }
     pub fn reset_ui(&mut self) {

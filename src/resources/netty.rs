@@ -14,7 +14,7 @@ pub struct Netty {
 
 impl Netty {
     pub fn init() -> Netty {
-        println!("Netty initalizing!");
+        info!("Netty initalizing");
 
         let connection = TcpStream::connect_timeout(
             &std::net::SocketAddr::from((GGS, NETTY_PORT)),
@@ -23,7 +23,7 @@ impl Netty {
         if let Ok(con) = connection {
             let inp = Arc::new(Mutex::new(vec![]));
             let out = Arc::new(Mutex::new(vec![]));
-            println!("Good connection to GGS (LOCAL-DEV), starting up client.");
+            info!("Good connection to GGS (LOCAL-DEV), starting up client.");
             startup(con, inp.clone(), out.clone());
             let mut fin = Netty {
                 connection: ConnectionStatus::Connected,
@@ -65,7 +65,7 @@ impl Netty {
             match packet {
                 Packet::CreatedUser(user) => {
                     while !disk.update_user(user.clone()) {};
-                    println!("Saved new user information.");
+                    info!("Saved new user information.");
                 }
                 Packet::AllSet => {
                     self.connection = ConnectionStatus::Stable;
@@ -85,7 +85,8 @@ impl Netty {
                     reality.set_avalable_servers(servers);
                 }
                 Packet::WrongVersion(prefered_version) => {
-                    panic!("Server is running {}, and you're using {} (You're most likely out of date, update!)", prefered_version, NETTY_VERSION);
+                    error!("Server is running {}, and you're using {} (You're most likely out of date, update!)", prefered_version, NETTY_VERSION);
+                    panic!("{FATAL_ERROR}");
                 }
                 Packet::OnlinePlayers(players) => {
                     reality.add_online_players(players);
@@ -189,9 +190,9 @@ pub fn google_exists() -> bool {
 }
 
 fn startup(mut con: TcpStream, recv_buffer: Arc<Mutex<Vec<Packet>>>, send_buffer: Arc<Mutex<Vec<Packet>>>) {
-    println!("Starting client with GGS set to {:?}.", con.peer_addr());
-    println!("GGS located at {:?}:{}", GGS, NETTY_PORT);
-    println!("NETTY VERSION: {}", NETTY_VERSION);
+    info!("Starting client with GGS set to {:?}.", con.peer_addr());
+    info!("GGS located at {:?}:{}", GGS, NETTY_PORT);
+    info!("NETTY VERSION: {}", NETTY_VERSION);
     let mut con_clone = con.try_clone().unwrap();
     std::thread::spawn(move || {
         loop {

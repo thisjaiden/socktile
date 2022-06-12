@@ -6,11 +6,12 @@ use std::{
         Mutex
     }
 };
+use bevy::prelude::*;
 use bevy::utils::HashMap;
 use crate::{
     components::GamePosition,
     consts::{
-        NETTY_VERSION,
+        NETTY_VERSION, FATAL_ERROR,
         NETTY_PORT, TICK_TIME, SAVE_TIME
     },
     shared::{
@@ -49,8 +50,8 @@ pub fn startup(arguments: Vec<String>) -> ! {
     let mut user_by_ip: HashMap<SocketAddr, User> = HashMap::default();
     let mut server_by_user: HashMap<User, usize> = HashMap::default();
     let mut sorted = vec![];
-    println!("{} profiles and {} saves.", profiles.len(), saves.len());
-    println!("Sorting saves...");
+    info!("Found {} profiles and {} saves.", profiles.len(), saves.len());
+    info!("Sorting saves...");
     for i in 0..saves.len() {
         for save in saves.clone() {
             if save.internal_id == i {
@@ -59,18 +60,19 @@ pub fn startup(arguments: Vec<String>) -> ! {
         }
     }
     saves = sorted;
-    println!("Saves sorted. Server started!");
+    info!("Saves sorted. Server started!");
     loop {
         if timer.elapsed() > std::time::Duration::from_millis(TICK_TIME) {
             // Save every 30 mins
             if autosave.elapsed() > std::time::Duration::from_secs(60 * SAVE_TIME) {
-                println!("Saving...");
+                info!("Saving worlds and profiles");
                 for world in saves.clone() {
                     save(world);
                 }
                 for profile in profiles.clone() {
                     save_profile(profile);
                 }
+                info!("Done saving");
                 autosave = std::time::Instant::now();
             }
             // logic tick
@@ -215,7 +217,7 @@ pub fn startup(arguments: Vec<String>) -> ! {
                             saves[world_index].data.players.push(player_info.clone());
                         }
                         else {
-                            println!("Warning: a player joined a server they were already in");
+                            warn!("A player joined a server they were already in");
                         }
                         let owner = owner.clone();
                         server_by_user.insert(owner.clone(), world_index);
@@ -476,22 +478,22 @@ pub struct SaveGame {
 }
 
 pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, arguments: Vec<String>) -> ! {
-    println!("Preparing network functions.");
-    println!("Netty version: {}", NETTY_VERSION);
+    info!("Preparing network functions");
+    info!("Netty version: {NETTY_VERSION}");
     let mut net = None;
     for (index, argument) in arguments.iter().enumerate() {
         if argument == "port" {
             if arguments.len() > index + 1 {
-                println!("Using port {} (overridden)", arguments[index + 1]);
+                info!("Using port {} (overridden)", arguments[index + 1]);
                 net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", arguments[index + 1])));
             }
             else {
-                println!("Invalid argument for port. (none)");
+                error!("Invalid argument for port. (none)");
             }
         }
     }
     if net.is_none() {
-        println!("Using port {NETTY_PORT} (default)");
+        info!("Using port {NETTY_PORT} (default)");
         net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", NETTY_PORT)));
     }
     
@@ -533,7 +535,7 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                         }
                         drop(send_access);
                         if destroy_conenction {
-                            // println!("Dropping connection to {:?}", remote_addr);
+                            trace!("Dropping connection to {remote_addr:?}");
                             break;
                         }
                         std::thread::sleep(std::time::Duration::from_millis(20));
@@ -541,12 +543,13 @@ pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_bu
                 });
             }
             else {
-                println!("Warning: Error occured connecting a stream.");
+                warn!("Error occured connecting a stream");
             }
         }
     }
     else {
-        panic!("Unable to bind to network effectively. Check that nothing else is running on the same port.");
+        error!("Unable to bind to network effectively. Check that nothing else is running on the same port.");
+        panic!("{FATAL_ERROR}");
     }
     unreachable!();
 }

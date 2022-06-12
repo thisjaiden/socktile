@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetLoader;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
+use tracing_subscriber::{prelude::*, EnvFilter};
 
 mod components;
 mod systems;
@@ -39,9 +40,13 @@ pub enum GameState {
 }
 
 fn main() {
+    // Set up the logger. We do this without bevy because the server doesn't set up a bevy app.
+    log_setup();
+    
     // Warn about distribution of internal builds
     if consts::DEV_BUILD {
-        println!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021. Do not share this software without permission from the property owners.");
+        info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021.");
+        info!("Do not share this software without permission from the property owners.");
     }
     // If starting a server is allowed...
     if consts::ALLOW_GGS {
@@ -55,7 +60,7 @@ fn main() {
         if arguments.contains(&String::from("server")) {
             // Run a server
             // `server::startup();` returns a never type and should never proceed to launching a normal game.
-            println!("WARNING: Running as a server. Make sure you know what you're doing!");
+            info!("Running as a server. Make sure you know what you're doing!");
             server::startup(arguments);
         }
     }
@@ -65,7 +70,9 @@ fn main() {
 
     // Enable embedded assets through `bevy_embedded_assets`
     app.add_plugins_with(DefaultPlugins, |group| {
-        group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+        group
+            .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+            .disable::<bevy::log::LogPlugin>()
     });
     // Register all the assets we need loaded
     AssetLoader::new(GameState::Load)
@@ -77,11 +84,13 @@ fn main() {
         .with_collection::<assets::ItemAssets>()
         .with_collection::<assets::ObjectAssets>()
         .with_collection::<assets::NPCAssets>()
+        .with_collection::<assets::AudioAssets>()
         .build(&mut app);
     
     // Add plugins and systems to our app, then run it
     app
         .add_plugin(ldtk::LDtkPlugin)
+        .add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         .add_state(GameState::Load)
         .add_system_set(
@@ -96,6 +105,7 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
                 .with_system(systems::visual::load_title_screen_map)
+                .with_system(systems::audio::title_screen_loop)
         )
         .add_system_set(
             SystemSet::on_resume(GameState::TitleScreen)
@@ -199,4 +209,26 @@ fn main() {
                 .with_system(systems::visual::update_title_screen_camera)
         )
         .run();
+}
+
+fn log_setup() {
+    tracing_log::LogTracer::init().unwrap();
+    let fmt_layer;
+    if consts::DEV_BUILD {
+        fmt_layer = tracing_subscriber::fmt::Layer::default()
+            .without_time()
+            .with_file(false)
+            .with_line_number(true);
+    }
+    else {
+        fmt_layer = tracing_subscriber::fmt::Layer::default()
+            .without_time()
+            .with_file(false)
+            .with_line_number(false);
+    }
+    let subscriber = tracing_subscriber::Registry::default()
+        .with(fmt_layer)
+        .with(EnvFilter::new("INFO,wgpu=error,symphonia=error"));
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Couldn't set global tracing subscriber");
 }

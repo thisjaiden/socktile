@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use bevy::prelude::*;
+
+use crate::consts::FATAL_ERROR;
+
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct PlayerData {
     pub inventory: Inventory,
@@ -54,7 +58,10 @@ impl Item {
         match from {
             "DemoAxe" => Item::DemoAxe,
             "DemoRod" => Item::DemoRod,
-            _ => panic!("No item with name {from}")
+            invalid_name => {
+                error!("No item with name {invalid_name}");
+                panic!("{FATAL_ERROR}");
+            }
         }
     }
     pub fn action(&self) -> ItemAction {

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use bevy::prelude::KeyCode;
+use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 
 use crate::shared::saves::User;
@@ -33,8 +33,8 @@ impl Disk {
                     user = Some(desered);
                 }
                 else {
-                    println!("WARNING: Encountered courrupted profile data. Resetting data.");
-                    println!("Error causing a faliure: {}", att.expect_err("unreachable condition"));
+                    warn!("Encountered courrupted profile data. Resetting data");
+                    warn!("Error causing a faliure: {}", att.expect_err("unreachable condition"));
                     user = None;
                 }
             }
@@ -113,7 +113,7 @@ impl Disk {
     pub fn update_user(&mut self, new: User) -> bool {
         #[cfg(target_arch = "wasm32")]
         {
-            println!("TODO: users are unsaved on wasm");
+            info!("TODO: users are unsaved on wasm");
             self.user = Some(new);
             true
         }

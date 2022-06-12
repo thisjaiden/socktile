@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{components::GamePosition, server::npc::NPC};
+use bevy::prelude::*;
 
+use crate::{components::GamePosition, server::npc::NPC, consts::FATAL_ERROR};
 use super::{object::{Object, ObjectType}, terrain::TerrainState, saves::User, player::{PlayerData, Item}};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -128,8 +129,9 @@ impl World {
                         }
                     }
                 }
-                it => {
-                    panic!("FATAL: LDtk file had an invalid instance type {it}.")
+                invalid_instance => {
+                    error!("LDtk file had an invalid instance type {invalid_instance}.");
+                    panic!("{FATAL_ERROR}");
                 }
             }
         }

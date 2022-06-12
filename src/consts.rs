@@ -43,3 +43,6 @@ pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
 /// The offset between the cursor's render location and actual location
 pub const CURSOR_OFFSET: [f32; 2] = [-25.0, 31.0];
+
+/// The message used for panic!s when a non-recoverable error occurs
+pub const FATAL_ERROR: &str = "A fatal error occured and socktile cannot continue";
