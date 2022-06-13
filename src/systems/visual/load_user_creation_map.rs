@@ -24,6 +24,7 @@ pub fn load_user_creation_map(
                         color: Color::BLACK
                     }
                 }
+                ;2 // we make two text components to show errors below if applicable
             ],
             alignment: TextAlignment {
                 vertical: VerticalAlign::Center,

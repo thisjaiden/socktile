@@ -35,7 +35,7 @@ pub fn load_title_screen_map(
                 }
             },
             transform: Transform::from_xyz(
-                -(1920.0 / 2.0),
+                -(1920.0 / 2.0) + 8.0,
                 -(1080.0 / 2.0) + 32.0,
                 UI_TEXT
             ),

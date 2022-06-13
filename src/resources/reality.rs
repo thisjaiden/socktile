@@ -584,28 +584,28 @@ impl Reality {
                 }).insert(PauseMenuMarker { type_: 1 }).insert(UILocked {});
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
-                    location: (-150.0, 110.0 - 27.5),
+                    location: (-150.0, 110.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
                     tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
-                    location: (-150.0, 55.0 - 27.5),
+                    location: (-150.0, 55.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
                     tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::ChangeScene(String::from("Settings")),
-                    location: (-150.0, -27.5),
+                    location: (-150.0, 0.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
                     tag: None
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
-                    location: (-150.0, -55.0 - 27.5),
+                    location: (-150.0, -55.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
                     tag: None

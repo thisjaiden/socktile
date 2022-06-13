@@ -43,12 +43,36 @@ pub fn user_creation(
     uiman: ResMut<UIManager>
 ) {
     let (entity, mut text) = tb_q.single_mut();
-    text.sections[0].value = tb.grab_buffer() + "#????";
-    if tb.grab_buffer().contains('#') || tb.grab_buffer().is_empty() {
+    text.sections[0].value = tb.grab_buffer() + "";
+    if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
+        text.sections[1].value = String::from("\nUsernames can't contain hashtags.");
     }
-    else {
+    else if tb.grab_buffer().contains('/') || tb.grab_buffer().contains('\\') {
+        text.sections[0].style.color = Color::RED;
+        text.sections[1].value = String::from("\nUsernames can't contain slashes.");
+    }
+    else if tb.grab_buffer().starts_with(' ') {
+        text.sections[0].style.color = Color::RED;
+        text.sections[1].value = String::from("\nUsernames can't start with a space.");
+    }
+    else if tb.grab_buffer().ends_with(' ') {
+        text.sections[0].style.color = Color::RED;
+        text.sections[1].value = String::from("\nUsernames can't end with a space.");
+    }
+    else if !tb.grab_buffer().is_empty() {
+        // Reset text to normal if all is okay
+        text.sections[1].value = String::from("\n");
         text.sections[0].style.color = Color::BLACK;
+        // Warnings for inconvenient but not disallowed names
+        if tb.grab_buffer().chars().count() > 20 {
+            text.sections[0].style.color = Color::ORANGE;
+            text.sections[1].value = String::from("\nUsernames over 20 characters may be inconvenient.");
+        }
+        else if tb.grab_buffer().contains("  ") {
+            text.sections[0].style.color = Color::ORANGE;
+            text.sections[1].value = String::from("\nUsernames with multiple spaces in a row may be inconvenient.");
+        }
         if tb.grab_buffer().contains('\n') {
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
