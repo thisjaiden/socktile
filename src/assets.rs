@@ -29,20 +29,21 @@ pub struct FontAssets {
 
 #[derive(AssetCollection)]
 pub struct AnimatorAssets {
-    #[asset(path = "player/uk_idle.png")]
-    pub placeholder: Handle<Image>,
-    #[asset(path = "player/fw_idle.png")]
-    pub forward_idle: Handle<Image>,
-    #[asset(path = "player/bw_idle.png")]
-    pub backward_idle: Handle<Image>
+    /// Represents a player that has not yet moved or had any animation occur.
+    #[asset(path = "player/idle/0.png")]
+    pub not_animated: Handle<Image>,
+    #[asset(path = "player/idle/0.png")]
+    pub idle0: Handle<Image>,
+    #[asset(path = "player/idle/1.png")]
+    pub idle1: Handle<Image>,
 }
 
 #[derive(AssetCollection)]
 pub struct NPCAssets {
-    #[asset(path = "nothing.png")]
-    pub unloaded: Handle<Image>,
-    #[asset(path = "npc/thomas_kontos/down.png")]
-    pub thomas_kontos_face_down: Handle<Image>,
+    #[asset(path = "npc/thomas_kontos/idle/0.png")]
+    pub not_animated: Handle<Image>,
+    #[asset(path = "npc/thomas_kontos/idle/0.png")]
+    pub idle0: Handle<Image>,
 }
 
 #[derive(AssetCollection)]

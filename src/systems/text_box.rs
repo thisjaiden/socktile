@@ -121,7 +121,7 @@ pub fn game_creation(
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();
             commands.spawn_bundle(SpriteBundle {
-                texture: materials.placeholder.clone(),
+                texture: materials.not_animated.clone(),
                 transform: Transform::from_xyz(
                     0.0,
                     0.0,

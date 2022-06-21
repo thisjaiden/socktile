@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetLoader;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
+use consts::EMBED_ASSETS;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
 mod components;
@@ -45,7 +46,7 @@ fn main() {
     
     // Warn about distribution of internal builds
     if consts::DEV_BUILD {
-        info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021.");
+        info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021-2022.");
         info!("Do not share this software without permission from the property owners.");
     }
     // If starting a server is allowed...
@@ -70,9 +71,15 @@ fn main() {
 
     // Enable embedded assets through `bevy_embedded_assets`
     app.add_plugins_with(DefaultPlugins, |group| {
-        group
-            .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
-            .disable::<bevy::log::LogPlugin>()
+        if EMBED_ASSETS {
+            group
+                .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+                .disable::<bevy::log::LogPlugin>()
+            }
+        else {
+            group
+                .disable::<bevy::log::LogPlugin>()
+        }
     });
     // Register all the assets we need loaded
     AssetLoader::new(GameState::Load)
@@ -152,6 +159,7 @@ fn main() {
             SystemSet::on_update(GameState::ServerList)
                 .with_system(resources::Reality::system_server_list_renderer)
         )
+        .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
         .add_system(systems::text_box::text_input)
         .add_system(systems::text_box::text_backspace)
@@ -191,6 +199,7 @@ fn main() {
                 .with_system(resources::Reality::system_remove_objects)
                 .with_system(resources::Reality::system_update_hotbar)
                 .with_system(resources::Animator::system_player_animator)
+                .with_system(resources::Animator::system_player_initiator)
                 .with_system(resources::Chat::system_display_chat)
                 .with_system(resources::Chat::system_pull_messages)
                 .with_system(resources::Chat::system_open_chat)

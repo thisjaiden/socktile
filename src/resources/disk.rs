@@ -74,7 +74,7 @@ impl Disk {
     pub fn window_config(&self) -> WindowConfig {
         self.window_config
     }
-    pub fn _update_window_config(&mut self, new: WindowConfig) -> bool {
+    pub fn update_window_config(&mut self, new: WindowConfig) -> bool {
         let mut window_config_path = files_dir();
         window_config_path.push("window_config.bic");
         let window_config_data = bincode::serialize(&new);

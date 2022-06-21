@@ -235,7 +235,7 @@ pub fn ui_game(
         if let Some(game_id) = man.join_game() {
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
-                texture: materials.placeholder.clone(),
+                texture: materials.not_animated.clone(),
                 transform: Transform::from_xyz(
                     0.0,
                     0.0,
@@ -351,7 +351,7 @@ pub fn ui_settings_page(
     despawns: Query<Entity, With<SettingsPageComp>>,
     mut man: ResMut<UIManager>,
     fonts: Res<FontAssets>,
-    disk: Res<Disk>
+    mut disk: ResMut<Disk>
 ) {
     if let Some(trigger) = man.gameplay_trigger() {
         match trigger.as_str() {
@@ -374,6 +374,27 @@ pub fn ui_settings_page(
                     removed_on_use: false,
                     tag: Some(String::from("Settings"))
                 });
+                man.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("IncreaseWindowScaling")),
+                    location: (0.0, 0.0), // TODO
+                    size: (0.0, 0.0), // TODO
+                    removed_on_use: false,
+                    tag: Some(String::from("Settings"))
+                });
+                man.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("DecreaseWindowScaling")),
+                    location: (0.0, 0.0), // TODO
+                    size: (0.0, 0.0), // TODO
+                    removed_on_use: false,
+                    tag: Some(String::from("Settings"))
+                });
+                man.add_ui(UIClickable {
+                    action: UIClickAction::GameplayTrigger(String::from("ToggleVSync")),
+                    location: (0.0, 0.0), // TODO
+                    size: (0.0, 0.0), // TODO
+                    removed_on_use: false,
+                    tag: Some(String::from("Settings"))
+                });
                 commands.spawn_bundle(Text2dBundle {
                     text: Text {
                         sections: vec![TextSection {
@@ -391,7 +412,7 @@ pub fn ui_settings_page(
                     },
                     transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                     ..default()
-                });
+                }).insert(SettingsPageComp { type_: 1 });
             }
             "GameplaySettings" => {
                 man.settings_page = SettingsPage::Gameplay;
@@ -410,6 +431,11 @@ pub fn ui_settings_page(
                 despawns.for_each(|entity| {
                     commands.entity(entity).despawn();
                 });
+            }
+            "ToggleFullscreen" => {
+                let mut winconf = disk.window_config();
+                winconf.fullscreen = !winconf.fullscreen;
+                disk.update_window_config(winconf);
             }
             _ => { return } // do nothing
         }
@@ -496,7 +522,7 @@ pub fn ui_disconnect_game(
             action: UIClickAction::ChangeScene(String::from("Title_screen")),
             location: (-2.5, -2.5),
             size: (5.0, 5.0),
-            removed_on_use: false,
+            removed_on_use: true,
             tag: None
         });
         man.clicked((0.0, 0.0));

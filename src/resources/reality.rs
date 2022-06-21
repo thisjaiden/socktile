@@ -209,7 +209,7 @@ impl Reality {
                 }
                 ObjectType::NPC(_who) => {
                     commands.spawn_bundle(SpriteBundle {
-                        texture: npc_assets.unloaded.clone(),
+                        texture: npc_assets.not_animated.clone(),
                         transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, PLAYER_CHARACTERS),
                         ..default()
                     }).insert(object.clone());
@@ -356,7 +356,7 @@ impl Reality {
             if user != disk.user().unwrap() {
                 commands.spawn_bundle(SpriteBundle {
                     transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
-                    texture: assets.placeholder.clone(),
+                    texture: assets.not_animated.clone(),
                     ..Default::default()
                 }).insert(PlayerMarker { user, isme: false });
             }

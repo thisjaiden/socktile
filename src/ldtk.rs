@@ -290,7 +290,7 @@ pub fn load_level(
                                     (1080.0 / 2.0) - entity.px[1] as f32
                                 ),
                                 size: (entity.width as f32, entity.height as f32),
-                                removed_on_use: true,
+                                removed_on_use: false,
                                 tag: None
                             });
                         }

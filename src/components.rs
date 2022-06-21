@@ -53,7 +53,12 @@ pub struct HotbarMarker {
 pub struct TitleScreenUser {}
 
 #[derive(Clone, Copy, Debug, Component)]
-pub struct SettingsPageComp {}
+pub struct SettingsPageComp {
+    /// what component this is
+    /// 0 | unimportant/misc
+    /// 1 | video settings fullscreen text
+    pub type_: u8
+}
 
 pub mod ldtk {
     use crate::shared::saves::User;
