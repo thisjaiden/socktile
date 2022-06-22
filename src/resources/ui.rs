@@ -443,6 +443,17 @@ pub fn ui_settings_page(
     }
 }
 
+pub fn ui_settings_text_updater(
+    mut query: Query<(&mut Text, &SettingsPageComp)>,
+    disk: Res<Disk>
+) {
+    query.for_each_mut(|(mut text, component)| {
+        if component.type_ == 1 {
+            text.sections[0].value = format!("Fullscreen: {}", disk.window_config().fullscreen);
+        }
+    });
+}
+
 pub fn ui_close_settings(
     mut commands: Commands,
     mut man: ResMut<UIManager>,

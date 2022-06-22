@@ -79,7 +79,6 @@ impl Netty {
                 }
                 Packet::ChangesChunk(chunk, changes) => {
                     reality.add_chunk(chunk, changes);
-                    reality.update_chunk(chunk);
                 }
                 Packet::ServerList(servers) => {
                     reality.set_avalable_servers(servers);

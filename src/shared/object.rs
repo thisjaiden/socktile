@@ -32,6 +32,7 @@ impl ObjectType {
     pub fn collider(&self) -> Option<(f64, f64)> {
         match self {
             Self::Tree => Some((64.0, 64.0)),
+            Self::NPC(_who) => Some((64.0, 64.0)),
             _ => None
         }
     }

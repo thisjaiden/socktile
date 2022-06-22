@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -38,7 +38,11 @@ pub struct Reality {
     /// Objects that need to be removed
     objects_to_remove: Vec<Uuid>,
     /// Should do an action if the player's selected item supports one
-    waiting_for_action: bool
+    waiting_for_action: bool,
+    /// Data for all chunks that have been modified
+    chunk_data: HashMap<(isize, isize), Vec<(usize, usize, TerrainState)>>,
+    /// Chunks waiting to be rerendered using `Self::chunk_data`
+    waiting_for_update: Vec<(isize, isize)>
 }
 
 impl Reality {
@@ -61,6 +65,8 @@ impl Reality {
             objects_to_update: vec![],
             objects_to_remove: vec![],
             waiting_for_action: false,
+            chunk_data: HashMap::default(),
+            waiting_for_update: vec![],
         }
     }
     pub fn reset(&mut self) {
@@ -128,11 +134,10 @@ impl Reality {
     pub fn set_ownership(&mut self, ownership: bool) {
         self.owns_server = ownership;
     }
-    pub fn update_chunk(&mut self, _chunk: (isize, isize)) {
-        warn!("update_chunk needs finishing");
-    }
-    pub fn add_chunk(&mut self, _chunk_position: (isize, isize), _chunk_data: Vec<(usize, usize, TerrainState)>) {
-        warn!("add_chunk needs finishing");
+    /// Add brand new chunk data for a not seen before chunk
+    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize, TerrainState)>) {
+        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
+        self.waiting_for_update.push(chunk_position);
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
         for (euser, pos) in players {
@@ -155,6 +160,64 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_render_waiting_chunks(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut existing_tiles: Query<(Entity, &Tile)>,
+        mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+        mut maps: ResMut<Assets<LDtkMap>>,
+        target_maps: Res<MapAssets>,
+    ) {
+        let map = maps.get_mut(target_maps.core.clone()).unwrap();
+        
+        for chunk in &selfs.waiting_for_update {
+            if let Some(data) = selfs.chunk_data.get(chunk) {
+                for (tile_x, tile_y, tilestate) in data {
+                    existing_tiles.for_each_mut(|(entity, tile)| {
+                        if
+                            tile.chunk == *chunk &&
+                            tile.position.0 == *tile_x &&
+                            tile.position.1 == *tile_y
+                        {
+                            let tileset = map.tilesets.get(&(tilestate.tileset as i64)).unwrap();
+                            let mut tileset_definition = None;
+                            for tileset in &map.project.defs.tilesets {
+                                if tileset.uid == tilestate.tileset as i64 {
+                                    tileset_definition = Some(tileset);
+                                }
+                            }
+                            let tileset_definition = tileset_definition.unwrap();
+                            let texture_atlas = TextureAtlas::from_grid(
+                                tileset.clone(),
+                                Vec2::from((tileset_definition.tile_grid_size as f32, tileset_definition.tile_grid_size as f32)),
+                                tileset_definition.c_hei as usize, tileset_definition.c_wid as usize
+                            );
+                            let atlas_handle = texture_atlases.add(texture_atlas);
+                            commands.entity(entity).despawn();
+                            commands.spawn_bundle(SpriteSheetBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + (*tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                    0.0,
+                                    BACKGROUND
+                                ),
+                                texture_atlas: atlas_handle.clone(),
+                                sprite: TextureAtlasSprite::new(tilestate.tile),
+                                ..default()
+                            }).insert(Tile {
+                                chunk: *chunk,
+                                position: (*tile_x, *tile_y),
+                                sprite: (tilestate.tileset, tilestate.tile)
+                            });
+                        }
+                    });
+                }
+            }
+            else {
+                warn!("Unable to find data for a chunk queued for rendering");
+            }
+        }
+        selfs.waiting_for_update.clear();
+    }
     pub fn system_remove_objects(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
