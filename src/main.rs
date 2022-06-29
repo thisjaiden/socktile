@@ -15,6 +15,7 @@ mod server;
 mod shared;
 mod window_setup;
 mod ldtk;
+mod modular_assets;
 mod assets;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.

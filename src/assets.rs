@@ -30,7 +30,7 @@ pub struct FontAssets {
 #[derive(AssetCollection)]
 pub struct AnimatorAssets {
     /// Represents a player that has not yet moved or had any animation occur.
-    #[asset(path = "player/idle/0.png")]
+    #[asset(path = "player/default.png")]
     pub not_animated: Handle<Image>,
     #[asset(path = "player/idle/0.png")]
     pub idle0: Handle<Image>,

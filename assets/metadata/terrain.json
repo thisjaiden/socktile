@@ -1,0 +1,13 @@
+{
+    "minimum_height": 0,
+    "maximum_height": 5,
+    "terrain_states": [
+        {
+            "name": "grass",
+            "meta_location": "grass.json",
+            "approx_color": "00FF00",
+            "walk_sound": "nothing",
+            "run_sound": "nothing"
+        }
+    ]
+}

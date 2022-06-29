@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{terrain::TerrainState, netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND, CHUNK_SIZE, CHUNK_WIDTH}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -40,7 +40,7 @@ pub struct Reality {
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
     /// Data for all chunks that have been modified
-    chunk_data: HashMap<(isize, isize), Vec<(usize, usize, TerrainState)>>,
+    chunk_data: HashMap<(isize, isize), Vec<usize>>,
     /// Chunks waiting to be rerendered using `Self::chunk_data`
     waiting_for_update: Vec<(isize, isize)>
 }
@@ -135,8 +135,8 @@ impl Reality {
         self.owns_server = ownership;
     }
     /// Add brand new chunk data for a not seen before chunk
-    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize, TerrainState)>) {
-        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
+    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: &[usize; CHUNK_SIZE]) {
+        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data.to_vec());
         self.waiting_for_update.push(chunk_position);
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
@@ -172,12 +172,14 @@ impl Reality {
         
         for chunk in &selfs.waiting_for_update {
             if let Some(data) = selfs.chunk_data.get(chunk) {
-                for (tile_x, tile_y, tilestate) in data {
+                for (index, tilestate) in data.iter().enumerate() {
+                    let tile_x = index % CHUNK_WIDTH;
+                    let tile_y = index / CHUNK_WIDTH;
                     existing_tiles.for_each_mut(|(entity, tile)| {
                         if
                             tile.chunk == *chunk &&
-                            tile.position.0 == *tile_x &&
-                            tile.position.1 == *tile_y
+                            tile.position.0 == tile_x &&
+                            tile.position.1 == tile_y
                         {
                             let tileset = map.tilesets.get(&(tilestate.tileset as i64)).unwrap();
                             let mut tileset_definition = None;

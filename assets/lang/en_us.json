@@ -1,0 +1,18 @@
+{
+    "core": {
+        "title_screen": {
+            "no_network": "An internet connection is required to play the Alpha.",
+            "no_ggs": "The server is down right now. Check back in later.",
+            "quit": "Quit",
+            "settings": "Settings",
+            "new_game": "New",
+            "join_game": "Join",
+            "title": "Socktile Closed Alpha 0",
+            "splash": [
+                "\"It just works.\" - Todd Howard",
+                "It's Playable!",
+                "Still Unfinished"
+            ]
+        }
+    }
+}
