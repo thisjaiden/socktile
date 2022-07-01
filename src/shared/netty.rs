@@ -3,10 +3,9 @@ use crate::{
     shared::{
         object::Object,
         saves::User,
-        terrain::TerrainState,
         listing::GameListing,
         player::Inventory
-    }, resources::ChatMessage
+    }, resources::ChatMessage, consts::CHUNK_SIZE
 };
 
 use serde::{Deserialize, Serialize};
@@ -71,10 +70,10 @@ pub enum Packet {
     OnlinePlayers(Vec<(User, GamePosition)>),
     /// The server sends over the information relating to some terrain.
     /// (Chunk, Array (Tile, Tile Override))
-    ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
-    /// An update has occurred in a chunk.
-    /// (Chunk, Tile, Tile Override)
-    ChunkUpdate((isize, isize), (usize, usize), TerrainState),
+    ChangesChunk((isize, isize), Vec<usize>),
+    /// An update has occurred to a single tile.
+    /// (Chunk, Tile, New State)
+    TileUpdate((isize, isize), (usize, usize), usize),
     /// Sends over all game objects.
     /// (Game Objects)
     AllObjects(Vec<Object>),

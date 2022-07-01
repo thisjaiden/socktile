@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, ldtk::LDtkMap, assets::{MapAssets, FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND, CHUNK_SIZE, CHUNK_WIDTH}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND, CHUNK_SIZE, CHUNK_WIDTH}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -135,8 +135,8 @@ impl Reality {
         self.owns_server = ownership;
     }
     /// Add brand new chunk data for a not seen before chunk
-    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: &[usize; CHUNK_SIZE]) {
-        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data.to_vec());
+    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
+        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
         self.waiting_for_update.push(chunk_position);
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
@@ -165,8 +165,6 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         mut existing_tiles: Query<(Entity, &Tile)>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-        mut maps: ResMut<Assets<LDtkMap>>,
-        target_maps: Res<MapAssets>,
     ) {
         let map = maps.get_mut(target_maps.core.clone()).unwrap();
         

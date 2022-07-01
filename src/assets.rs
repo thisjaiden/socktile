@@ -1,13 +1,24 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetCollection;
-use bevy_kira_audio::AudioSource;
 
-use crate::{ldtk, shared::player::Item};
+use crate::{shared::player::Item, modular_assets};
 
 #[derive(AssetCollection)]
-pub struct MapAssets {
-    #[asset(path = "core.ldtk")]
-    pub core: Handle<ldtk::LDtkMap>,
+pub struct CoreAssets {
+    #[asset(path = "metadata")]
+    pub core: Handle<modular_assets::ModularAssets>,
+    #[asset(path = "core/title_screen.png")]
+    pub title_screen: Handle<Image>,
+    #[asset(path = "core/create_user.png")]
+    pub create_user: Handle<Image>,
+    #[asset(path = "core/create_world.png")]
+    pub create_world: Handle<Image>,
+    #[asset(path = "core/join_world.png")]
+    pub join_world: Handle<Image>,
+    #[asset(path = "core/video_settings.png")]
+    pub video_settings: Handle<Image>,
+    #[asset(path = "core/offline.png")]
+    pub offline_no_support: Handle<Image>,
 }
 
 #[derive(AssetCollection, Clone)]
@@ -78,12 +89,4 @@ impl ItemAssets {
 pub struct ObjectAssets {
     #[asset(path = "object/placeholder.png")]
     pub tree: Handle<Image>
-}
-
-#[derive(AssetCollection)]
-pub struct AudioAssets {
-    #[asset(path = "audio/silence.ogg")]
-    pub title_screen_loop: Handle<AudioSource>,
-    #[asset(path = "audio/silence.ogg")]
-    pub menu_click: Handle<AudioSource>
 }

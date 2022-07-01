@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{LDtkMap}, assets::{FontAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -38,7 +38,6 @@ pub fn user_creation(
     unloads: Query<Entity, With<TileMarker>>,
     mut maps: ResMut<Assets<LDtkMap>>,
     texture_atlases: ResMut<Assets<TextureAtlas>>,
-    target_maps: Res<MapAssets>,
     font_assets: Res<FontAssets>,
     uiman: ResMut<UIManager>
 ) {
@@ -88,9 +87,6 @@ pub fn user_creation(
             tb.clear_buffer();
             state.replace(GameState::TitleScreen).unwrap();
             commands.entity(entity).despawn_recursive();
-            let a = maps.get_mut(target_maps.core.clone()).unwrap();
-            let level = a.get_level("Title_screen");
-            load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
         }
     }
 }

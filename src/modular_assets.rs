@@ -14,23 +14,7 @@ use bevy_kira_audio::AudioSource;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::{
-    assets::FontAssets,
-    components::ldtk::{
-        TileMarker,
-        Tile
-    },
-    consts::{
-        BACKGROUND,
-        UI_TEXT,
-        FATAL_ERROR, EMBED_ASSETS
-    },
-    resources::ui::{
-        UIManager,
-        UIClickable,
-        UIClickAction
-    }
-};
+use crate::consts::{FATAL_ERROR, EMBED_ASSETS};
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -52,7 +36,28 @@ pub struct ModularAssets {
 }
 
 impl ModularAssets {
-    
+    pub fn get_audio(&self, name: String) -> Handle<AudioSource> {
+        for (meta, handle) in &self.audio_samples {
+            if meta.name == name {
+                return handle.clone();
+            }
+        }
+        error!("Unable to find an audio sample with the name {}", name);
+        panic!("{FATAL_ERROR}");
+    }
+    pub fn get_tile_rendering(&self, environment: [usize; 9]) -> TerrainRendering {
+        // check environment validity
+        for tile in environment {
+            if tile > self.terrain_data.states.len() {
+                error!("Invalid environment passed");
+                panic!("{FATAL_ERROR}");
+            }
+        }
+        // check for a uniform environment
+        if environment.iter().min() == environment.iter().max() {
+            return 
+        }
+    }
 }
 
 pub struct ModularAssetsLoader;
@@ -71,14 +76,20 @@ impl AssetLoader for ModularAssetsLoader {
             };
             let audio_core: AudioMetadata;
             let lang_core: Value;
+            let terrain_core: TerrainData;
+            let transition_core: Vec<TerrainTransition>;
 
             if EMBED_ASSETS {
                 audio_core = serde_json::from_slice(include_bytes!("../assets/metadata/audio.json")).unwrap();
                 lang_core = serde_json::from_slice(include_bytes!("../assets/lang/en_us.json")).unwrap();
+                terrain_core = serde_json::from_slice(include_bytes!("../assets/metadata/terrain.json")).unwrap();
+                transition_core = serde_json::from_slice(include_bytes!("../assets/metadata/transitions.json")).unwrap();
             }
             else {
                 audio_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/audio.json").unwrap()).unwrap();
                 lang_core = serde_json::from_str(&std::fs::read_to_string("../assets/lang/en_us.json").unwrap()).unwrap();
+                terrain_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/terrain.json").unwrap()).unwrap();
+                transition_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/transitions.json").unwrap()).unwrap();
             }
 
             let mut dependencies = vec![];
@@ -172,7 +183,7 @@ impl Default for TerrainData {
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the state of a single tile of terrain.
-pub struct TerrainState {
+struct TerrainState {
     name: String,
     meta_location: String,
     approx_color: String,
@@ -182,7 +193,20 @@ pub struct TerrainState {
 
 #[derive(Deserialize)]
 struct TerrainTransition {
+    names: Vec<String>,
+    meta_location: String,
+}
 
+pub enum TerrainRendering {
+    Sprite(Handle<Image>),
+    SpriteSheet(Handle<Image>, usize),
+    AnimatedSprite(Vec<Handle<Image>>, AnimationInfo),
+    AnimatedSpriteSheet(Handle<Image>, AnimationInfo)
+}
+
+pub struct AnimationInfo {
+    pub num_states: usize,
+    pub ticks_between_states: usize,
 }
 
 /* 

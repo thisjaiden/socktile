@@ -14,7 +14,6 @@ mod consts;
 mod server;
 mod shared;
 mod window_setup;
-mod ldtk;
 mod modular_assets;
 mod assets;
 
@@ -85,19 +84,18 @@ fn main() {
     // Register all the assets we need loaded
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
-        .with_collection::<assets::MapAssets>()
+        .with_collection::<assets::CoreAssets>()
         .with_collection::<assets::FontAssets>()
         .with_collection::<assets::AnimatorAssets>()
         .with_collection::<assets::UIAssets>()
         .with_collection::<assets::ItemAssets>()
         .with_collection::<assets::ObjectAssets>()
         .with_collection::<assets::NPCAssets>()
-        .with_collection::<assets::AudioAssets>()
         .build(&mut app);
     
     // Add plugins and systems to our app, then run it
     app
-        .add_plugin(ldtk::LDtkPlugin)
+        .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         .add_state(GameState::Load)

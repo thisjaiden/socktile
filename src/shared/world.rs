@@ -2,14 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use bevy::prelude::*;
 
-use crate::{components::GamePosition, server::npc::NPC, consts::FATAL_ERROR};
-use super::{object::{Object, ObjectType}, terrain::TerrainState, saves::User, player::{PlayerData, Item}};
+use crate::{components::GamePosition, server::npc::NPC, consts::{FATAL_ERROR, CHUNK_WIDTH}};
+use super::{object::{Object, ObjectType}, saves::User, player::{PlayerData, Item}};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct World {
     pub players: Vec<(User, GamePosition, PlayerData)>,
     pub offline_players: Vec<(User, GamePosition, PlayerData)>,
-    pub terrain_changes: Vec<((isize, isize), Vec<(usize, usize, TerrainState)>)>,
+    /// All of the generated terrain in the world.
+    /// (chunk coords, terrain data array)
+    pub terrain: Vec<((isize, isize), Vec<usize>)>,
     pub objects: Vec<Object>,
     pub generated_objects: Vec<(isize, isize)>
 }
@@ -19,7 +21,7 @@ impl World {
         World {
             players: vec![],
             offline_players: vec![],
-            terrain_changes: vec![],
+            terrain: vec![],
             objects: vec![],
             generated_objects: vec![]
         }
@@ -140,34 +142,22 @@ impl World {
 
         dupe_objects
     }
-    pub fn clone_chunk(&mut self, chunk: (isize, isize)) -> Vec<(usize, usize, TerrainState)> {
-        for (loc, data) in &self.terrain_changes {
+    pub fn clone_chunk(&mut self, chunk: (isize, isize)) -> Vec<usize> {
+        for (loc, data) in &self.terrain {
             if loc == &chunk {
                 return data.clone();
             }
         }
+        warn!("Chunk data was requested for a chunk with nothing generated");
         return vec![];
     }
-    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: TerrainState) {
-        let mut target_index = 0;
-        let mut found_target = false;
-        for (index, (loc, _data)) in self.terrain_changes.iter().enumerate() {
-            if loc == &chunk {
-                target_index = index;
-                found_target = true;
+    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
+        for (loc, data) in self.terrain {
+            if loc == chunk {
+                data[tile.0 + tile.1 * CHUNK_WIDTH] = state;
+                return;
             }
         }
-        if found_target {
-            for (index2, (posx, posy, _state)) in self.terrain_changes[target_index].1.iter().enumerate() {
-                if posx == &tile.0 && posy == &tile.1 {
-                    self.terrain_changes[target_index].1[index2].2 = state;
-                    return;
-                }
-            }
-            self.terrain_changes[target_index].1.push((tile.0, tile.1, state));
-        }
-        else {
-            self.terrain_changes.push((chunk, vec![(tile.0, tile.1, state)]));
-        }
+        warn!("A change was requested for a tile in an ungenerated chunk. TODO: generate said chunk");
     }
 }

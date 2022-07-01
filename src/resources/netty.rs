@@ -77,8 +77,8 @@ impl Netty {
                     reality.set_player_position(mypos);
                     reality.set_ownership(ownership);
                 }
-                Packet::ChangesChunk(chunk, changes) => {
-                    reality.add_chunk(chunk, changes);
+                Packet::ChangesChunk(chunk, data) => {
+                    reality.add_chunk(chunk, data);
                 }
                 Packet::ServerList(servers) => {
                     reality.set_avalable_servers(servers);
