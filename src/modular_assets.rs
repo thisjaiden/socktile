@@ -55,8 +55,9 @@ impl ModularAssets {
         }
         // check for a uniform environment
         if environment.iter().min() == environment.iter().max() {
-            return 
+            todo!()
         }
+        todo!()
     }
 }
 
@@ -76,8 +77,8 @@ impl AssetLoader for ModularAssetsLoader {
             };
             let audio_core: AudioMetadata;
             let lang_core: Value;
-            let terrain_core: TerrainData;
-            let transition_core: Vec<TerrainTransition>;
+            let terrain_core: TerrainDataJSON;
+            let transition_core: Vec<TerrainTransitionJSON>;
 
             if EMBED_ASSETS {
                 audio_core = serde_json::from_slice(include_bytes!("../assets/metadata/audio.json")).unwrap();
@@ -94,6 +95,7 @@ impl AssetLoader for ModularAssetsLoader {
 
             let mut dependencies = vec![];
 
+            // audio dependencies
             for sample in audio_core.audio_samples {
                 let path: AssetPath = load_context
                     .path()
@@ -103,6 +105,52 @@ impl AssetLoader for ModularAssetsLoader {
                     .into();
                 final_out.audio_samples.push((sample, load_context.get_handle(path.clone())));
                 dependencies.push(path);
+            }
+
+            // terrain metadata
+            final_out.terrain_data.maximum_height = terrain_core.maximum_height;
+            final_out.terrain_data.minimum_height = terrain_core.minimum_height;
+            // terrain definitions
+            // TODO ^^^
+            // terrain transitions
+            // For each terrain transition file,
+            for transition in transition_core {
+                // get the file contents
+                let meta: TerrainRenderingJSON = serde_json::from_str(&std::fs::read_to_string(format!("../assets/terrain/states/{}", transition.meta_location)).unwrap()).unwrap();
+                let mut definitions: Vec<ImageDefinition> = vec![];
+                // for every image declaration
+                for file in meta.files {
+                    // load the file
+                    let path: AssetPath = load_context
+                        .path()
+                        .parent()
+                        .unwrap()
+                        .join(format!("terrain/{}", file.location))
+                        .into();
+                    // save it to our image definitions
+                    if file.width == 1 && file.height == 1 {
+                        definitions.push(ImageDefinition::Sprite(load_context.get_handle(path.clone())));
+                    }
+                    else {
+                        definitions.push(ImageDefinition::SpriteSheet(load_context.get_handle(path.clone()), (file.width, file.height)));
+                    }
+                    // request it to be loaded by bevy
+                    dependencies.push(path);
+                }
+                // for every transition declaration
+                for transition in meta.variants {
+                    if let Some(animation) = transition.animation {
+                        
+                    }
+                }
+                final_out.terrain_data.states.push(TerrainState {
+                    name: terrain.name,
+                    meta_location: terrain.meta_location,
+                    approx_color: terrain.approx_color,
+                    walk_sound: final_out.get_audio(terrain.walk_sound),
+                    run_sound: final_out.get_audio(terrain.run_sound),
+                    meta_data: rendering.unwrap()
+                });
             }
 
             let keys = grab_keys_recursively(String::from("en_us"), lang_core);
@@ -161,11 +209,16 @@ enum LanguageValue {
 }
 
 #[derive(Deserialize)]
+struct TerrainDataJSON {
+    minimum_height: usize,
+    maximum_height: usize,
+    states: Vec<TerrainStateJSON>,
+}
+
 struct TerrainData {
     minimum_height: usize,
     maximum_height: usize,
     states: Vec<TerrainState>,
-    #[serde(skip)]
     transitions: Vec<TerrainTransition>
 }
 
@@ -183,126 +236,97 @@ impl Default for TerrainData {
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the state of a single tile of terrain.
-struct TerrainState {
+struct TerrainStateJSON {
     name: String,
-    meta_location: String,
     approx_color: String,
     walk_sound: String,
     run_sound: String
 }
 
+struct TerrainState {
+    name: String,
+    approx_color: String,
+    walk_sound: Handle<AudioSource>,
+    run_sound: Handle<AudioSource>
+}
+
 #[derive(Deserialize)]
+struct TerrainTransitionJSON {
+    names: Vec<String>,
+    meta_location: String,
+}
+
 struct TerrainTransition {
     names: Vec<String>,
     meta_location: String,
+    meta_data: Vec<(TransitionType, TerrainRendering)>
+}
+
+enum TransitionType {
+    BorderUp,
+    BorderDown,
+    BorderLeft,
+    BorderRight,
+    BorderUpLeft,
+    BorderUpRight,
+    BorderDownLeft,
+    BorderDownRight,
+    BorderInvertedUpLeft,
+    BorderInvertedUpRight,
+    BorderInvertedDownLeft,
+    BorderInvertedDownRight,
+    HeightmapDown
+}
+
+enum ImageDefinition {
+    Sprite(Handle<Image>),
+    SpriteSheet(Handle<Image>, (usize, usize))
 }
 
 pub enum TerrainRendering {
     Sprite(Handle<Image>),
     SpriteSheet(Handle<Image>, usize),
     AnimatedSprite(Vec<Handle<Image>>, AnimationInfo),
-    AnimatedSpriteSheet(Handle<Image>, AnimationInfo)
+    AnimatedSpriteSheet(Handle<Image>, AnimationInfo),
+    Variant(Vec<TerrainRendering>)
 }
 
+#[derive(Deserialize)]
+struct TerrainRenderingJSON {
+    files: Vec<TerrainRenderingFileJSON>,
+    variants: Vec<TerrainRenderingTransitionJSON>,
+}
+
+#[derive(Deserialize)]
+struct TerrainRenderingFileJSON {
+    location: String,
+    width: usize,
+    height: usize
+}
+
+#[derive(Deserialize)]
+struct TerrainRenderingTransitionJSON {
+    animation: Option<AnimationInfo>,
+    central: Option<Vec<usize>>,
+    up: Option<Vec<usize>>,
+    down: Option<Vec<usize>>,
+    /*
+        "left": [0, 8],
+        "right": [0, 10],
+        "up_left": [0, 0],
+        "up_right": [0, 2],
+        "down_left": [0, 16],
+        "down_right": [0, 18],
+        "inverted_up_left": [0, 3],
+        "inverted_up_right": [0, 4],
+        "inverted_down_left": [0, 11],
+        "inverted_down_right": [0, 12]
+    }
+    */
+}
+
+#[derive(Deserialize)]
 pub struct AnimationInfo {
-    pub num_states: usize,
+    pub number_of_states: usize,
     pub ticks_between_states: usize,
 }
-
-/* 
-impl TerrainState {
-    pub fn collides(&mut self, player: (f64, f64), offset_x: f64, offset_y: f64) -> bool {
-        // TODO: properly define player hitbox beyond arbitrary numbers here
-        self.collider_type().does_collide_with((player.0 - 32.0, player.1 - 28.0, 64.0, 64.0), offset_x, offset_y)
-    }
-    fn collider_type(&mut self) -> ColliderType {
-        match self.tileset {
-            58 | 85 => {
-                match self.tile {
-                    0 => ColliderType::TopLeft,
-                    1 => ColliderType::Top,
-                    2 => ColliderType::TopRight,
-                    3 => ColliderType::InverseTopLeft,
-                    4 => ColliderType::InverseTopRight,
-                    8 => ColliderType::Left,
-                    10 => ColliderType::Right,
-                    11 => ColliderType::InverseBottomLeft,
-                    12 => ColliderType::InverseBottomRight,
-                    16 => ColliderType::BottomLeft,
-                    17 => ColliderType::Bottom,
-                    18 => ColliderType::BottomRight,
-                    9 | 19 | 24..=28 | 32 | 34..=36 | 40..=42 => ColliderType::None,
-                    invalid_id => {
-                        error!("Unknown tile id in generic style tilesheet ({}:{invalid_id})", self.tileset);
-                        panic!("{FATAL_ERROR}");
-                    }
-                }
-            }
-            invalid_id => {
-                error!("Unknown tileset id {invalid_id}");
-                panic!("{FATAL_ERROR}");
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum ColliderType {
-    // No collider
-    None,
-    // Thin colliders prevent movement across the respective sides of the tile
-    TopLeft,
-    Top,
-    TopRight,
-    Left,
-    Right,
-    BottomLeft,
-    Bottom,
-    BottomRight,
-    InverseTopLeft,
-    InverseTopRight,
-    InverseBottomLeft,
-    InverseBottomRight,
-}
-
-impl ColliderType {
-    fn collider_dimensions(&mut self) -> &[(f64, f64, f64, f64)] {
-        match self {
-            Self::None => &[],
-            Self::TopLeft => &[(26.0, 0.0, 6.0, 32.0), (32.0, 32.0, 32.0, 6.0)],
-            Self::Top => &[(0.0, 32.0, 64.0, 6.0)],
-            Self::TopRight => &[(0.0, 32.0, 32.0, 6.0), (32.0, 0.0, 6.0, 32.0)],
-            Self::Left => &[(26.0, 0.0, 6.0, 64.0)],
-            Self::Right => &[(32.0, 0.0, 6.0, 64.0)],
-            Self::BottomLeft => &[(26.0, 32.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::Bottom => &[(0.0, 26.0, 64.0, 6.0)],
-            Self::BottomRight => &[(0.0, 26.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::InverseTopLeft => &[(32.0, 0.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::InverseTopRight => &[(0.0, 26.0, 32.0, 6.0), (26.0, 0.0, 6.0, 32.0)],
-            Self::InverseBottomLeft => &[(32.0, 32.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::InverseBottomRight => &[(0.0, 32.0, 32.0, 6.0), (26.0, 32.0, 6.0, 32.0)]
-        }
-    }
-    fn cube_colliders(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> bool {
-        a.0 < (b.0 + b.2) &&
-        (a.0 + a.2) > b.0 &&
-        (a.1 + a.3) > b.1 &&
-        a.1 < (b.1 + b.3)
-    }
-    pub fn does_collide_with(&mut self, other: (f64, f64, f64, f64), offset_x: f64, offset_y: f64) -> bool {
-        let mut checks = vec![];
-        for collider in self.collider_dimensions() {
-            checks.push(Self::cube_colliders(
-                (
-                    collider.0 + offset_x,
-                    collider.1 + offset_y,
-                    collider.2,
-                    collider.3
-                ),
-                other
-            ));
-        }
-        checks.contains(&true)
-    }
-}
-*/

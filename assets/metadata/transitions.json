@@ -1,10 +1,10 @@
 [
     {
         "names": ["grass", "water"],
-        "meta_location": "grass_water.json"
+        "meta_location": "transitions/grass_water.json"
     },
     {
         "names": ["grass", "grass"],
-        "meta_location": "grass_heightmap.json"
+        "meta_location": "heightmaps/grass.json"
     }
 ]
