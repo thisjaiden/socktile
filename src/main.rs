@@ -123,7 +123,6 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::OfflineTitle)
-                .with_system(systems::visual::load_offline_title_map)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
@@ -135,7 +134,6 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Settings)
-                .with_system(systems::visual::load_settings_map)
                 .with_system(resources::ui::ui_settings_camera)
         )
         .add_system_set(

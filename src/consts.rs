@@ -39,6 +39,8 @@ pub const TICK_TIME: u64 = 25;
 /// Time in minutes between game saves on the server
 pub const SAVE_TIME: u64 = 30;
 
+/// Size of the player hitbox in pixels
+pub const PLAYER_HITBOX: (f64, f64) = (64.0, 64.0);
 /// The distance before an item on the ground is drawn to players
 pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 /// The distance before an item on the ground is picked up by players

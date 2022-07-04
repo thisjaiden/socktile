@@ -61,7 +61,7 @@ pub struct SettingsPageComp {
 }
 
 pub mod ldtk {
-    use crate::shared::saves::User;
+    use crate::{shared::saves::User, modular_assets::TransitionType};
     use bevy::prelude::Component;
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
@@ -77,7 +77,6 @@ pub mod ldtk {
     pub struct Tile {
         pub chunk: (isize, isize),
         pub position: (usize, usize),
-        /// (Spritesheet index, Sprite index)
-        pub sprite: (usize, usize)
+        pub transition_type: TransitionType
     }
 }

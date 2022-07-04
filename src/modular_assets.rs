@@ -14,7 +14,7 @@ use bevy_kira_audio::AudioSource;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::consts::{FATAL_ERROR, EMBED_ASSETS};
+use crate::consts::{FATAL_ERROR, EMBED_ASSETS, PLAYER_HITBOX};
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -117,6 +117,7 @@ impl AssetLoader for ModularAssetsLoader {
             for transition in transition_core {
                 // get the file contents
                 let meta: TerrainRenderingJSON = serde_json::from_str(&std::fs::read_to_string(format!("../assets/terrain/states/{}", transition.meta_location)).unwrap()).unwrap();
+                
                 let mut definitions: Vec<ImageDefinition> = vec![];
                 // for every image declaration
                 for file in meta.files {
@@ -137,20 +138,66 @@ impl AssetLoader for ModularAssetsLoader {
                     // request it to be loaded by bevy
                     dependencies.push(path);
                 }
+                
+                let mut transitions: HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>> = default();
                 // for every transition declaration
-                for transition in meta.variants {
-                    if let Some(animation) = transition.animation {
-                        
+                for variant in meta.variants {
+                    let vec_styles = conjoin_styles(variant.clone());
+                    let existing_variants = transitions.clone().get(
+                        &[transition.names[0].clone(), transition.names[1].clone()]
+                    );
+                    let mut new_existing_variants: HashMap<TransitionType, Vec<TerrainRendering>> = default();
+                    for (style, data) in vec_styles {
+                        if let Some(existing_variants) = existing_variants {
+                            for (k, v) in existing_variants.iter() {
+                                new_existing_variants.insert(k.clone(), v.to_vec());
+                            }
+                            let old_data = existing_variants.get(&style);
+                            let mut data2: Vec<TerrainRendering>;
+                            if let Some(old_data) = old_data {
+                                data2 = old_data.to_vec();
+                            }
+                            else {
+                                data2 = vec![];
+                            }
+                            if let Some(animation) = variant.animation {
+                                match &definitions[data[0]] {
+                                    ImageDefinition::Sprite(_image_handle) => {
+                                        let mut file_handles = vec![];
+                                        for i in 0..animation.number_of_states {
+                                            file_handles.push(definitions[data[i * 2]].force_sprite());
+                                        }
+                                        data2.push(TerrainRendering::AnimatedSprite(file_handles, animation));
+                                    }
+                                    ImageDefinition::SpriteSheet(file_dta, (file_w, file_h)) => {
+                                        let mut file_handles = vec![];
+                                        for i in 0..animation.number_of_states {
+                                            file_handles.push((definitions[data[i * 2]].force_sprite_sheet(), data[(i * 2) + 1]))
+                                        }
+                                        data2.push(TerrainRendering::AnimatedSpriteSheet(file_handles, animation));
+                                    }
+                                }
+                            }
+                            else {
+                                match &definitions[data[0]] {
+                                    ImageDefinition::Sprite(image_handle) => {
+                                        data2.push(TerrainRendering::Sprite(image_handle.clone()));
+                                    }
+                                    ImageDefinition::SpriteSheet(image_handle, (image_width, image_height)) => {
+                                        data2.push(TerrainRendering::SpriteSheet(image_handle.clone(), *image_width, *image_height, data[1]));
+                                    }
+                                }
+                            }
+                            new_existing_variants.insert(style, data2);
+                            transitions.insert(
+                                [transition.names[0].clone(), transition.names[1].clone()],
+                                new_existing_variants
+                            );
+                        }
                     }
+                    transitions.insert([transition.names[0].clone(), transition.names[1].clone()], new_existing_variants);
+                    todo!();
                 }
-                final_out.terrain_data.states.push(TerrainState {
-                    name: terrain.name,
-                    meta_location: terrain.meta_location,
-                    approx_color: terrain.approx_color,
-                    walk_sound: final_out.get_audio(terrain.walk_sound),
-                    run_sound: final_out.get_audio(terrain.run_sound),
-                    meta_data: rendering.unwrap()
-                });
             }
 
             let keys = grab_keys_recursively(String::from("en_us"), lang_core);
@@ -168,6 +215,10 @@ impl AssetLoader for ModularAssetsLoader {
         static EXTENSIONS: &[&str] = &[];
         EXTENSIONS
     }
+}
+
+fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType, Vec<usize>)> {
+    todo!();
 }
 
 /// Takes the keys out of a json object and monosizes them into (Key, Value) pairs.
@@ -258,11 +309,12 @@ struct TerrainTransitionJSON {
 
 struct TerrainTransition {
     names: Vec<String>,
-    meta_location: String,
     meta_data: Vec<(TransitionType, TerrainRendering)>
 }
 
-enum TransitionType {
+#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
+pub enum TransitionType {
+    Center,
     BorderUp,
     BorderDown,
     BorderLeft,
@@ -278,17 +330,85 @@ enum TransitionType {
     HeightmapDown
 }
 
+impl TransitionType {
+    pub fn collides(&self, player_location: (f64, f64), offset_x: f64, offset_y: f64) -> bool {
+        for collider in self.collider_dimensions() {
+            if TransitionType::cube_colliders(
+                (
+                    collider.0 + offset_x,
+                    collider.1 + offset_y,
+                    collider.2,
+                    collider.3,
+                ),
+                (
+                    player_location.0 - 32.0,
+                    player_location.1 - 28.0,
+                    PLAYER_HITBOX.0,
+                    PLAYER_HITBOX.1
+                )
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+    fn collider_dimensions(&self) -> &[(f64, f64, f64, f64)] {
+        match self {
+            Self::Center => &[],
+            Self::BorderUpLeft => &[(26.0, 0.0, 6.0, 32.0), (32.0, 32.0, 32.0, 6.0)],
+            Self::BorderUp => &[(0.0, 32.0, 64.0, 6.0)],
+            Self::BorderUpRight => &[(0.0, 32.0, 32.0, 6.0), (32.0, 0.0, 6.0, 32.0)],
+            Self::BorderLeft => &[(26.0, 0.0, 6.0, 64.0)],
+            Self::BorderRight => &[(32.0, 0.0, 6.0, 64.0)],
+            Self::BorderDownLeft => &[(26.0, 32.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
+            Self::BorderDown => &[(0.0, 26.0, 64.0, 6.0)],
+            Self::BorderDownRight => &[(0.0, 26.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
+            Self::BorderInvertedUpLeft => &[(32.0, 0.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
+            Self::BorderInvertedUpRight => &[(0.0, 26.0, 32.0, 6.0), (26.0, 0.0, 6.0, 32.0)],
+            Self::BorderInvertedDownLeft => &[(32.0, 32.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
+            Self::BorderInvertedDownRight => &[(0.0, 32.0, 32.0, 6.0), (26.0, 32.0, 6.0, 32.0)],
+            _ => todo!()
+        }
+    }
+    fn cube_colliders(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> bool {
+        a.0 < (b.0 + b.2) &&
+        (a.0 + a.2) > b.0 &&
+        (a.1 + a.3) > b.1 &&
+        a.1 < (b.1 + b.3)
+    }
+}
+
 enum ImageDefinition {
     Sprite(Handle<Image>),
     SpriteSheet(Handle<Image>, (usize, usize))
 }
 
+impl ImageDefinition {
+    fn force_sprite(&self) -> Handle<Image> {
+        match self {
+            Self::Sprite(handle) => return handle.clone(),
+            Self::SpriteSheet(_, _) => panic!()
+        }
+    }
+    fn force_sprite_sheet(&self) -> (Handle<Image>, usize, usize) {
+        match self {
+            Self::Sprite(_) => panic!(),
+            Self::SpriteSheet(handle, (width, height)) =>
+                return (handle.clone(), *width, *height)
+        }
+    }
+}
+
+#[derive(Clone)]
 pub enum TerrainRendering {
+    /// image
     Sprite(Handle<Image>),
-    SpriteSheet(Handle<Image>, usize),
+    /// image, width, height, index
+    SpriteSheet(Handle<Image>, usize, usize, usize),
+    /// [image], animation
     AnimatedSprite(Vec<Handle<Image>>, AnimationInfo),
-    AnimatedSpriteSheet(Handle<Image>, AnimationInfo),
-    Variant(Vec<TerrainRendering>)
+    /// [image, width, height, index], animation
+    AnimatedSpriteSheet(Vec<((Handle<Image>, usize, usize), usize)>, AnimationInfo)
 }
 
 #[derive(Deserialize)]
@@ -304,15 +424,15 @@ struct TerrainRenderingFileJSON {
     height: usize
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct TerrainRenderingTransitionJSON {
     animation: Option<AnimationInfo>,
     central: Option<Vec<usize>>,
     up: Option<Vec<usize>>,
     down: Option<Vec<usize>>,
+    left: Option<Vec<usize>>,
+    right: Option<Vec<usize>>,
     /*
-        "left": [0, 8],
-        "right": [0, 10],
         "up_left": [0, 0],
         "up_right": [0, 2],
         "down_left": [0, 16],
@@ -325,7 +445,7 @@ struct TerrainRenderingTransitionJSON {
     */
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Copy)]
 pub struct AnimationInfo {
     pub number_of_states: usize,
     pub ticks_between_states: usize,

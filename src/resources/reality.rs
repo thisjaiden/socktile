@@ -39,7 +39,7 @@ pub struct Reality {
     objects_to_remove: Vec<Uuid>,
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
-    /// Data for all chunks that have been modified
+    /// Data for all chunks
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     /// Chunks waiting to be rerendered using `Self::chunk_data`
     waiting_for_update: Vec<(isize, isize)>
@@ -166,50 +166,12 @@ impl Reality {
         mut existing_tiles: Query<(Entity, &Tile)>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     ) {
-        let map = maps.get_mut(target_maps.core.clone()).unwrap();
-        
         for chunk in &selfs.waiting_for_update {
             if let Some(data) = selfs.chunk_data.get(chunk) {
                 for (index, tilestate) in data.iter().enumerate() {
                     let tile_x = index % CHUNK_WIDTH;
                     let tile_y = index / CHUNK_WIDTH;
-                    existing_tiles.for_each_mut(|(entity, tile)| {
-                        if
-                            tile.chunk == *chunk &&
-                            tile.position.0 == tile_x &&
-                            tile.position.1 == tile_y
-                        {
-                            let tileset = map.tilesets.get(&(tilestate.tileset as i64)).unwrap();
-                            let mut tileset_definition = None;
-                            for tileset in &map.project.defs.tilesets {
-                                if tileset.uid == tilestate.tileset as i64 {
-                                    tileset_definition = Some(tileset);
-                                }
-                            }
-                            let tileset_definition = tileset_definition.unwrap();
-                            let texture_atlas = TextureAtlas::from_grid(
-                                tileset.clone(),
-                                Vec2::from((tileset_definition.tile_grid_size as f32, tileset_definition.tile_grid_size as f32)),
-                                tileset_definition.c_hei as usize, tileset_definition.c_wid as usize
-                            );
-                            let atlas_handle = texture_atlases.add(texture_atlas);
-                            commands.entity(entity).despawn();
-                            commands.spawn_bundle(SpriteSheetBundle {
-                                transform: Transform::from_xyz(
-                                    (-1920.0 / 2.0) + (*tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                    0.0,
-                                    BACKGROUND
-                                ),
-                                texture_atlas: atlas_handle.clone(),
-                                sprite: TextureAtlasSprite::new(tilestate.tile),
-                                ..default()
-                            }).insert(Tile {
-                                chunk: *chunk,
-                                position: (*tile_x, *tile_y),
-                                sprite: (tilestate.tileset, tilestate.tile)
-                            });
-                        }
-                    });
+                    todo!()
                 }
             }
             else {
@@ -372,15 +334,11 @@ impl Reality {
     pub fn system_chunk_loader(
         mut selfs: ResMut<Reality>,
         mut commands: Commands,
-        mut maps: ResMut<Assets<LDtkMap>>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-        target_maps: Res<MapAssets>,
         fonts: Res<FontAssets>
     ) {
         for chunk in selfs.chunks_to_load.clone() {
             if !selfs.loaded_chunks.contains(&chunk) {
-                let a = maps.get_mut(target_maps.core.clone()).unwrap();
-                crate::ldtk::load_chunk(chunk, a, &mut texture_atlases, fonts.clone(), &mut commands);
                 selfs.loaded_chunks.push(chunk);
                 // sorted order is needed for .binary_search() used in `system_chunk_unloader`
                 selfs.loaded_chunks.sort();
@@ -821,11 +779,7 @@ fn calc_player_against_tiles(tiles: &[Tile], player: (f64, f64)) -> bool {
     for tile in tiles {
         let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
         let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
-        let mut state = TerrainState {
-            tileset: tile.sprite.0,
-            tile: tile.sprite.1
-        };
-        if state.collides(player, offset_x, offset_y) {
+        if tile.transition_type.collides(player, offset_x, offset_y) {
             return true;
         }
     }

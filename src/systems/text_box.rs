@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{LDtkMap}, assets::{FontAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
+use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, assets::{FontAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -36,7 +36,6 @@ pub fn user_creation(
     mut state: ResMut<State<GameState>>,
     mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<TileMarker>>,
-    mut maps: ResMut<Assets<LDtkMap>>,
     texture_atlases: ResMut<Assets<TextureAtlas>>,
     font_assets: Res<FontAssets>,
     uiman: ResMut<UIManager>

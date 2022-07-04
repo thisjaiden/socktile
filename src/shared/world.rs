@@ -152,9 +152,9 @@ impl World {
         return vec![];
     }
     pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
-        for (loc, data) in self.terrain {
-            if loc == chunk {
-                data[tile.0 + tile.1 * CHUNK_WIDTH] = state;
+        for (index, (loc, _data)) in self.terrain.iter().enumerate() {
+            if loc == &chunk {
+                self.terrain[index].1[tile.0 + tile.1 * CHUNK_WIDTH] = state;
                 return;
             }
         }

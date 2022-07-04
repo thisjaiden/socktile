@@ -1,7 +1,10 @@
 use bevy::{prelude::*, app::AppExit};
 use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}};
+use crate::{
+    components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile},
+    PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp},
+    assets::{FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}};
 
 use super::{Netty, Reality, TextBox, Disk};
 
@@ -546,42 +549,28 @@ pub fn ui_disconnect_game(
 
 pub fn ui_scene(
     mut commands: Commands,
-    unloads: Query<Entity, With<TileMarker>>,
-    mapsatt: Option<ResMut<Assets<LDtkMap>>>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-    target_mapsatt: Option<Res<MapAssets>>,
     mut state: ResMut<State<GameState>>,
-    font_assetsatt: Option<Res<FontAssets>>,
     mut man: ResMut<UIManager>
 ) {
-    if let Some(font_assets) = font_assetsatt {
-        if let Some(target_maps) = target_mapsatt {
-            if let Some(mut maps) = mapsatt {
-                if let Some(goto) = man.scene_changes() {
-                    man.reset_ui();
-                    let a = maps.get_mut(target_maps.core.clone()).unwrap();
-                    let level = a.get_level(goto.as_str());
-                    load_level(unloads, level, a, texture_atlases, font_assets.clone(), man, &mut commands);
-                    match goto.as_str() {
-                        "Settings" => {
-                            state.push(GameState::Settings).unwrap();
-                        }
-                        "Create_world" => {
-                            state.replace(GameState::MakeGame).unwrap();
-                        }
-                        "Create_profile" => {
-                            state.replace(GameState::MakeUser).unwrap();
-                        }
-                        "Server_list" => {
-                            state.replace(GameState::ServerList).unwrap();
-                        }
-                        "Title_screen" => {
-                            state.replace(GameState::TitleScreen).unwrap();
-                        }
-                        _ => {}
-                    }
-                }
+    if let Some(goto) = man.scene_changes() {
+        man.reset_ui();
+        match goto.as_str() {
+            "Settings" => {
+                state.push(GameState::Settings).unwrap();
             }
+            "Create_world" => {
+                state.replace(GameState::MakeGame).unwrap();
+            }
+            "Create_profile" => {
+                state.replace(GameState::MakeUser).unwrap();
+            }
+            "Server_list" => {
+                state.replace(GameState::ServerList).unwrap();
+            }
+            "Title_screen" => {
+                state.replace(GameState::TitleScreen).unwrap();
+            }
+            _ => todo!()
         }
     }
 }
