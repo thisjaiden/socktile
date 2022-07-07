@@ -1,6 +1,12 @@
 use bevy::prelude::*;
 
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, assets::{FontAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
+use crate::{
+    components::{TextBox, ldtk::{TileMarker, PlayerMarker}, RemoveOnStateChange},
+    resources::{Netty, Disk},
+    shared::{netty::Packet, saves::User},
+    GameState, assets::{FontAssets, AnimatorAssets},
+    consts::{PLAYER_CHARACTERS, UI_TEXT}
+};
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -31,16 +37,13 @@ pub fn text_backspace(
 pub fn user_creation(
     mut commands: Commands,
     mut tb: ResMut<crate::resources::TextBox>,
-    mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
+    mut tb_q: Query<&mut Text, With<TextBox>>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut disk: ResMut<Disk>,
-    unloads: Query<Entity, With<TileMarker>>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-    font_assets: Res<FontAssets>,
-    uiman: ResMut<UIManager>
+    unloads: Query<Entity, With<RemoveOnStateChange>>
 ) {
-    let (entity, mut text) = tb_q.single_mut();
+    let mut text = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
@@ -60,7 +63,7 @@ pub fn user_creation(
     }
     else if !tb.grab_buffer().is_empty() {
         // Reset text to normal if all is okay
-        text.sections[1].value = String::from("\n");
+        text.sections[1].value = String::from("\n ");
         text.sections[0].style.color = Color::BLACK;
         // Warnings for inconvenient but not disallowed names
         if tb.grab_buffer().chars().count() > 20 {
@@ -70,6 +73,10 @@ pub fn user_creation(
         else if tb.grab_buffer().contains("  ") {
             text.sections[0].style.color = Color::ORANGE;
             text.sections[1].value = String::from("\nUsernames with multiple spaces in a row may be inconvenient.");
+        }
+        else if !tb.grab_buffer().is_ascii() {
+            text.sections[0].style.color = Color::ORANGE;
+            text.sections[1].value = String::from("\nUsernames with emojis or other non-ascii characters may be inconvenient.");
         }
         if tb.grab_buffer().contains('\n') {
             let mut mode = tb.grab_buffer();
@@ -84,8 +91,10 @@ pub fn user_creation(
                 tag: 0
             }) {}
             tb.clear_buffer();
+            unloads.for_each(|e| {
+                commands.entity(e).despawn();
+            });
             state.replace(GameState::TitleScreen).unwrap();
-            commands.entity(entity).despawn_recursive();
         }
     }
 }

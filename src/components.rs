@@ -50,6 +50,8 @@ pub struct HotbarMarker {
 }
 
 #[derive(Clone, Copy, Debug, Component)]
+/// Indicates a Text object that is used to show the user's username
+/// on the titlescreen in the bottom left.
 pub struct TitleScreenUser {}
 
 #[derive(Clone, Copy, Debug, Component)]
@@ -59,6 +61,9 @@ pub struct SettingsPageComp {
     /// 1 | video settings fullscreen text
     pub type_: u8
 }
+
+#[derive(Clone, Copy, Debug, Component)]
+pub struct RemoveOnStateChange {}
 
 pub mod ldtk {
     use crate::{shared::saves::User, modular_assets::TransitionType};

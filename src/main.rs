@@ -110,12 +110,12 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
-                .with_system(systems::visual::load_title_screen_map)
+                .with_system(systems::visual::title_screen)
                 .with_system(systems::audio::title_screen_loop)
         )
         .add_system_set(
             SystemSet::on_resume(GameState::TitleScreen)
-                .with_system(systems::visual::load_title_screen_map)
+                .with_system(systems::visual::title_screen)
         )
         .add_system_set(
             SystemSet::on_resume(GameState::Play)
@@ -126,7 +126,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
-                .with_system(systems::visual::load_user_creation_map)
+                .with_system(systems::visual::make_user)
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeUser)

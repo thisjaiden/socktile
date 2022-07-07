@@ -3,6 +3,10 @@
         {
             "name": "nothing",
             "meta_location": "silence.ogg"
+        },
+        {
+            "name": "title screen loop",
+            "meta_location": "silence.ogg"
         }
     ]
 }

@@ -42,7 +42,7 @@ impl ModularAssets {
                 return handle.clone();
             }
         }
-        error!("Unable to find an audio sample with the name {}", name);
+        error!("Unable to find an audio sample with the name '{}'", name);
         panic!("{FATAL_ERROR}");
     }
     pub fn get_tile_rendering(&self, environment: [usize; 9]) -> TerrainRendering {

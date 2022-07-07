@@ -1,11 +1,17 @@
 use bevy::prelude::*;
-use crate::{assets::FontAssets, components::TextBox, resources::ui::UIManager};
+use crate::{assets::{FontAssets, CoreAssets}, components::{TextBox, RemoveOnStateChange}};
 
-pub fn load_user_creation_map(
+pub fn make_user(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
-    uiman: ResMut<UIManager>
+    core: Res<CoreAssets>
 ) {
+    commands.spawn_bundle(SpriteBundle {
+        texture: core.title_screen.clone(),
+        ..default()
+    })
+    .insert(RemoveOnStateChange {});
+
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             sections: vec![
@@ -25,5 +31,7 @@ pub fn load_user_creation_map(
             }
         },
         ..Default::default()
-    }).insert(TextBox {});
+    })
+    .insert(TextBox {})
+    .insert(RemoveOnStateChange {});
 }

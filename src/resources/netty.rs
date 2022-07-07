@@ -148,13 +148,23 @@ impl Netty {
     }
     pub fn system_startup_checks(
         mut netty: ResMut<Netty>,
-        mut state: ResMut<State<GameState>>
+        mut state: ResMut<State<GameState>>,
+        disk: Res<Disk>
     ) {
         match netty.connection() {
             ConnectionStatus::Connected | ConnectionStatus::Stable => {
-                state.set(GameState::TitleScreen).unwrap();
+                if disk.user().is_some() {
+                    info!("Logging in user");
+                    netty.say(Packet::UserPresence(disk.user().unwrap()));
+                    state.set(GameState::TitleScreen).unwrap();
+                }
+                else {
+                    info!("Opening user creation screen");
+                    state.set(GameState::MakeUser).unwrap();
+                }
             }
             _ => {
+                info!("No network connection");
                 state.set(GameState::OfflineTitle).unwrap();
             }
         }
