@@ -5,7 +5,7 @@ use crate::{shared::player::Item, modular_assets};
 
 #[derive(AssetCollection)]
 pub struct CoreAssets {
-    #[asset(path = "metadata")]
+    #[asset(path = "e.nrf")]
     pub core: Handle<modular_assets::ModularAssets>,
     #[asset(path = "core/title_screen.png")]
     pub title_screen: Handle<Image>,

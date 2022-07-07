@@ -8,6 +8,7 @@ mkdir "testenv\server"
 mkdir "testenv\client"
 copy "target\debug\socktile.exe" "testenv\client\socktile.exe"
 copy "target\debug\socktile.exe" "testenv\server\socktile.exe"
+xcopy /q /e /i "assets" "testenv\client\assets"
 echo socktile.exe server > testenv\server\launch.bat
 echo pause >> testenv\server\launch.bat
 echo socktile.exe > testenv\client\crash_debug.bat
