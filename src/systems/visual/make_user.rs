@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{assets::{FontAssets, CoreAssets}, components::{TextBox, RemoveOnStateChange}};
+use crate::{assets::{FontAssets, CoreAssets}, components::{TextBox, RemoveOnStateChange}, consts::{BACKGROUND, UI_TEXT}};
 
 pub fn make_user(
     mut commands: Commands,
@@ -7,7 +7,8 @@ pub fn make_user(
     core: Res<CoreAssets>
 ) {
     commands.spawn_bundle(SpriteBundle {
-        texture: core.title_screen.clone(),
+        texture: core.create_user.clone(),
+        transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
         ..default()
     })
     .insert(RemoveOnStateChange {});
@@ -30,6 +31,7 @@ pub fn make_user(
                 horizontal: HorizontalAlign::Center
             }
         },
+        transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
         ..Default::default()
     })
     .insert(TextBox {})

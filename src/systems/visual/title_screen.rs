@@ -3,16 +3,18 @@ use crate::{
     assets::{FontAssets, CoreAssets},
     components::RemoveOnStateChange,
     components::TitleScreenUser,
-    consts::UI_TEXT
+    consts::{UI_TEXT, BACKGROUND}, resources::ui::{UIManager, UIClickable, UIClickAction}
 };
 
 pub fn title_screen(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
-    core: Res<CoreAssets>
+    core: Res<CoreAssets>,
+    mut ui: ResMut<UIManager>
 ) {
     commands.spawn_bundle(SpriteBundle {
         texture: core.title_screen.clone(),
+        transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
         ..default()
     })
     .insert(RemoveOnStateChange {});
@@ -43,4 +45,28 @@ pub fn title_screen(
     })
     .insert(TitleScreenUser {})
     .insert(RemoveOnStateChange {});
+    ui.add_ui(UIClickable {
+        action: UIClickAction::CloseProgram,
+        location: (-50.0, -100.0),
+        size: (50.0, 50.0),
+        ..default()
+    });
+    ui.add_ui(UIClickable {
+        action: UIClickAction::OpenSettings,
+        location: (50.0, -100.0),
+        size: (50.0, 50.0),
+        ..default()
+    });
+    ui.add_ui(UIClickable {
+        action: UIClickAction::CreateWorld,
+        location: (50.0, 100.0),
+        size: (50.0, 50.0),
+        ..default()
+    });
+    ui.add_ui(UIClickable {
+        action: UIClickAction::ViewWorldList,
+        location: (-50.0, 100.0),
+        size: (50.0, 50.0),
+        ..default()
+    });
 }

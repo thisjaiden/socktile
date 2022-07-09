@@ -138,7 +138,8 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_update(GameState::Settings)
-                .with_system(resources::ui::ui_settings_page)
+                .with_system(resources::ui::ui_video_settings_tab)
+                .with_system(resources::ui::ui_toggle_fullscreen)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
@@ -159,9 +160,10 @@ fn main() {
         .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
         .add_system(systems::text_box::text_input)
-        .add_system(systems::text_box::text_backspace)
         .add_system(resources::Netty::system_step)
-        .add_system(resources::ui::ui_scene)
+        .add_system(resources::ui::ui_create_world)
+        .add_system(resources::ui::ui_view_worlds)
+        .add_system(resources::ui::ui_open_settings)
         .add_system(resources::ui::ui_game)
         .add_system(resources::ui::ui_manager.after("cursor").before("player"))
         .add_system(resources::ui::ui_quick_exit)

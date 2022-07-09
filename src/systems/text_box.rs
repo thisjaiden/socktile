@@ -10,8 +10,7 @@ use crate::{
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
-    mut char_evr: EventReader<ReceivedCharacter>,
-    keys: Res<Input<KeyCode>>
+    mut char_evr: EventReader<ReceivedCharacter>
 ) {
     for char in char_evr.iter() {
         tb.update_buffer(char.char);
@@ -19,18 +18,13 @@ pub fn text_input(
             tb.eat_buffer();
             tb.update_buffer('\n');
         }
-    }
-    if keys.just_pressed(KeyCode::Back) {
-        tb.eat_buffer();
-    }
-}
-
-pub fn text_backspace(
-    mut tb: ResMut<crate::resources::TextBox>,
-    keys: Res<Input<KeyCode>>
-) {
-    if keys.just_pressed(KeyCode::Back) {
-        tb.eat_buffer();
+        // If we recieve a backspace character...
+        if char.char == '\x08' {
+            // Remove backspace character
+            tb.eat_buffer();
+            // Remove one more (the actual backspace action)
+            tb.eat_buffer();
+        }
     }
 }
 
@@ -60,6 +54,13 @@ pub fn user_creation(
     else if tb.grab_buffer().ends_with(' ') {
         text.sections[0].style.color = Color::RED;
         text.sections[1].value = String::from("\nUsernames can't end with a space.");
+    }
+    else if tb.grab_buffer().chars().count() < 3 {
+        text.sections[0].style.color = Color::RED;
+        text.sections[1].value = String::from("\nUsernames must be at least 3 characters long.");
+        if tb.grab_buffer().contains('\n') {
+            tb.eat_buffer();
+        }
     }
     else if !tb.grab_buffer().is_empty() {
         // Reset text to normal if all is okay
