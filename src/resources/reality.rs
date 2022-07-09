@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, BACKGROUND, CHUNK_SIZE, CHUNK_WIDTH}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH}, modular_assets::ModularAssets};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -15,10 +15,6 @@ pub struct Reality {
     /// Servers that can be joined
     avalable_servers: Vec<GameListing>,
     push_servers: bool,
-    /// Chunks that need to be loaded
-    chunks_to_load: Vec<(isize, isize)>,
-    /// Chunks that need to be unloaded
-    chunks_to_unload: Vec<(isize, isize)>,
     /// Players to spawn in and load
     players_to_spawn: Vec<(User, GamePosition)>,
     /// Players to unload
@@ -42,7 +38,13 @@ pub struct Reality {
     /// Data for all chunks
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     /// Chunks waiting to be rerendered using `Self::chunk_data`
-    waiting_for_update: Vec<(isize, isize)>
+    waiting_for_render: Vec<(isize, isize)>,
+    /// Chunks actively rendered onto the screen
+    currently_rendering: Vec<(isize, isize)>,
+    /// Chunks waiting to stop being rendered
+    stop_rendering: Vec<(isize, isize)>,
+    /// Chunks waiting to be downloaded from the server
+    chunks_to_download: Vec<(isize, isize)>
 }
 
 impl Reality {
@@ -53,20 +55,21 @@ impl Reality {
             chat_messages: vec![],
             avalable_servers: vec![],
             push_servers: false,
-            chunks_to_load: vec![],
-            chunks_to_unload: vec![],
             players_to_spawn: vec![],
             players_to_despawn: vec![],
             loaded_chunks: vec![],
             owns_server: false,
             pause_menu: MenuState::Closed,
-            players_to_move: HashMap::default(),
+            players_to_move: default(),
             queued_objects: vec![],
             objects_to_update: vec![],
             objects_to_remove: vec![],
             waiting_for_action: false,
-            chunk_data: HashMap::default(),
-            waiting_for_update: vec![],
+            chunk_data: default(),
+            waiting_for_render: vec![],
+            currently_rendering: vec![],
+            stop_rendering: vec![],
+            chunks_to_download: vec![]
         }
     }
     pub fn reset(&mut self) {
@@ -101,34 +104,48 @@ impl Reality {
     pub fn queue_chat(&mut self, msg: ChatMessage) {
         self.chat_messages.push(msg);
     }
+    /// Sets the player's position. This funciton also loads and unloads
+    /// appropriate chunks around the player's new position.
     pub fn set_player_position(&mut self, position: GamePosition) {
+        // Set the player's position
         self.player_position = position;
-        // load visible world
+        // Chunk sizes in coordinate space
         const ENV_WIDTH: f64 = 1920.0;
         const ENV_HEIGHT: f64 = 1088.0;
         // Get the player's chunk
         let tile_x = (self.player_position.x / ENV_WIDTH).round() as isize;
         let tile_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
         
-        // Add chunks that should be loaded
-        self.chunks_to_load.push((tile_x, tile_y));
-        self.chunks_to_load.push((tile_x, tile_y + 1));
-        self.chunks_to_load.push((tile_x, tile_y - 1));
-        self.chunks_to_load.push((tile_x + 1, tile_y));
-        self.chunks_to_load.push((tile_x - 1, tile_y));
-        self.chunks_to_load.push((tile_x + 1, tile_y + 1));
-        self.chunks_to_load.push((tile_x + 1, tile_y - 1));
-        self.chunks_to_load.push((tile_x - 1, tile_y + 1));
-        self.chunks_to_load.push((tile_x - 1, tile_y - 1));
+        // Add chunks that should be loaded (3x3 around player)
+        self.chunks_to_download.push((tile_x, tile_y));
+        self.chunks_to_download.push((tile_x, tile_y + 1));
+        self.chunks_to_download.push((tile_x, tile_y - 1));
+        self.chunks_to_download.push((tile_x + 1, tile_y));
+        self.chunks_to_download.push((tile_x - 1, tile_y));
+        self.chunks_to_download.push((tile_x + 1, tile_y + 1));
+        self.chunks_to_download.push((tile_x + 1, tile_y - 1));
+        self.chunks_to_download.push((tile_x - 1, tile_y + 1));
+        self.chunks_to_download.push((tile_x - 1, tile_y - 1));
 
         // Grab all loaded chunks
-        self.chunks_to_unload.append(&mut self.loaded_chunks.clone());
-        self.chunks_to_unload.sort();
-        // Mark every chunk that isn't about to be loaded to unload
-        for chunk in &self.chunks_to_load {
-            if let Ok(index) = self.chunks_to_unload.binary_search(chunk) {
-                self.chunks_to_unload.remove(index);
+        self.stop_rendering.append(&mut self.currently_rendering.clone());
+        self.stop_rendering.sort();
+        // Mark every chunk that isn't about to be downloaded to stop rendering
+        for chunk in &self.chunks_to_download {
+            if let Ok(index) = self.stop_rendering.binary_search(chunk) {
+                self.stop_rendering.remove(index);
             }
+        }
+        // Remove every chunk we already have from the download list
+        // Yes, there is a better way to do this. I don't care
+        let mut remove_indexes = vec![];
+        for (index, chunk) in self.chunks_to_download.iter().enumerate() {
+            if self.chunk_data.contains_key(chunk) {
+                remove_indexes.push(index);
+            }
+        }
+        for (index, value) in remove_indexes.iter().enumerate() {
+            self.chunks_to_download.swap_remove(value - index);
         }
     }
     pub fn set_ownership(&mut self, ownership: bool) {
@@ -137,7 +154,7 @@ impl Reality {
     /// Add brand new chunk data for a not seen before chunk
     pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
         self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
-        self.waiting_for_update.push(chunk_position);
+        self.waiting_for_render.push(chunk_position);
     }
     pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
         for (euser, pos) in players {
@@ -160,14 +177,38 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_chunk_requester(
+        mut selfs: ResMut<Reality>,
+        mut netty: ResMut<Netty>
+    ) {
+        for chunk in &selfs.chunks_to_download {
+            netty.say(Packet::RequestChunk(*chunk));
+        }
+        selfs.chunks_to_download.clear();
+    }
+    pub fn system_chunk_derenderer(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        tiles: Query<(Entity, &Tile)>
+    ) {
+        for chunk in &selfs.stop_rendering {
+            tiles.for_each(|(e, tile)| {
+                if tile.chunk == *chunk {
+                    commands.entity(e).despawn();
+                }
+            })
+        }
+        selfs.stop_rendering.clear();
+    }
     pub fn system_render_waiting_chunks(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
-        mut existing_tiles: Query<(Entity, &Tile)>,
-        mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+        mut core: Res<CoreAssets>,
+        mut core_serve: Res<Assets<ModularAssets>>
     ) {
-        for chunk in &selfs.waiting_for_update {
-            if let Some(data) = selfs.chunk_data.get(chunk) {
+        let mod_assets = core_serve.get(core.core.clone()).unwrap();
+        for chunk in selfs.waiting_for_render.clone() {
+            if let Some(data) = selfs.chunk_data.get(&chunk) {
                 for (index, tilestate) in data.iter().enumerate() {
                     let tile_x = index % CHUNK_WIDTH;
                     let tile_y = index / CHUNK_WIDTH;
@@ -178,7 +219,9 @@ impl Reality {
                 warn!("Unable to find data for a chunk queued for rendering");
             }
         }
-        selfs.waiting_for_update.clear();
+        let mut chunks = selfs.waiting_for_render.clone();
+        selfs.currently_rendering.append(&mut chunks);
+        selfs.waiting_for_render.clear();
     }
     pub fn system_remove_objects(
         mut commands: Commands,
@@ -330,42 +373,6 @@ impl Reality {
                 }
             }
         }
-    }
-    pub fn system_chunk_loader(
-        mut selfs: ResMut<Reality>,
-        mut commands: Commands,
-        mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-        fonts: Res<FontAssets>
-    ) {
-        for chunk in selfs.chunks_to_load.clone() {
-            if !selfs.loaded_chunks.contains(&chunk) {
-                selfs.loaded_chunks.push(chunk);
-                // sorted order is needed for .binary_search() used in `system_chunk_unloader`
-                selfs.loaded_chunks.sort();
-            }
-        }
-        selfs.chunks_to_load.clear();
-    }
-    pub fn system_chunk_unloader(
-        mut selfs: ResMut<Reality>,
-        mut commands: Commands,
-        mut query: Query<(Entity, &Tile)>
-    ) {
-        for chunk in selfs.chunks_to_unload.clone() {
-            // remove chunk from loaded chunks list, if found
-            if let Ok(index) = selfs.loaded_chunks.binary_search(&chunk) {
-                selfs.loaded_chunks.remove(index);
-            }
-            else {
-                warn!("A chunk was queued to be removed but isn't loaded");
-            }
-            query.for_each_mut(|(entity, tile)| {
-                if tile.chunk == chunk {
-                    commands.entity(entity).despawn();
-                }
-            });
-        }
-        selfs.chunks_to_unload.clear();
     }
     pub fn system_player_loader(
         mut selfs: ResMut<Reality>,

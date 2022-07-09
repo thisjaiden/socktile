@@ -100,6 +100,10 @@ fn main() {
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         .add_state(GameState::Load)
         .add_system_set(
+            SystemSet::on_exit(GameState::TitleScreen)
+                .with_system(systems::visual::clear_old)
+        )
+        .add_system_set(
             SystemSet::on_enter(GameState::Load)
                 .with_system(window_setup::window_setup)
         )
@@ -184,8 +188,7 @@ fn main() {
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_spawn_objects)
                 .with_system(resources::Reality::system_pause_menu)
-                .with_system(resources::Reality::system_chunk_loader)
-                .with_system(resources::Reality::system_chunk_unloader)
+                .with_system(resources::Reality::system_chunk_requester)
                 .with_system(resources::Reality::system_player_loader)
                 .with_system(resources::Reality::system_player_unloader)
                 .with_system(resources::Reality::system_player_controls)
@@ -198,6 +201,7 @@ fn main() {
                 .with_system(resources::Reality::system_update_objects)
                 .with_system(resources::Reality::system_remove_objects)
                 .with_system(resources::Reality::system_update_hotbar)
+                .with_system(resources::Reality::system_chunk_derenderer)
                 .with_system(resources::Reality::system_render_waiting_chunks)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Animator::system_player_initiator)

@@ -250,17 +250,18 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         func_send.push((Packet::InventoryState(player_info.2.inventory), from));
                         func_send.push((Packet::OnlinePlayers(constructable_players), from));
                         func_send.push((Packet::AllObjects(saves[world_index].data.objects.clone()), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1))), from));
                         func_send.append(&mut other_players);
                         func_send.append(&mut all_players);
+                        drop(func_send);
+                    }
+                    Packet::RequestChunk(chunk) => {
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestChunk");
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestChunk");
+
+                        let chunk_data = saves[*server].data.get_or_gen(chunk);
+
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::ChunkData(chunk, chunk_data), from));
                         drop(func_send);
                     }
                     Packet::SendChatMessage(msg) => {
@@ -470,7 +471,7 @@ pub fn save_folder() -> PathBuf {
 pub struct SaveGame {
     pub public_name: String,
     pub internal_id: usize,
-    pub data: World,
+    pub data: crate::shared::world::World,
     pub path: PathBuf,
     pub whitelist: Vec<User>,
     pub played_before: Vec<User>,

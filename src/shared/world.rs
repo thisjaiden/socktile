@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
-use crate::{components::GamePosition, server::npc::NPC, consts::{FATAL_ERROR, CHUNK_WIDTH}};
+use crate::{components::GamePosition, server::npc::NPC, consts::{FATAL_ERROR, CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_SIZE}};
 use super::{object::{Object, ObjectType}, saves::User, player::{PlayerData, Item}};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -11,7 +11,7 @@ pub struct World {
     pub offline_players: Vec<(User, GamePosition, PlayerData)>,
     /// All of the generated terrain in the world.
     /// (chunk coords, terrain data array)
-    pub terrain: Vec<((isize, isize), Vec<usize>)>,
+    pub terrain: HashMap<(isize, isize), Vec<usize>>,
     pub objects: Vec<Object>,
     pub generated_objects: Vec<(isize, isize)>
 }
@@ -21,10 +21,78 @@ impl World {
         World {
             players: vec![],
             offline_players: vec![],
-            terrain: vec![],
+            terrain: default(),
             objects: vec![],
             generated_objects: vec![]
         }
+    }
+    pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<usize> {
+        if let Some(chunk_data) = self.terrain.get(&chunk) {
+            return chunk_data.clone();
+        }
+        else {
+            self.generate_terrain(chunk);
+            return self.get_or_gen(chunk);
+        }
+    }
+    fn generate_terrain(&mut self, chunk: (isize, isize)) {
+        let project: ldtk_rust::Project = serde_json::from_slice(include_bytes!("../../assets/core.ldtk"))
+            .expect("FATAL: Invalid LDTK map for server executable, this is an unrepairable error.");
+
+        // find the level name from a chunk
+        let fmta = if chunk.0.is_negative() {
+            format!("M{}", -chunk.0)
+        }
+        else {
+            format!("{}", chunk.0)
+        };
+        let fmtb = if chunk.1.is_negative() {
+            format!("M{}", -chunk.1)
+        }
+        else {
+            format!("{}", chunk.1)
+        };
+
+        // Search for the level in the world.
+        let mut selected_level = None;
+        for level in &project.levels {
+            if level.identifier == format!("Env_{}_{}", fmta, fmtb) {
+                selected_level = Some(level);
+            }
+        }
+        
+        // Use the backup if this level doesn't exist.
+        if selected_level.is_none() {
+            for level in &project.levels {
+                if level.identifier == "Env_NONE" {
+                    selected_level = Some(level);
+                }
+            }
+        }
+        let level = selected_level.expect("FATAL: LDTK file missing required backup environment");
+        let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
+        let mut chunk_data = vec![];
+        for layer in layers {
+            match layer.layer_instance_type.as_str() {
+                "IntGrid" => {
+                    for height_layer in CHUNK_HEIGHT-1..=0 {
+                        for width_layer in 0..CHUNK_WIDTH {
+                            chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
+                        }
+                    }
+                }
+                _ => {
+                    // ignored
+                }
+            }
+        }
+        // check data
+        if chunk_data.len() != CHUNK_SIZE {
+            error!("Chunk size was improper ({} != {CHUNK_SIZE})", chunk_data.len());
+            panic!("{FATAL_ERROR}");
+        }
+        // save data
+        self.terrain.insert(chunk, chunk_data);
     }
     pub fn try_generating_objects(&mut self, chunk: (isize, isize)) -> Vec<Object> {
         if self.generated_objects.contains(&chunk) {
@@ -131,9 +199,8 @@ impl World {
                         }
                     }
                 }
-                invalid_instance => {
-                    error!("LDtk file had an invalid instance type {invalid_instance}.");
-                    panic!("{FATAL_ERROR}");
+                _ => {
+                    // ignore
                 }
             }
         }
@@ -142,22 +209,9 @@ impl World {
 
         dupe_objects
     }
-    pub fn clone_chunk(&mut self, chunk: (isize, isize)) -> Vec<usize> {
-        for (loc, data) in &self.terrain {
-            if loc == &chunk {
-                return data.clone();
-            }
-        }
-        warn!("Chunk data was requested for a chunk with nothing generated");
-        return vec![];
-    }
     pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
-        for (index, (loc, _data)) in self.terrain.iter().enumerate() {
-            if loc == &chunk {
-                self.terrain[index].1[tile.0 + tile.1 * CHUNK_WIDTH] = state;
-                return;
-            }
-        }
-        warn!("A change was requested for a tile in an ungenerated chunk. TODO: generate said chunk");
+        let mut dta = self.get_or_gen(chunk);
+        dta[tile.0 + (tile.1 * CHUNK_WIDTH)] = state;
+        self.terrain.insert(chunk, dta);
     }
 }

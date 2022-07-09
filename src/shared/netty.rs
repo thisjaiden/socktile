@@ -1,11 +1,12 @@
 use crate::{
     components::GamePosition,
+    resources::ChatMessage,
     shared::{
         object::Object,
         saves::User,
         listing::GameListing,
         player::Inventory
-    }, resources::ChatMessage, consts::CHUNK_SIZE
+    }
 };
 
 use serde::{Deserialize, Serialize};
@@ -68,11 +69,14 @@ pub enum Packet {
     /// A list of online users for a given world
     /// (Array (User, Position))
     OnlinePlayers(Vec<(User, GamePosition)>),
-    /// The server sends over the information relating to some terrain.
-    /// (Chunk, Array (Tile, Tile Override))
-    ChangesChunk((isize, isize), Vec<usize>),
+    /// A client requests full data pertaining to a chunk
+    /// (Chunk Location)
+    RequestChunk((isize, isize)),
+    /// The server sends over a chunk of terrain
+    /// (Chunk Location, [Tile])
+    ChunkData((isize, isize), Vec<usize>),
     /// An update has occurred to a single tile.
-    /// (Chunk, Tile, New State)
+    /// (Chunk Location, Tile Location, New State)
     TileUpdate((isize, isize), (usize, usize), usize),
     /// Sends over all game objects.
     /// (Game Objects)

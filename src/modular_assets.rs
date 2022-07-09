@@ -112,6 +112,14 @@ impl AssetLoader for ModularAssetsLoader {
             final_out.terrain_data.minimum_height = terrain_core.minimum_height;
             // terrain definitions
             // TODO ^^^
+            for definition in terrain_core.states {
+                final_out.terrain_data.states.push(TerrainState {
+                    name: definition.name,
+                    approx_color: definition.approx_color,
+                    walk_sound: final_out.get_audio(definition.walk_sound),
+                    run_sound: final_out.get_audio(definition.run_sound)
+                });
+            }
             // terrain transitions
             // For each terrain transition file,
             for transition in transition_core {
@@ -140,7 +148,7 @@ impl AssetLoader for ModularAssetsLoader {
                     dependencies.push(path);
                 }
                 
-                let mut transitions: HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>> = default();
+                let transitions: &mut HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>> = &mut final_out.terrain_data.transitions;
                 // for every transition declaration
                 for variant in meta.variants {
                     let vec_styles = conjoin_styles(variant.clone());
@@ -194,6 +202,7 @@ impl AssetLoader for ModularAssetsLoader {
                     }
                 }
             }
+            
 
             let keys = grab_keys_recursively(String::from("en_us"), lang_core);
             for (key, value) in keys {
@@ -307,7 +316,7 @@ struct TerrainData {
     minimum_height: usize,
     maximum_height: usize,
     states: Vec<TerrainState>,
-    transitions: Vec<TerrainTransition>
+    transitions: HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>>
 }
 
 impl Default for TerrainData {
@@ -316,7 +325,7 @@ impl Default for TerrainData {
             minimum_height: 0,
             maximum_height: 0,
             states: vec![],
-            transitions: vec![]
+            transitions: default()
         }
     }
 }
@@ -342,11 +351,6 @@ struct TerrainState {
 struct TerrainTransitionJSON {
     names: Vec<String>,
     meta_location: String,
-}
-
-struct TerrainTransition {
-    names: Vec<String>,
-    meta_data: Vec<(TransitionType, TerrainRendering)>
 }
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
