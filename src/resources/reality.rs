@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH}, modular_assets::ModularAssets};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH, CHUNK_HEIGHT, BACKGROUND, CHUNK_SIZE}, modular_assets::{ModularAssets, TerrainRendering}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -117,7 +117,6 @@ impl Reality {
         let tile_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
         
         // Add chunks that should be loaded (3x3 around player)
-        self.chunks_to_download.push((tile_x, tile_y));
         self.chunks_to_download.push((tile_x, tile_y + 1));
         self.chunks_to_download.push((tile_x, tile_y - 1));
         self.chunks_to_download.push((tile_x + 1, tile_y));
@@ -126,6 +125,7 @@ impl Reality {
         self.chunks_to_download.push((tile_x + 1, tile_y - 1));
         self.chunks_to_download.push((tile_x - 1, tile_y + 1));
         self.chunks_to_download.push((tile_x - 1, tile_y - 1));
+        self.chunks_to_download.push((tile_x, tile_y));
 
         // Grab all loaded chunks
         self.stop_rendering.append(&mut self.currently_rendering.clone());
@@ -203,16 +203,182 @@ impl Reality {
     pub fn system_render_waiting_chunks(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
-        mut core: Res<CoreAssets>,
-        mut core_serve: Res<Assets<ModularAssets>>
+        core: Res<CoreAssets>,
+        core_serve: Res<Assets<ModularAssets>>
     ) {
+        if selfs.currently_rendering.len() == 0 && selfs.chunk_data.len() < 9 {
+            // don't render inital chunks until all are downloaded. prevents clipping errors on edges
+            // TODO: EDGES ON NEW CHUNKS NEED RELOADING TO PREVENT ISSUES THIS WILL CAUSE GRAPHICAL ISSUES
+            return;
+        }
         let mod_assets = core_serve.get(core.core.clone()).unwrap();
         for chunk in selfs.waiting_for_render.clone() {
             if let Some(data) = selfs.chunk_data.get(&chunk) {
-                for (index, tilestate) in data.iter().enumerate() {
+                for index in 0..CHUNK_SIZE {
                     let tile_x = index % CHUNK_WIDTH;
                     let tile_y = index / CHUNK_WIDTH;
-                    todo!()
+                    let rendering;
+                    if tile_x > 0 {
+                        if tile_x < CHUNK_WIDTH - 1 {
+                            if tile_y > 0 {
+                                if tile_y < CHUNK_HEIGHT - 1 {
+                                    // all tiles are within this chunk
+                                    rendering = mod_assets.get_tile_rendering([
+                                        data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                                        data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                                        data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+
+                                        data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                                        data[tile_x + (tile_y * CHUNK_WIDTH)],
+                                        data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+
+                                        data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                                        data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                                        data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                                    ]);
+                                }
+                                else {
+                                    // some y tiles are one chunk above
+                                    let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
+                                    if let Some(data_up) = pot_data_up {
+                                        rendering = mod_assets.get_tile_rendering([
+                                            data_up[tile_x - 1],
+                                            data_up[tile_x],
+                                            data_up[tile_x + 1],
+    
+                                            data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                                            data[tile_x + (tile_y * CHUNK_WIDTH)],
+                                            data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+    
+                                            data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                                            data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                                            data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                                        ]);
+                                    }
+                                    else {
+                                        // we don't have that chunk in memory, so don't render this tile.
+                                        continue;
+                                    }
+                                }
+                            }
+                            else {
+                                // some y tiles are one chunk below
+                                todo!();
+                            }
+                        }
+                        else {
+                            if tile_y > 0 {
+                                if tile_y < CHUNK_HEIGHT - 1 {
+                                    // some x tiles are one chunk right
+                                    todo!();
+                                }
+                                else {
+                                    // some x tiles are one chunk right AND
+                                    // some y tiles are one chunk above AND
+                                    // one tile is one chunk above and right
+                                    todo!();
+                                }
+                            }
+                            else {
+                                // some x tiles are one chunk right AND
+                                // some y tiles are one chunk below AND
+                                // one tile is below and right
+                                let pot_data_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1));
+                                let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
+                                let pot_data_down_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1 - 1));
+                                if pot_data_right.is_none() || pot_data_down.is_none() || pot_data_down_right.is_none() {
+                                    // we don't have one of the chunks we need, so don't render this tile.
+                                    continue;
+                                }
+                                let data_right = pot_data_right.unwrap();
+                                let data_down = pot_data_down.unwrap();
+                                let data_down_right = pot_data_down_right.unwrap();
+                                rendering = mod_assets.get_tile_rendering([
+                                    data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                                    data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                                    data_right[(tile_y * CHUNK_WIDTH)],
+
+                                    data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                                    data[tile_x + (tile_y * CHUNK_WIDTH)],
+                                    data_right[(tile_y * CHUNK_WIDTH)],
+
+                                    data_down[tile_x - 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+                                    data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+                                    data_down_right[CHUNK_WIDTH * (CHUNK_HEIGHT - 1)]
+                                ]);
+                            }
+                        }
+                    }
+                    else {
+                        if tile_y > 0 {
+                            if tile_y < CHUNK_HEIGHT - 1 {
+                                // some x tiles are one chunk left
+                                todo!();
+                            }
+                            else {
+                                // some x tiles are one chunk left AND
+                                // some y tiles are one chunk above AND
+                                // one tile is above and left
+                                todo!();
+                            }
+                        }
+                        else {
+                            // some x tiles are one chunk left AND
+                            // some y tiles are one chunk below
+                            // one tile is below and left
+                            let pot_data_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1));
+                            let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
+                            let pot_data_down_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1 - 1));
+                            if pot_data_left.is_none() || pot_data_down.is_none() || pot_data_down_left.is_none() {
+                                // we don't have one of the chunks we need, so don't render this tile.
+                                continue;
+                            }
+                            let data_left = pot_data_left.unwrap();
+                            let data_down = pot_data_down.unwrap();
+                            let data_down_left = pot_data_down_left.unwrap();
+                            rendering = mod_assets.get_tile_rendering([
+                                data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                                data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                                data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+
+                                data_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
+                                data[tile_x + (tile_y * CHUNK_WIDTH)],
+                                data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+
+                                data_down_left[CHUNK_SIZE - 1],
+                                data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+                                data_down[tile_x + 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))]
+                            ]);
+                        }
+                    }
+                    match rendering.0 {
+                        TerrainRendering::Sprite(img) => {
+                            commands.spawn_bundle(SpriteBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                    (1080.0 / 2.0) - (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                    BACKGROUND
+                                ),
+                                texture: img,
+                                ..default()
+                            })
+                            .insert(Tile {
+                                chunk,
+                                position: (tile_x, tile_y),
+                                transition_type: rendering.1
+                            });
+                        },
+                        TerrainRendering::SpriteSheet(img, width, height, loc) => {
+                            
+                        },
+                        TerrainRendering::AnimatedSprite(imgs, animation) => {
+
+                        },
+                        TerrainRendering::AnimatedSpriteSheet(_, _) => {
+
+                        }
+                    }
+                    todo!();
                 }
             }
             else {

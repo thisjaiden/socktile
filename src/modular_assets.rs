@@ -14,7 +14,7 @@ use bevy_kira_audio::AudioSource;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::consts::{FATAL_ERROR, EMBED_ASSETS, PLAYER_HITBOX};
+use crate::consts::{FATAL_ERROR, EMBED_ASSETS, PLAYER_HITBOX, DEV_BUILD};
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -45,7 +45,8 @@ impl ModularAssets {
         error!("Unable to find an audio sample with the name '{}'", name);
         panic!("{FATAL_ERROR}");
     }
-    pub fn get_tile_rendering(&self, environment: [usize; 9]) -> TerrainRendering {
+    // NOTE: INPUT ENVIRONMENT IS FLIPPED VERTICALLY (IN HUMAN LOGICAL ORDER)
+    pub fn get_tile_rendering(&self, environment: [usize; 9]) -> (TerrainRendering, TransitionType) {
         // check environment validity
         for tile in environment {
             if tile > self.terrain_data.states.len() {
@@ -119,6 +120,25 @@ impl AssetLoader for ModularAssetsLoader {
                     walk_sound: final_out.get_audio(definition.walk_sound),
                     run_sound: final_out.get_audio(definition.run_sound)
                 });
+            }
+            if DEV_BUILD {
+                info!("Creating injectable.json based on states");
+                let mut contents = String::from("\"intGridValues\":[");
+                for (index, state) in final_out.terrain_data.states.iter().enumerate() {
+                    if index > 0 {
+                        contents += ",";
+                    }
+                    contents += "{\"value\":";
+                    contents += &format!("{}", index + 1);
+                    contents += ",\"identifier\":\"";
+                    contents += &state.name;
+                    contents += "\",\"color\":\"";
+                    contents += &state.approx_color;
+                    contents += "\"}";
+                }
+                contents += "],";
+                std::fs::write("./injectable.json", contents).unwrap();
+                info!("injectable.json written");
             }
             // terrain transitions
             // For each terrain transition file,

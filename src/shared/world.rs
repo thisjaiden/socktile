@@ -75,7 +75,8 @@ impl World {
         for layer in layers {
             match layer.layer_instance_type.as_str() {
                 "IntGrid" => {
-                    for height_layer in CHUNK_HEIGHT-1..=0 {
+                    for pot_height_layer in 0..CHUNK_HEIGHT {
+                        let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
                         for width_layer in 0..CHUNK_WIDTH {
                             chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
                         }
@@ -89,6 +90,7 @@ impl World {
         // check data
         if chunk_data.len() != CHUNK_SIZE {
             error!("Chunk size was improper ({} != {CHUNK_SIZE})", chunk_data.len());
+            error!("Chunk location: ({}, {})", chunk.0, chunk.1);
             panic!("{FATAL_ERROR}");
         }
         // save data
@@ -138,9 +140,6 @@ impl World {
         let mut dupe_objects = vec![];
         for layer in layers {
             match layer.layer_instance_type.as_str() {
-                "Tiles" => {
-                    // ignored
-                }
                 "Entities" => {
                     for entity in &layer.entity_instances {
                         match entity.identifier.as_str() {
@@ -200,7 +199,7 @@ impl World {
                     }
                 }
                 _ => {
-                    // ignore
+                    // ignored
                 }
             }
         }
