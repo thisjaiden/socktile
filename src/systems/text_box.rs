@@ -4,8 +4,8 @@ use crate::{
     components::{TextBox, ldtk::{TileMarker, PlayerMarker}, RemoveOnStateChange},
     resources::{Netty, Disk},
     shared::{netty::Packet, saves::User},
-    GameState, assets::{FontAssets, AnimatorAssets},
-    consts::{PLAYER_CHARACTERS, UI_TEXT}
+    GameState, assets::{FontAssets, AnimatorAssets, CoreAssets},
+    consts::{PLAYER_CHARACTERS, UI_TEXT}, modular_assets::ModularAssets
 };
 
 pub fn text_input(
@@ -35,29 +35,32 @@ pub fn user_creation(
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut disk: ResMut<Disk>,
-    unloads: Query<Entity, With<RemoveOnStateChange>>
+    unloads: Query<Entity, With<RemoveOnStateChange>>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>
 ) {
+    let core_assets = core_serve.get(core.core.clone()).unwrap();
     let mut text = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't contain hashtags.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_hashtags");
     }
     else if tb.grab_buffer().contains('/') || tb.grab_buffer().contains('\\') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't contain slashes.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_slashes");
     }
     else if tb.grab_buffer().starts_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't start with a space.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_start");
     }
     else if tb.grab_buffer().ends_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't end with a space.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_end");
     }
     else if tb.grab_buffer().chars().count() < 3 {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames must be at least 3 characters long.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_short");
         if tb.grab_buffer().contains('\n') {
             tb.eat_buffer();
         }
@@ -69,15 +72,15 @@ pub fn user_creation(
         // Warnings for inconvenient but not disallowed names
         if tb.grab_buffer().chars().count() > 20 {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = String::from("\nUsernames over 20 characters may be inconvenient.");
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_long");
         }
         else if tb.grab_buffer().contains("  ") {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = String::from("\nUsernames with multiple spaces in a row may be inconvenient.");
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.double_space");
         }
         else if !tb.grab_buffer().is_ascii() {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = String::from("\nUsernames with emojis or other non-ascii characters may be inconvenient.");
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.non_ascii");
         }
         if tb.grab_buffer().contains('\n') {
             let mut mode = tb.grab_buffer();

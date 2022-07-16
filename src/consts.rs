@@ -21,6 +21,8 @@ pub const ALLOW_GGS: bool = true;
 pub const UI_DEBUG: bool = true;
 /// Show debug lines over terrain hitboxes?
 pub const TERRAIN_DEBUG: bool = true;
+/// Show debug lines over player hitboxes?
+pub const PLAYER_DEBUG: bool = true;
 /// Should assets be included in the exe?
 pub const EMBED_ASSETS: bool = true;
 
@@ -49,9 +51,9 @@ pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
 /// The offset between the cursor's render location and actual location
 pub const CURSOR_OFFSET: [f32; 2] = [-25.0, 31.0];
-/// Width of a chunk
+/// Width of a chunk in tiles
 pub const CHUNK_WIDTH: usize = 30;
-/// Height of a chunk
+/// Height of a chunk in tiles
 pub const CHUNK_HEIGHT: usize = 17;
 /// Amount of tiles in a chunk
 pub const CHUNK_SIZE: usize = CHUNK_WIDTH * CHUNK_HEIGHT;

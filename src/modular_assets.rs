@@ -38,6 +38,23 @@ pub struct ModularAssets {
 }
 
 impl ModularAssets {
+    pub fn get_lang(&self, key: &str) -> String {
+        let potential_value = self.language_keys.get(&key.to_string());
+        if let Some(value) = potential_value {
+            match value {
+                LanguageValue::Value(val) => {
+                    return val.clone();
+                }
+                LanguageValue::RandomValue(vals) => {
+                    return Self::rand_array(vals.to_vec());
+                }
+            }
+        }
+        else {
+            warn!("No value found for language key {}", key);
+            return key.to_string();
+        }
+    }
     pub fn get_audio(&self, name: String) -> Handle<AudioSource> {
         for (meta, handle) in &self.audio_samples {
             if meta.name == name {
@@ -305,6 +322,7 @@ impl AssetLoader for ModularAssetsLoader {
                     run_sound: final_out.get_audio(definition.run_sound)
                 });
             }
+            info!("{} terrain states loaded", final_out.terrain_data.states.len());
             if DEV_BUILD {
                 info!("Creating injectable.json based on states");
                 let mut contents = String::from("\"intGridValues\":[");
@@ -406,12 +424,14 @@ impl AssetLoader for ModularAssetsLoader {
                     }
                 }
             }
+            info!("{} terrain transitions loaded", final_out.terrain_data.transitions.len());
             
 
             let keys = grab_keys_recursively(String::from("en_us"), lang_core);
             for (key, value) in keys {
                 final_out.language_keys.insert(key, value);
             }
+            info!("{} language keys loaded", final_out.language_keys.len());
             
             let loaded_asset = LoadedAsset::new(final_out);
             load_context.set_default_asset(loaded_asset.with_dependencies(dependencies));
@@ -477,7 +497,7 @@ fn grab_keys_recursively(current_key: String, current_value: Value) -> Vec<(Stri
     let mut returnable = vec![];
     for (key, value) in current_value.as_object().unwrap() {
         if value.is_string() {
-            returnable.push((format!("{}.{}", current_key, key), LanguageValue::Value(value.to_string())));
+            returnable.push((format!("{}.{}", current_key, key), LanguageValue::Value(value.as_str().unwrap().to_string())));
         }
         if value.is_array() {
             let mut smallarray = vec![];

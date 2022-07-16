@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{Mo
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH, CHUNK_HEIGHT, BACKGROUND, CHUNK_SIZE, TERRAIN_DEBUG, DEBUG}, modular_assets::{ModularAssets, TerrainRendering}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH, CHUNK_HEIGHT, BACKGROUND, CHUNK_SIZE, TERRAIN_DEBUG, DEBUG, PLAYER_HITBOX, PLAYER_DEBUG}, modular_assets::{ModularAssets, TerrainRendering}};
 
 use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
 
@@ -1006,8 +1006,28 @@ impl Reality {
             transform.translation.y += selfs.player_position.y as f32;
         });
     }
+    pub fn system_player_debug_lines(
+        selfs: Res<Reality>,
+        mut lines: ResMut<DebugLines>
+    ) {
+        if PLAYER_DEBUG {
+            lines.line_colored(
+                Vec3::new(
+                    (selfs.player_position.x - (PLAYER_HITBOX.0 / 2.0)) as f32,
+                    (selfs.player_position.y - (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    DEBUG
+                ),
+                Vec3::new(
+                    (selfs.player_position.x + (PLAYER_HITBOX.0 / 2.0)) as f32,
+                    (selfs.player_position.y + (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    DEBUG
+                ),
+                0.0,
+                Color::ORANGE
+            );
+        }
+    }
     pub fn system_hitbox_debug_lines(
-        mut selfs: ResMut<Reality>,
         mut lines: ResMut<DebugLines>,
         tiles: Query<&Tile>
     ) {
@@ -1016,7 +1036,7 @@ impl Reality {
                 let dta = tile.transition_type.collider_dimensions();
                 for collider in dta {
                     let true_x = collider.0 + (tile.position.0 as f64 * 64.0) + (tile.chunk.0 as f64 * 1920.0) - (1920.0 / 2.0);
-                    let true_y = collider.1 + (tile.position.1 as f64 * 64.0) + (tile.chunk.1 as f64 * 1088.0) - (1088.0 / 2.0);
+                    let true_y = collider.1 + (tile.position.1 as f64 * 64.0) + (tile.chunk.1 as f64 * 1088.0) - (1088.0 / 2.0) - 64.0;
                     lines.line_colored(
                         Vec3::new(true_x as f32, true_y as f32, DEBUG),
                         Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
