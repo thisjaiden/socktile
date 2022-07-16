@@ -2429,6 +2429,7 @@ dependencies = [
  "bevy_kira_audio",
  "bevy_prototype_debug_lines",
  "bincode",
+ "getrandom",
  "ldtk_rust",
  "serde",
  "serde_json",

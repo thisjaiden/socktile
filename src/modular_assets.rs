@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use bevy::{
     utils::HashMap,
     reflect::TypeUuid,
@@ -26,7 +28,7 @@ impl Plugin for ModularAssetsPlugin {
     }
 }
 
-#[derive(TypeUuid)]
+#[derive(TypeUuid, Debug)]
 #[uuid = "8d513cb4-0fa2-4069-b6ad-fb7e8dd37031"]
 pub struct ModularAssets {
     // TODO: will contain all assets loaded from modules and json
@@ -46,7 +48,59 @@ impl ModularAssets {
         panic!("{FATAL_ERROR}");
     }
     // NOTE: INPUT ENVIRONMENT IS FLIPPED VERTICALLY (IN HUMAN LOGICAL ORDER)
-    pub fn get_tile_rendering(&self, environment: [usize; 9]) -> (TerrainRendering, TransitionType) {
+    pub fn get_tile(&self, environment: [usize; 9]) -> (TerrainRendering, TransitionType) {
+        let maybe_transition = self.get_transition_type(environment);
+        if let Some((transition, main, sub)) = maybe_transition {
+            let rendering = self.get_terrain_rendering(main, sub, transition);
+            return (rendering, transition);
+        }
+        else {
+            // no valid transition is known. fallback time!
+            todo!()
+        }
+    }
+    /// Finds the appropriate rendering for a given terrain type and transition type
+    fn get_terrain_rendering(&self, terrain_id: usize, alt_id: usize, transition: TransitionType) -> TerrainRendering {
+        let central = self.terrain_data.states[terrain_id].name.clone();
+        let non_central = self.terrain_data.states[alt_id].name.clone();
+        let transitions_maybe = self.terrain_data.transitions.get(&[central.clone(), non_central.clone()]);
+        if let Some(transitions_map) = transitions_maybe {
+            let types_maybe = transitions_map.get(&transition);
+            if let Some(types) = types_maybe {
+                return Self::rand_array(types.to_vec());
+            }
+            else {
+                warn!("No transition {:?} for materials {} and {}, falling back", transition, central, non_central);
+                trace!("{:#?}", self);
+                todo!();
+            }
+        }
+        else {
+            // this is a submissive terrain state, so we just use the central point
+            if self.terrain_data.transitions.get(&[non_central.clone(), central.clone()]).is_some() {
+                return self.get_terrain_rendering(terrain_id, terrain_id, TransitionType::Center);
+            }
+            else {
+                error!("No transition between materials {} and {}", central, non_central);
+                panic!("{FATAL_ERROR}");
+            }
+        }
+    }
+    fn rand_array<T: Any + Clone>(array: Vec<T>) -> T {
+        let mut bytes = [0; 4];
+        getrandom::getrandom(&mut bytes).unwrap();
+        let mut value = f32::from_be_bytes(bytes);
+        while value.is_subnormal() {
+            getrandom::getrandom(&mut bytes).unwrap();
+            value = f32::from_be_bytes(bytes);
+        }
+        if value > 1.0 {
+            value -= value.floor();
+        }
+        value *= array.len() as f32 - 1.0;
+        return array[value.round() as usize].clone();
+    }
+    fn get_transition_type(&self, environment: [usize; 9]) -> Option<(TransitionType, usize, usize)> {
         // check environment validity
         for tile in environment {
             if tile > self.terrain_data.states.len() {
@@ -56,9 +110,59 @@ impl ModularAssets {
         }
         // check for a uniform environment
         if environment.iter().min() == environment.iter().max() {
+            // found!
+            return Some((TransitionType::Center, environment[0], environment[0]));
+        }
+        // check for a environment with 2 distinct types
+        let mut environment_types = vec![];
+        for tile in environment {
+            if !environment_types.contains(&tile) {
+                environment_types.push(tile);
+            }
+        }
+        if environment_types.len() == 2 {
+            // found!
+            if  environment[0] != environment[4] && environment[1] != environment[4] &&
+                environment[2] != environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // AAA
+                // BBB
+                // BBB
+                return Some((TransitionType::Up, environment[4], environment[0]));
+            }
+            if  environment[0] != environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] != environment[4] &&
+                environment[5] == environment[4] && environment[6] != environment[4] &&
+                environment[7] != environment[4] && environment[8] != environment[4] {
+                // ABB
+                // ABB
+                // AAA
+                return Some((TransitionType::DownLeft, environment[4], environment[0]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] != environment[4] &&
+                environment[7] != environment[4] && environment[8] != environment[4] {
+                // BBB
+                // BBB
+                // AAA
+                return Some((TransitionType::Down, environment[4], environment[6]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] != environment[4] && environment[8] != environment[4] {
+                // BBB
+                // BBB
+                // BAA
+                return Some((TransitionType::Down, environment[4], environment[7]));
+            }
+            warn!("{:?}", environment);
             todo!()
         }
-        todo!()
+        // fallback to default
+        return None;
     }
 }
 
@@ -112,7 +216,6 @@ impl AssetLoader for ModularAssetsLoader {
             final_out.terrain_data.maximum_height = terrain_core.maximum_height;
             final_out.terrain_data.minimum_height = terrain_core.minimum_height;
             // terrain definitions
-            // TODO ^^^
             for definition in terrain_core.states {
                 final_out.terrain_data.states.push(TerrainState {
                     name: definition.name,
@@ -245,7 +348,7 @@ impl AssetLoader for ModularAssetsLoader {
 // But I don't know how I would do it and I don't care enough. It's *fine*.
 fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType, Vec<usize>)> {
     let mut output = vec![];
-    if let Some(value) = styles.central {
+    if let Some(value) = styles.center {
         output.push((TransitionType::Center, value));
     }
     if let Some(value) = styles.down {
@@ -314,12 +417,13 @@ struct AudioMetadata {
     pub audio_samples: Vec<AudioSampleMetadata>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct AudioSampleMetadata {
     pub name: String,
     pub meta_location: String
 }
 
+#[derive(Debug)]
 enum LanguageValue {
     Value(String),
     RandomValue(Vec<String>)
@@ -332,6 +436,7 @@ struct TerrainDataJSON {
     states: Vec<TerrainStateJSON>,
 }
 
+#[derive(Debug)]
 struct TerrainData {
     minimum_height: usize,
     maximum_height: usize,
@@ -360,6 +465,7 @@ struct TerrainStateJSON {
     run_sound: String
 }
 
+#[derive(Debug)]
 struct TerrainState {
     name: String,
     approx_color: String,
@@ -458,7 +564,7 @@ impl ImageDefinition {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TerrainRendering {
     /// image
     Sprite(Handle<Image>),
@@ -486,7 +592,7 @@ struct TerrainRenderingFileJSON {
 #[derive(Deserialize, Clone)]
 struct TerrainRenderingTransitionJSON {
     animation: Option<AnimationInfo>,
-    central: Option<Vec<usize>>,
+    center: Option<Vec<usize>>,
     up: Option<Vec<usize>>,
     down: Option<Vec<usize>>,
     left: Option<Vec<usize>>,
@@ -501,7 +607,7 @@ struct TerrainRenderingTransitionJSON {
     inverted_down_right: Option<Vec<usize>>
 }
 
-#[derive(Deserialize, Clone, Copy)]
+#[derive(Deserialize, Clone, Copy, Debug)]
 pub struct AnimationInfo {
     pub number_of_states: usize,
     pub ticks_between_states: usize,

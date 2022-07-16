@@ -204,7 +204,8 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         core: Res<CoreAssets>,
-        core_serve: Res<Assets<ModularAssets>>
+        core_serve: Res<Assets<ModularAssets>>,
+        mut atlas_serve: ResMut<Assets<TextureAtlas>>
     ) {
         if selfs.currently_rendering.len() == 0 && selfs.chunk_data.len() < 9 {
             // don't render inital chunks until all are downloaded. prevents clipping errors on edges
@@ -223,7 +224,7 @@ impl Reality {
                             if tile_y > 0 {
                                 if tile_y < CHUNK_HEIGHT - 1 {
                                     // all tiles are within this chunk
-                                    rendering = mod_assets.get_tile_rendering([
+                                    rendering = mod_assets.get_tile([
                                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                                         data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                                         data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -241,7 +242,7 @@ impl Reality {
                                     // some y tiles are one chunk above
                                     let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
                                     if let Some(data_up) = pot_data_up {
-                                        rendering = mod_assets.get_tile_rendering([
+                                        rendering = mod_assets.get_tile([
                                             data_up[tile_x - 1],
                                             data_up[tile_x],
                                             data_up[tile_x + 1],
@@ -293,7 +294,7 @@ impl Reality {
                                 let data_right = pot_data_right.unwrap();
                                 let data_down = pot_data_down.unwrap();
                                 let data_down_right = pot_data_down_right.unwrap();
-                                rendering = mod_assets.get_tile_rendering([
+                                rendering = mod_assets.get_tile([
                                     data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                                     data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                                     data_right[(tile_y * CHUNK_WIDTH)],
@@ -336,7 +337,7 @@ impl Reality {
                             let data_left = pot_data_left.unwrap();
                             let data_down = pot_data_down.unwrap();
                             let data_down_left = pot_data_down_left.unwrap();
-                            rendering = mod_assets.get_tile_rendering([
+                            rendering = mod_assets.get_tile([
                                 data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                                 data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                                 data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -369,16 +370,39 @@ impl Reality {
                             });
                         },
                         TerrainRendering::SpriteSheet(img, width, height, loc) => {
-                            
+                            let sprite = TextureAtlasSprite {
+                                index: loc,
+                                ..default()
+                            };
+                            let new_atlas = TextureAtlas::from_grid(
+                                img,
+                                Vec2::new(64.0, 64.0),
+                                width, height
+                            );
+                            let atlas_handle = atlas_serve.add(new_atlas);
+                            commands.spawn_bundle(SpriteSheetBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                    (1080.0 / 2.0) - (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                    BACKGROUND
+                                ),
+                                sprite,
+                                texture_atlas: atlas_handle,
+                                ..default()
+                            })
+                            .insert(Tile {
+                                chunk,
+                                position: (tile_x, tile_y),
+                                transition_type: rendering.1
+                            });
                         },
                         TerrainRendering::AnimatedSprite(imgs, animation) => {
-
+                            todo!()
                         },
                         TerrainRendering::AnimatedSpriteSheet(_, _) => {
-
+                            todo!()
                         }
                     }
-                    todo!();
                 }
             }
             else {
