@@ -6,5 +6,9 @@
     {
         "names": ["grass", "grass"],
         "meta_location": "heightmaps/grass.json"
+    },
+    {
+        "names": ["water", "water"],
+        "meta_location": "heightmaps/water.json"
     }
 ]

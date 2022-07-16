@@ -19,6 +19,8 @@ pub const DEV_BUILD: bool = true;
 pub const ALLOW_GGS: bool = true;
 /// Show debug lines over UI hitboxes?
 pub const UI_DEBUG: bool = true;
+/// Show debug lines over terrain hitboxes?
+pub const TERRAIN_DEBUG: bool = true;
 /// Should assets be included in the exe?
 pub const EMBED_ASSETS: bool = true;
 

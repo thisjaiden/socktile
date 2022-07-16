@@ -4,7 +4,13 @@
     "states": [
         {
             "name": "grass",
-            "approx_color": "00FF00",
+            "approx_color": "#00FF00",
+            "walk_sound": "nothing",
+            "run_sound": "nothing"
+        },
+        {
+            "name": "water",
+            "approx_color": "#0000FF",
             "walk_sound": "nothing",
             "run_sound": "nothing"
         }
