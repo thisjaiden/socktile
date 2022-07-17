@@ -204,6 +204,7 @@ fn main() {
                 .with_system(resources::Reality::system_hitbox_debug_lines)
                 .with_system(resources::Reality::system_player_debug_lines)
                 .with_system(resources::Reality::system_chunk_derenderer)
+                .with_system(resources::Reality::system_rerender_edges)
                 .with_system(resources::Reality::system_render_waiting_chunks)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Animator::system_player_initiator)
