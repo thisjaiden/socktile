@@ -1,24 +1,187 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
+use bevy_easings::{Ease, EaseFunction};
 use crate::{
     assets::{FontAssets, CoreAssets},
     components::RemoveOnStateChange,
     components::TitleScreenUser,
-    consts::{UI_TEXT, BACKGROUND}, resources::ui::{UIManager, UIClickable, UIClickAction}
+    consts::{UI_TEXT, BACKGROUND}, resources::ui::{UIManager, UIClickable, UIClickAction}, modular_assets::ModularAssets
 };
 
 pub fn title_screen(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
     core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
     mut ui: ResMut<UIManager>
 ) {
+    let core_assets = core_serve.get(core.core.clone()).unwrap();
     commands.spawn_bundle(SpriteBundle {
         texture: core.title_screen.clone(),
         transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
         ..default()
     })
     .insert(RemoveOnStateChange {});
-
+    // New game text
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: core_assets.get_lang("en_us.core.title_screen.new_game"),
+                    style: TextStyle {
+                        font: font_assets.apple_tea.clone(),
+                        font_size: 64.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        ..default()
+    })
+    .insert(RemoveOnStateChange {})
+    .insert(
+        Transform::from_xyz(0.0, -3000.0, UI_TEXT)
+        .ease_to(
+            Transform::from_xyz(512.0, 256.0, UI_TEXT),
+            EaseFunction::QuadraticInOut,
+            bevy_easings::EasingType::Once { duration: Duration::from_millis(1500) }
+        )
+    );
+    // Join game text
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: core_assets.get_lang("en_us.core.title_screen.join_game"),
+                    style: TextStyle {
+                        font: font_assets.apple_tea.clone(),
+                        font_size: 64.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        ..default()
+    })
+    .insert(RemoveOnStateChange {})
+    .insert(
+        Transform::from_xyz(0.0, -3000.0, UI_TEXT)
+        .ease_to(
+            Transform::from_xyz(-512.0, 256.0, UI_TEXT),
+            EaseFunction::QuadraticInOut,
+            bevy_easings::EasingType::Once { duration: Duration::from_millis(2000) }
+        )
+    );
+    // Quit game text
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: core_assets.get_lang("en_us.core.title_screen.quit"),
+                    style: TextStyle {
+                        font: font_assets.apple_tea.clone(),
+                        font_size: 64.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        transform: Transform::from_xyz(
+            -512.0,
+            -256.0,
+            UI_TEXT
+        ),
+        ..default()
+    })
+    .insert(RemoveOnStateChange {})
+    .insert(
+        Transform::from_xyz(0.0, -3000.0, UI_TEXT)
+        .ease_to(
+            Transform::from_xyz(-512.0, -256.0, UI_TEXT),
+            EaseFunction::QuadraticInOut,
+            bevy_easings::EasingType::Once { duration: Duration::from_millis(1000) }
+        )
+    );
+    // Settings text
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: core_assets.get_lang("en_us.core.title_screen.settings"),
+                    style: TextStyle {
+                        font: font_assets.apple_tea.clone(),
+                        font_size: 64.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        ..default()
+    })
+    .insert(RemoveOnStateChange {})
+    .insert(
+        Transform::from_xyz(0.0, -3000.0, UI_TEXT)
+        .ease_to(
+            Transform::from_xyz(512.0, -256.0, UI_TEXT),
+            EaseFunction::QuadraticInOut,
+            bevy_easings::EasingType::Once { duration: Duration::from_millis(500) }
+        )
+    );
+    // Splash text
+    commands.spawn_bundle(Text2dBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: core_assets.get_lang("en_us.core.title_screen.splash"),
+                    style: TextStyle {
+                        font: font_assets.apple_tea.clone(),
+                        font_size: 40.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
+                vertical: VerticalAlign::Center,
+                horizontal: HorizontalAlign::Center
+            }
+        },
+        transform: Transform::from_xyz(
+            0.0,
+            128.0,
+            UI_TEXT
+        ),
+        ..default()
+    })
+    .insert(RemoveOnStateChange {})
+    .insert(
+        Transform::from_xyz(0.0, 128.0, UI_TEXT)
+        .ease_to(
+            Transform::from_xyz(0.0, 128.0, UI_TEXT).with_scale(Vec3::new(1.05, 1.05, 1.05)),
+            EaseFunction::SineInOut,
+            bevy_easings::EasingType::PingPong {
+                duration: Duration::from_millis(800),
+                pause: None
+            }
+        )
+    );
+    // player username in bottom left
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             sections: vec![
@@ -47,26 +210,26 @@ pub fn title_screen(
     .insert(RemoveOnStateChange {});
     ui.add_ui(UIClickable {
         action: UIClickAction::CloseProgram,
-        location: (-50.0, -100.0),
-        size: (50.0, 50.0),
+        location: (-710.0, -210.0),
+        size: (410.0, 100.0),
         ..default()
     });
     ui.add_ui(UIClickable {
         action: UIClickAction::OpenSettings,
-        location: (50.0, -100.0),
-        size: (50.0, 50.0),
+        location: (330.0, -210.0),
+        size: (350.0, 100.0),
         ..default()
     });
     ui.add_ui(UIClickable {
         action: UIClickAction::CreateWorld,
-        location: (50.0, 100.0),
-        size: (50.0, 50.0),
+        location: (230.0, 310.0),
+        size: (560.0, 100.0),
         ..default()
     });
     ui.add_ui(UIClickable {
         action: UIClickAction::ViewWorldList,
-        location: (-50.0, 100.0),
-        size: (50.0, 50.0),
+        location: (-790.0, 310.0),
+        size: (560.0, 100.0),
         ..default()
     });
 }

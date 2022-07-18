@@ -322,6 +322,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_easings"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf8a9f2d26bc1be528f77c4588bafd31e0e563596fc59ecd9f7b690b6c1d5562"
+dependencies = [
+ "bevy",
+ "interpolation",
+]
+
+[[package]]
 name = "bevy_ecs"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -518,7 +528,8 @@ dependencies = [
 [[package]]
 name = "bevy_prototype_debug_lines"
 version = "0.7.2"
-source = "git+https://github.com/Toqozz/bevy_debug_lines.git#3b513aee308391252a524f25b128cf55e40e5fcf"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6323841e9f70d7e124c60a3e7a985d9afd03074992968adbd5fc45badec8f6db"
 dependencies = [
  "bevy",
 ]
@@ -1592,6 +1603,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "interpolation"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3b7357d2bbc5ee92f8e899ab645233e43d21407573cceb37fed8bc3dede2c02"
+
+[[package]]
 name = "itoa"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2425,12 +2442,13 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_asset_loader",
+ "bevy_easings",
  "bevy_embedded_assets",
  "bevy_kira_audio",
  "bevy_prototype_debug_lines",
  "bincode",
- "getrandom",
  "ldtk_rust",
+ "rand",
  "serde",
  "serde_json",
  "tracing",

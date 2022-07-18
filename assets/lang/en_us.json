@@ -3,15 +3,17 @@
         "title_screen": {
             "no_network": "An internet connection is required to play the Alpha.",
             "no_ggs": "The server is down right now. Check back in later.",
-            "quit": "Quit",
+            "quit": "Quit Game",
             "settings": "Settings",
-            "new_game": "New",
-            "join_game": "Join",
+            "new_game": "Create World",
+            "join_game": "Join World",
             "title": "Socktile Closed Alpha 0",
             "splash": [
                 "\"It just works.\" - Todd Howard",
                 "It's Playable!",
-                "Still Unfinished"
+                "Still Unfinished",
+                "Shameless plagarism!",
+                "Hatsune Miku"
             ]
         },
         "create_user": {

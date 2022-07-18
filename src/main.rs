@@ -100,6 +100,7 @@ fn main() {
         .insert_resource(ClearColor(Color::WHITE))
         .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
+        .add_plugin(bevy_easings::EasingsPlugin)
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         .add_state(GameState::PreLoadLoad)
         .add_system_set(

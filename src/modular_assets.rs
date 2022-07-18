@@ -13,6 +13,7 @@ use bevy::{
     }
 };
 use bevy_kira_audio::AudioSource;
+use rand::prelude::SliceRandom;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
@@ -106,18 +107,7 @@ impl ModularAssets {
         }
     }
     fn rand_array<T: Any + Clone>(array: Vec<T>) -> T {
-        let mut bytes = [0; 4];
-        getrandom::getrandom(&mut bytes).unwrap();
-        let mut value = f32::from_be_bytes(bytes);
-        while value.is_subnormal() {
-            getrandom::getrandom(&mut bytes).unwrap();
-            value = f32::from_be_bytes(bytes);
-        }
-        if value > 1.0 {
-            value -= value.floor();
-        }
-        value *= array.len() as f32 - 1.0;
-        return array[value.round() as usize].clone();
+        return array.choose(&mut rand::thread_rng()).clone().unwrap().clone();
     }
     fn get_transition_type(&self, environment: [usize; 9]) -> Option<(TransitionType, usize, usize)> {
         // check environment validity

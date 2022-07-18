@@ -25,6 +25,11 @@ pub fn text_input(
             // Remove one more (the actual backspace action)
             tb.eat_buffer();
         }
+        // If we recieve an escape character...
+        if char.char == '\x27' {
+            // Remove the escape character
+            tb.eat_buffer();
+        }
     }
 }
 
