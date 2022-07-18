@@ -67,17 +67,18 @@ impl ModularAssets {
     // NOTE: INPUT ENVIRONMENT IS FLIPPED VERTICALLY (IN HUMAN LOGICAL ORDER)
     pub fn get_tile(&self, environment: [usize; 9]) -> (TerrainRendering, TransitionType) {
         let maybe_transition = self.get_transition_type(environment);
-        if let Some((transition, main, sub)) = maybe_transition {
-            let rendering = self.get_terrain_rendering(main, sub, transition);
+        if let Some((mut transition, main, sub)) = maybe_transition {
+            let rendering = self.get_terrain_rendering(main, sub, &mut transition);
             return (rendering, transition);
         }
         else {
             // no valid transition is known. fallback time!
-            todo!()
+            let rendering = self.get_terrain_rendering(environment[4], environment[4], &mut TransitionType::Center);
+            return (rendering, TransitionType::Center);
         }
     }
     /// Finds the appropriate rendering for a given terrain type and transition type
-    fn get_terrain_rendering(&self, terrain_id: usize, alt_id: usize, transition: TransitionType) -> TerrainRendering {
+    fn get_terrain_rendering(&self, terrain_id: usize, alt_id: usize, transition: &mut TransitionType) -> TerrainRendering {
         let central = self.terrain_data.states[terrain_id].name.clone();
         let non_central = self.terrain_data.states[alt_id].name.clone();
         let transitions_maybe = self.terrain_data.transitions.get(&[central.clone(), non_central.clone()]);
@@ -95,7 +96,8 @@ impl ModularAssets {
         else {
             // this is a submissive terrain state, so we just use the central point
             if self.terrain_data.transitions.get(&[non_central.clone(), central.clone()]).is_some() {
-                return self.get_terrain_rendering(terrain_id, terrain_id, TransitionType::Center);
+                *transition = TransitionType::Center;
+                return self.get_terrain_rendering(terrain_id, terrain_id, transition);
             }
             else {
                 error!("No transition between materials {} and {}", central, non_central);
@@ -200,7 +202,7 @@ impl ModularAssets {
                 // ABB
                 // BBB
                 // BBB
-                return Some((TransitionType::InvertedUpLeft, environment[4], environment[0]));
+                return Some((TransitionType::InvertedDownRight, environment[4], environment[0]));
             }
             if  environment[0] == environment[4] && environment[1] == environment[4] &&
                 environment[2] == environment[4] && environment[3] == environment[4] &&
@@ -236,7 +238,7 @@ impl ModularAssets {
                 // BBB
                 // BBB
                 // BBA
-                return Some((TransitionType::InvertedDownRight, environment[4], environment[8]));
+                return Some((TransitionType::InvertedUpLeft, environment[4], environment[8]));
             }
             if  environment[0] != environment[4] && environment[1] != environment[4] &&
                 environment[2] == environment[4] && environment[3] == environment[4] &&
@@ -256,8 +258,70 @@ impl ModularAssets {
                 // ABB
                 return Some((TransitionType::UpLeft, environment[4], environment[0]));
             }
-            warn!("{:?}", environment);
-            todo!()
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] != environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBA
+                // BBB
+                // BBB
+                return Some((TransitionType::InvertedDownLeft, environment[4], environment[2]));
+            }
+            if  environment[0] == environment[4] && environment[1] != environment[4] &&
+                environment[2] != environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BAA
+                // BBB
+                // BBB
+                return Some((TransitionType::Up, environment[4], environment[1]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] != environment[4] && environment[3] == environment[4] &&
+                environment[5] != environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBA
+                // BBA
+                // BBB
+                return Some((TransitionType::Right, environment[4], environment[2]));
+            }
+            if  environment[0] != environment[4] && environment[1] != environment[4] &&
+                environment[2] != environment[4] && environment[3] == environment[4] &&
+                environment[5] != environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] != environment[4] {
+                // AAA
+                // BBA
+                // BBA
+                return Some((TransitionType::UpRight, environment[4], environment[0]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] != environment[4] &&
+                environment[5] == environment[4] && environment[6] != environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBB
+                // ABB
+                // ABB
+                return Some((TransitionType::Left, environment[4], environment[3]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] != environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBB
+                // BBB
+                // ABB
+                return Some((TransitionType::InvertedUpRight, environment[4], environment[6]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] != environment[4] &&
+                environment[7] != environment[4] && environment[8] == environment[4] {
+                // BBB
+                // BBB
+                // AAB
+                return Some((TransitionType::Down, environment[4], environment[6]));
+            }
+            warn!("Environment not handled: {:?}", environment);
         }
         // fallback to default
         return None;

@@ -20,6 +20,8 @@ mod assets;
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
+    /// Loads logo from disk and continues to `Load`
+    PreLoadLoad,
     /// Loads assets from disk
     Load,
     /// Checks network status
@@ -95,10 +97,19 @@ fn main() {
     
     // Add plugins and systems to our app, then run it
     app
+        .insert_resource(ClearColor(Color::WHITE))
         .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
-        .add_state(GameState::Load)
+        .add_state(GameState::PreLoadLoad)
+        .add_system_set(
+            SystemSet::on_enter(GameState::PreLoadLoad)
+                .with_system(systems::visual::logo)
+        )
+        .add_system_set(
+            SystemSet::on_exit(GameState::Load)
+                .with_system(systems::visual::clear_old)
+        )
         .add_system_set(
             SystemSet::on_exit(GameState::TitleScreen)
                 .with_system(systems::visual::clear_old)
