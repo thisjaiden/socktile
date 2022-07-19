@@ -56,7 +56,7 @@ impl ModularAssets {
             return key.to_string();
         }
     }
-    pub fn get_audio(&self, name: String) -> Handle<AudioSource> {
+    pub fn get_audio(&self, name: &str) -> Handle<AudioSource> {
         for (meta, handle) in &self.audio_samples {
             if meta.name == name {
                 return handle.clone();
@@ -372,8 +372,8 @@ impl AssetLoader for ModularAssetsLoader {
                 final_out.terrain_data.states.push(TerrainState {
                     name: definition.name,
                     approx_color: definition.approx_color,
-                    walk_sound: final_out.get_audio(definition.walk_sound),
-                    run_sound: final_out.get_audio(definition.run_sound)
+                    walk_sound: final_out.get_audio(&definition.walk_sound),
+                    run_sound: final_out.get_audio(&definition.run_sound)
                 });
             }
             info!("{} terrain states loaded", final_out.terrain_data.states.len());

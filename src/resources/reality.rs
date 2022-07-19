@@ -167,6 +167,17 @@ impl Reality {
     }
 
     // Systems
+    /// Forces the game to render chunks before the player moves by moving the player to where
+    /// they are when entering the `Play` state.
+    /// 
+    /// Without this system, the world is unrendered until the player moves in any direction.
+    pub fn system_force_render(
+        mut selfs: ResMut<Reality>
+    ) {
+        let current_pos = selfs.player_position;
+        selfs.set_player_position(current_pos);
+    }
+    /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(
         mut selfs: ResMut<Reality>,
         mut netty: ResMut<Netty>

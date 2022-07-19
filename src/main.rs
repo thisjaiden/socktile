@@ -118,6 +118,7 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(GameState::Load)
                 .with_system(window_setup::window_setup)
+                .with_system(systems::audio::audio_setup)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
@@ -172,19 +173,16 @@ fn main() {
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
                 .with_system(resources::Reality::system_server_list_renderer)
+                .with_system(resources::ui::ui_game)
         )
         .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
         .add_system(systems::text_box::text_input)
         .add_system(resources::Netty::system_step)
-        .add_system(resources::ui::ui_create_world)
-        .add_system(resources::ui::ui_view_worlds)
         .add_system(resources::ui::ui_open_settings)
-        .add_system(resources::ui::ui_game)
         .add_system(resources::ui::ui_manager.after("cursor").before("player"))
         .add_system(resources::ui::ui_quick_exit)
         .add_system(resources::ui::ui_close_pause_menu)
-        .add_system(resources::ui::ui_disconnect_game)
         .add_system(resources::ui::ui_invite_menu)
         .add_system(resources::ui::ui_close_settings)
         .add_system(resources::ui::ui_debug_lines)
@@ -226,16 +224,20 @@ fn main() {
                 .with_system(resources::Chat::system_type_chat)
                 .with_system(resources::Chat::system_send_chat)
                 .with_system(resources::ui::ui_forward)
+                .with_system(resources::ui::ui_disconnect_game)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Play)
                 .with_system(resources::Reality::system_spawn_hotbar)
                 .with_system(resources::Chat::system_init)
+                .with_system(resources::Reality::system_force_render)
         )
         .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
                 .with_system(systems::visual::update_title_screen_user)
                 .with_system(systems::visual::update_title_screen_camera)
+                .with_system(resources::ui::ui_create_world)
+                .with_system(resources::ui::ui_view_worlds)
         )
         .run();
 }

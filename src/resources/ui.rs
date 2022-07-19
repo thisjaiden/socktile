@@ -1,10 +1,11 @@
 use bevy::{prelude::*, app::AppExit};
+use bevy_kira_audio::Audio;
 use bevy_prototype_debug_lines::DebugLines;
 
 use crate::{
     components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile},
     PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp, RemoveOnStateChange},
-    assets::{FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}};
+    assets::{FontAssets, AnimatorAssets, CoreAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}, modular_assets::ModularAssets};
 
 use super::{Netty, Reality, TextBox, Disk};
 
@@ -468,6 +469,9 @@ pub fn ui_disconnect_game(
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
     mut query: Query<
         Entity,
         Or<(
@@ -481,6 +485,8 @@ pub fn ui_disconnect_game(
     >
 ) {
     if man.queued_actions.get(0) == Some(&UIClickAction::DisconnectFromWorld) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
         query.for_each_mut(|e| {
@@ -497,9 +503,14 @@ pub fn ui_disconnect_game(
 
 pub fn ui_create_world(
     mut state: ResMut<State<GameState>>,
-    mut man: ResMut<UIManager>
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
 ) {
     if man.queued_actions.get(0) == Some(&UIClickAction::CreateWorld) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.replace(GameState::MakeGame).unwrap();
     }
@@ -507,9 +518,14 @@ pub fn ui_create_world(
 
 pub fn ui_view_worlds(
     mut state: ResMut<State<GameState>>,
-    mut man: ResMut<UIManager>
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
 ) {
     if man.queued_actions.get(0) == Some(&UIClickAction::ViewWorldList) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.replace(GameState::ServerList).unwrap();
     }

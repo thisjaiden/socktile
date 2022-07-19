@@ -8,5 +8,5 @@ pub fn title_screen_loop(
     server: Res<Assets<ModularAssets>>
 ) {
     let core_assets = server.get(assets.core.clone()).unwrap();
-    audio.play_looped(core_assets.get_audio(String::from("title screen loop")));
+    audio.play_looped(core_assets.get_audio("title screen loop"));
 }

@@ -99,11 +99,6 @@ pub fn title_screen(
                 horizontal: HorizontalAlign::Center
             }
         },
-        transform: Transform::from_xyz(
-            -512.0,
-            -256.0,
-            UI_TEXT
-        ),
         ..default()
     })
     .insert(RemoveOnStateChange {})

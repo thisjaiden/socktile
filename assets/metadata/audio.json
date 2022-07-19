@@ -7,6 +7,14 @@
         {
             "name": "title screen loop",
             "meta_location": "silence.ogg"
+        },
+        {
+            "name": "click",
+            "meta_location": "soft_click.ogg"
+        },
+        {
+            "name": "final click",
+            "meta_location": "hard_click.ogg"
         }
     ]
 }
