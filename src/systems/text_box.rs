@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::{TextBox, ldtk::{TileMarker, PlayerMarker}, RemoveOnStateChange},
-    resources::{Netty, Disk},
+    resources::{Netty, Disk, ui::{UIManager, UIClickAction}},
     shared::{netty::Packet, saves::User},
     GameState, assets::{FontAssets, AnimatorAssets, CoreAssets},
     consts::{PLAYER_CHARACTERS, UI_TEXT}, modular_assets::ModularAssets
@@ -112,6 +112,7 @@ pub fn game_creation(
     mut commands: Commands,
     mut tb: ResMut<crate::resources::TextBox>,
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
+    uiman: Res<UIManager>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     disk: Res<Disk>,
@@ -125,7 +126,7 @@ pub fn game_creation(
     }
     else {
         text.sections[0].style.color = Color::BLACK;
-        if tb.grab_buffer().contains('\n') {
+        if tb.grab_buffer().contains('\n') || uiman.queued_action == Some(UIClickAction::CreateWorld) {
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
@@ -173,5 +174,7 @@ pub fn game_creation_once(
         },
         transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
         ..Default::default()
-    }).insert(TextBox {});
+    })
+    .insert(TextBox {})
+    .insert(RemoveOnStateChange {});
 }

@@ -229,6 +229,7 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         for (us, gp, _) in &saves[world_id].data.players {
                             constructable_players.push((us.clone(), *gp));
                         }
+                        // TODO: matrixop3x3()
                         let mut new_objs = saves[world_index].data.try_generating_objects(spawn_centre_chnks_lack);
                         new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1)));
                         new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1)));

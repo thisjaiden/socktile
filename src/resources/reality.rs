@@ -9,6 +9,8 @@ use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::Chat
 pub struct Reality {
     /// Player's current position
     player_position: GamePosition,
+    /// Once the player is connected this is set to true
+    in_valid_world: bool,
     /// Player's data
     player: PlayerData,
     /// Queued chat messages
@@ -43,6 +45,7 @@ impl Reality {
     pub fn init() -> Reality {
         Reality {
             player_position: GamePosition::zero(),
+            in_valid_world: false,
             player: PlayerData::new(),
             chat_messages: vec![],
             avalable_servers: vec![],
@@ -97,47 +100,11 @@ impl Reality {
     pub fn set_player_position(&mut self, position: GamePosition) {
         // Set the player's position
         self.player_position = position;
-        // Chunk sizes in coordinate space
-        const ENV_WIDTH: f64 = 1920.0;
-        const ENV_HEIGHT: f64 = 1088.0;
-        // Get the player's chunk
-        let chunk_x = (self.player_position.x / ENV_WIDTH).round() as isize;
-        let chunk_y = (self.player_position.y / ENV_HEIGHT).round() as isize;
-        
-        // Add chunks that should be loaded (5x5 around player) for download if they aren't
-        // already avalable
-        matrixop5x5(&mut |x, y| {
-            if !self.chunk_status.contains_key(&(x + chunk_x, y + chunk_y)) {
-                self.chunk_status.insert(
-                    (x + chunk_x, y + chunk_y),
-                    ChunkStatus {
-                        rendered: false,
-                        downloaded: false,
-                        needs_download_request: true,
-                        waiting_to_render: false,
-                        stop_rendering: false,
-                        edges_rendered: true
-                    }
-                );
-            }
-        });
-        for (chunk, status) in self.chunk_status.iter_mut() {
-            // mark all chunks that aren't around the player to stop rendering
-            if !MATRIX_3X3.contains(&((chunk.0 - chunk_x) as i8, (chunk.1 - chunk_y) as i8)) {
-                if status.rendered {
-                    status.stop_rendering = true;
-                }
-            }
-            else {
-                // mark all chunks that are around the player to start rendering
-                if !status.rendered && status.downloaded {
-                    status.waiting_to_render = true;
-                }
-            }
-        }
     }
     pub fn set_ownership(&mut self, ownership: bool) {
+        info!("Setting ownership status to {ownership}");
         self.owns_server = ownership;
+        self.in_valid_world = true;
     }
     /// Add brand new chunk data for a not seen before chunk
     pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
@@ -167,15 +134,52 @@ impl Reality {
     }
 
     // Systems
-    /// Forces the game to render chunks before the player moves by moving the player to where
-    /// they are when entering the `Play` state.
-    /// 
-    /// Without this system, the world is unrendered until the player moves in any direction.
-    pub fn system_force_render(
+    /// Marks chunks to be rendered, downloaded, and unrendered. This system is essential to
+    /// the world loading and collision loading
+    pub fn system_mark_chunks(
         mut selfs: ResMut<Reality>
     ) {
-        let current_pos = selfs.player_position;
-        selfs.set_player_position(current_pos);
+        if selfs.is_changed() && selfs.in_valid_world {
+            // Chunk sizes in coordinate space
+            const ENV_WIDTH: f64 = 1920.0;
+            const ENV_HEIGHT: f64 = 1088.0;
+            // Get the player's chunk
+            let chunk_x = (selfs.player_position.x / ENV_WIDTH).round() as isize;
+            let chunk_y = (selfs.player_position.y / ENV_HEIGHT).round() as isize;
+
+            // Add chunks that should be loaded (5x5 around player) for download if they aren't
+            // already avalable
+            matrixop5x5(&mut |x, y| {
+                if !selfs.chunk_status.contains_key(&(x + chunk_x, y + chunk_y)) {
+                    selfs.chunk_status.insert(
+                        (x + chunk_x, y + chunk_y),
+                        ChunkStatus {
+                            rendered: false,
+                            downloaded: false,
+                            needs_download_request: true,
+                            waiting_to_render: false, // TODO this is error
+                            stop_rendering: false,
+                            edges_rendered: true
+                        }
+                    );
+                }
+            });
+
+            for (chunk, status) in selfs.chunk_status.iter_mut() {
+                // mark all chunks that aren't around the player to stop rendering
+                if !MATRIX_3X3.contains(&((chunk.0 - chunk_x) as i8, (chunk.1 - chunk_y) as i8)) {
+                    if status.rendered {
+                        status.stop_rendering = true;
+                    }
+                }
+                else {
+                    // mark all chunks that are around the player to start rendering
+                    if !status.rendered && status.downloaded {
+                        status.waiting_to_render = true;
+                    }
+                }
+            }
+        }
     }
     /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(

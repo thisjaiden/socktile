@@ -4,18 +4,24 @@ mod make_user;
 pub use make_user::make_user;
 mod update_title_screen_user;
 pub use update_title_screen_user::*;
+mod create_world;
+pub use create_world::create_world;
 
 use bevy::prelude::*;
 
-use crate::{components::RemoveOnStateChange, GameState, consts::UI_TEXT};
+use crate::{components::RemoveOnStateChange, GameState, consts::UI_TEXT, resources::ui::UIManager};
 
 pub fn clear_old(
     mut commands: Commands,
+    mut ui: ResMut<UIManager>,
     query: Query<Entity, With<RemoveOnStateChange>>
 ) {
+    // Despawn entities tagged with `RemoveOnStateChange`
     query.for_each(|e| {
         commands.entity(e).despawn();
     });
+    // Clear all UI elements
+    ui.reset_ui();
 }
 
 pub fn logo(

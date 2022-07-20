@@ -108,14 +108,6 @@ fn main() {
                 .with_system(systems::visual::logo)
         )
         .add_system_set(
-            SystemSet::on_exit(GameState::Load)
-                .with_system(systems::visual::clear_old)
-        )
-        .add_system_set(
-            SystemSet::on_exit(GameState::TitleScreen)
-                .with_system(systems::visual::clear_old)
-        )
-        .add_system_set(
             SystemSet::on_enter(GameState::Load)
                 .with_system(window_setup::window_setup)
                 .with_system(systems::audio::audio_setup)
@@ -127,8 +119,9 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
-                .with_system(systems::visual::title_screen)
-                .with_system(systems::audio::title_screen_loop)
+                .with_system(systems::visual::title_screen.label("any"))
+                .with_system(systems::audio::title_screen_loop.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_resume(GameState::TitleScreen)
@@ -143,7 +136,8 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
-                .with_system(systems::visual::make_user)
+                .with_system(systems::visual::make_user.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeUser)
@@ -160,7 +154,9 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
-                .with_system(systems::text_box::game_creation_once)
+                .with_system(systems::visual::clear_old.before("any"))
+                .with_system(systems::text_box::game_creation_once.label("any"))
+                .with_system(systems::visual::create_world.label("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeGame)
@@ -168,7 +164,8 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
-                .with_system(resources::Netty::system_server_list)
+                .with_system(resources::Netty::system_server_list.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
@@ -187,6 +184,7 @@ fn main() {
         .add_system(resources::ui::ui_close_settings)
         .add_system(resources::ui::ui_debug_lines)
         .add_system(resources::ui::ui_settings_text_updater)
+        .add_system(resources::ui::ui_return_titlescreen)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())
@@ -225,18 +223,19 @@ fn main() {
                 .with_system(resources::Chat::system_send_chat)
                 .with_system(resources::ui::ui_forward)
                 .with_system(resources::ui::ui_disconnect_game)
+                .with_system(resources::Reality::system_mark_chunks)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Play)
-                .with_system(resources::Reality::system_spawn_hotbar)
-                .with_system(resources::Chat::system_init)
-                .with_system(resources::Reality::system_force_render)
+                .with_system(resources::Reality::system_spawn_hotbar.label("any"))
+                .with_system(resources::Chat::system_init.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
                 .with_system(systems::visual::update_title_screen_user)
                 .with_system(systems::visual::update_title_screen_camera)
-                .with_system(resources::ui::ui_create_world)
+                .with_system(resources::ui::ui_return_create_world)
                 .with_system(resources::ui::ui_view_worlds)
         )
         .run();

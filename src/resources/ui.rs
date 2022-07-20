@@ -18,7 +18,7 @@ pub enum SettingsPage {
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
-    queued_actions: Vec<UIClickAction>,
+    pub queued_action: Option<UIClickAction>,
     queue_player_action: bool,
     settings_page: SettingsPage
 }
@@ -27,7 +27,7 @@ impl UIManager {
     pub fn init() -> UIManager {
         UIManager {
             active_clickables: vec![],
-            queued_actions: vec![],
+            queued_action: None,
             queue_player_action: false,
             settings_page: SettingsPage::Video
         }
@@ -39,7 +39,7 @@ impl UIManager {
     }
     pub fn reset_ui(&mut self) {
         self.active_clickables.clear();
-        self.queued_actions.clear();
+        self.queued_action = None;
     }
     pub fn remove_tag(&mut self, tag: &str) {
         let mut removed = 0;
@@ -51,10 +51,9 @@ impl UIManager {
         }
     }
     fn join_game(&mut self) -> Option<usize> {
-        if self.queued_actions.get(0).is_some() {
-            match self.queued_actions[0].clone() {
+        if self.queued_action.is_some() {
+            match self.queued_action.unwrap() {
                 UIClickAction::JoinWorld(world) => {
-                    self.next();
                     Some(world)
                 }
                 _ => {
@@ -66,16 +65,17 @@ impl UIManager {
             None
         }
     }
-    fn next(&mut self) {
-        self.queued_actions.remove(0);
-    }
     fn clicked(&mut self, location: (f32, f32)) {
         let mut removed = 0;
         let mut did_action = false;
         for (index, clickable) in self.active_clickables.clone().iter().enumerate() {
             if clickable.is_contained(location) {
                 did_action = true;
-                self.queued_actions.push(clickable.action.clone());
+                if self.queued_action.is_some() {
+                    warn!("A UI action occured while one was waiting. Discarding old action");
+                }
+                info!("Click occured on an actionable location.");
+                self.queued_action = Some(clickable.action);
                 if clickable.removed_on_use {
                     self.active_clickables.remove(index - removed);
                     removed += 1;
@@ -140,6 +140,8 @@ pub enum UIClickAction {
     DecreaseWindowScaling,
     InvitePlayer,
     DisconnectFromWorld,
+    GoToCreateWorld,
+    GoToTitleScreen,
     CreateWorld,
     ViewWorldList,
     OpenSettings,
@@ -213,10 +215,15 @@ pub fn ui_game(
     mut state: ResMut<State<GameState>>,
     mut netty: ResMut<Netty>,
     mut man: ResMut<UIManager>,
-    disk: Res<Disk>
+    disk: Res<Disk>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
 ) {
     if let Some(materials) = target_materials {
         if let Some(game_id) = man.join_game() {
+            let assets = core_serve.get(core.core.clone()).unwrap();
+            audio.play(assets.get_audio("click"));
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
                 texture: materials.not_animated.clone(),
@@ -240,7 +247,7 @@ pub fn ui_quick_exit(
     man: Res<UIManager>,
     mut exit: EventWriter<AppExit>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::CloseProgram) {
+    if man.queued_action == Some(UIClickAction::CloseProgram) {
         exit.send(AppExit);
     }
 }
@@ -249,8 +256,7 @@ pub fn ui_close_pause_menu(
     mut man: ResMut<UIManager>,
     mut selfs: ResMut<Reality>,
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::ClosePauseMenu) {
-        man.next();
+    if man.queued_action == Some(UIClickAction::ClosePauseMenu) {
         man.reset_ui();
         selfs.pause_closed();
     }
@@ -263,8 +269,7 @@ pub fn ui_invite_menu(
     desps: Query<Entity, With<PauseMenuMarker>>,
     mut tb: ResMut<TextBox>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::InvitePlayer) {
-        man.next();
+    if man.queued_action == Some(UIClickAction::InvitePlayer) {
         man.reset_ui();
         desps.for_each(|e| {
             commands.entity(e).despawn();
@@ -337,7 +342,7 @@ pub fn ui_video_settings_tab(
     fonts: Res<FontAssets>,
     disk: Res<Disk>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::TabVideoSettings) {
+    if man.queued_action == Some(UIClickAction::TabVideoSettings) {
         despawns.for_each(|entity| {
             commands.entity(entity).despawn();
         });
@@ -396,11 +401,11 @@ pub fn ui_toggle_fullscreen(
     mut man: ResMut<UIManager>,
     mut disk: ResMut<Disk>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::ToggleFullscreen) {
+    if man.queued_action == Some(UIClickAction::ToggleFullscreen) {
         let mut winconf = disk.window_config();
         winconf.fullscreen = !winconf.fullscreen;
         disk.update_window_config(winconf);
-        man.next();
+        man.queued_action = None;
     }
 }
 
@@ -421,7 +426,7 @@ pub fn ui_close_settings(
     mut state: ResMut<State<GameState>>,
     query: Query<Entity, With<RemoveOnStateChange>>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::CloseSettings) {
+    if man.queued_action == Some(UIClickAction::CloseSettings) {
         query.for_each(|e| {
             commands.entity(e).despawn();
         });
@@ -484,7 +489,7 @@ pub fn ui_disconnect_game(
         )>
     >
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::DisconnectFromWorld) {
+    if man.queued_action == Some(UIClickAction::DisconnectFromWorld) {
         let assets = core_serve.get(core.core.clone()).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
@@ -501,14 +506,14 @@ pub fn ui_disconnect_game(
     }
 }
 
-pub fn ui_create_world(
+pub fn ui_return_create_world(
     mut state: ResMut<State<GameState>>,
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
     core_serve: Res<Assets<ModularAssets>>,
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::CreateWorld) {
+    if man.queued_action == Some(UIClickAction::GoToCreateWorld) {
         let assets = core_serve.get(core.core.clone()).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
@@ -523,7 +528,7 @@ pub fn ui_view_worlds(
     core: Res<CoreAssets>,
     core_serve: Res<Assets<ModularAssets>>,
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::ViewWorldList) {
+    if man.queued_action == Some(UIClickAction::ViewWorldList) {
         let assets = core_serve.get(core.core.clone()).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
@@ -531,11 +536,21 @@ pub fn ui_view_worlds(
     }
 }
 
+pub fn ui_return_titlescreen(
+    mut state: ResMut<State<GameState>>,
+    mut man: ResMut<UIManager>
+) {
+    if man.queued_action == Some(UIClickAction::GoToTitleScreen) {
+        man.reset_ui();
+        state.push(GameState::TitleScreen).unwrap();
+    }
+}
+
 pub fn ui_open_settings(
     mut state: ResMut<State<GameState>>,
     mut man: ResMut<UIManager>
 ) {
-    if man.queued_actions.get(0) == Some(&UIClickAction::OpenSettings) {
+    if man.queued_action == Some(UIClickAction::OpenSettings) {
         man.reset_ui();
         state.push(GameState::Settings).unwrap();
     }

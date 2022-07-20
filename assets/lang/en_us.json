@@ -25,6 +25,11 @@
             "too_long": "\nUsernames over 20 characters may be inconvenient.",
             "double_space": "\nUsernames with multiple spaces in a row may be inconvenient.",
             "non_ascii": "\nUsernames with emojis or other non-ascii characters may be inconvenient."
+        },
+        "create_world": {
+            "cancel": "Back",
+            "confirm": "Create World",
+            "description": "Please choose a world name."
         }
     }
 }

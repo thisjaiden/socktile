@@ -216,7 +216,7 @@ pub fn title_screen(
         ..default()
     });
     ui.add_ui(UIClickable {
-        action: UIClickAction::CreateWorld,
+        action: UIClickAction::GoToCreateWorld,
         location: (230.0, 310.0),
         size: (560.0, 100.0),
         ..default()
