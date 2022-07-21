@@ -311,6 +311,69 @@ impl ModularAssets {
                 // AAB
                 return Some((TransitionType::Down, environment[4], environment[6]));
             }
+            if  environment[0] == environment[4] && environment[1] != environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BAB
+                // BBB
+                // BBB
+                return Some((TransitionType::Up, environment[4], environment[1]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] != environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBB
+                // BBA
+                // BBB
+                return Some((TransitionType::Right, environment[4], environment[5]));
+            }
+            if  environment[0] != environment[4] && environment[1] != environment[4] &&
+                environment[2] != environment[4] && environment[3] != environment[4] &&
+                environment[5] != environment[4] && environment[6] != environment[4] &&
+                environment[7] != environment[4] && environment[8] != environment[4] {
+                // AAA
+                // ABA
+                // AAA
+                return Some((TransitionType::Center, environment[4], environment[0]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] != environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] == environment[4] && environment[8] == environment[4] {
+                // BBB
+                // ABB
+                // BBB
+                return Some((TransitionType::Left, environment[4], environment[3]));
+            }
+            if  environment[0] == environment[4] && environment[1] == environment[4] &&
+                environment[2] == environment[4] && environment[3] == environment[4] &&
+                environment[5] == environment[4] && environment[6] == environment[4] &&
+                environment[7] != environment[4] && environment[8] == environment[4] {
+                // BBB
+                // BBB
+                // BAB
+                return Some((TransitionType::Down, environment[4], environment[7]));
+            }
+            if  environment[0] != environment[4] && environment[1] == environment[4] &&
+                environment[2] != environment[4] && environment[3] != environment[4] &&
+                environment[5] != environment[4] && environment[6] != environment[4] &&
+                environment[7] != environment[4] && environment[8] != environment[4] {
+                // ABA
+                // ABA
+                // AAA
+                return Some((TransitionType::Center, environment[4], environment[0]));
+            }
+            if  environment[0] != environment[4] && environment[1] != environment[4] &&
+                environment[2] != environment[4] && environment[3] != environment[4] &&
+                environment[5] != environment[4] && environment[6] != environment[4] &&
+                environment[7] == environment[4] && environment[8] != environment[4] {
+                // AAA
+                // ABA
+                // ABA
+                return Some((TransitionType::Center, environment[4], environment[0]));
+            }
             warn!("Environment not handled: {:?}", environment);
         }
         // fallback to default

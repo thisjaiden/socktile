@@ -309,7 +309,7 @@ impl Reality {
     ) {
         let mut chunks_to_rerender = vec![];
         for (chunk, status) in selfs.chunk_status.iter() {
-            if !status.edges_rendered {
+            if !status.edges_rendered && status.rendered {
                 let mut should_rerender = true;
                 matrixop3x3(&mut |x, y| {
                     if !selfs.chunk_data.contains_key(&(chunk.0 + x, chunk.1 + y)) {
@@ -565,6 +565,7 @@ impl Reality {
             ];
             let mut needed_pairs = vec![];
             let mut needed_chunks = vec![];
+            // TODO: BUG: ERROR GRABBING COLLISION IN OTHER CHUNKS
             for tile in needed_tiles {
                 if tile.0 == -1 && tile.1 != 0 {
                     needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1), (29, tile.1 as usize)));
@@ -920,7 +921,7 @@ impl Reality {
                         ],
                         alignment: TextAlignment {
                             vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Center
+                            horizontal: HorizontalAlign::Left
                         }
                     },
                     transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),

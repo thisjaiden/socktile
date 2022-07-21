@@ -6,6 +6,8 @@ mod update_title_screen_user;
 pub use update_title_screen_user::*;
 mod create_world;
 pub use create_world::create_world;
+mod join_world;
+pub use join_world::join_world;
 
 use bevy::prelude::*;
 

@@ -151,6 +151,7 @@ fn main() {
             SystemSet::on_update(GameState::Settings)
                 .with_system(resources::ui::ui_video_settings_tab)
                 .with_system(resources::ui::ui_toggle_fullscreen)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
@@ -161,16 +162,19 @@ fn main() {
         .add_system_set(
             SystemSet::on_update(GameState::MakeGame)
                 .with_system(systems::text_box::game_creation)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
                 .with_system(resources::Netty::system_server_list.label("any"))
+                .with_system(systems::visual::join_world.label("any"))
                 .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
                 .with_system(resources::Reality::system_server_list_renderer)
                 .with_system(resources::ui::ui_game)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
@@ -184,7 +188,6 @@ fn main() {
         .add_system(resources::ui::ui_close_settings)
         .add_system(resources::ui::ui_debug_lines)
         .add_system(resources::ui::ui_settings_text_updater)
-        .add_system(resources::ui::ui_return_titlescreen)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())

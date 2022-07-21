@@ -30,6 +30,9 @@
             "cancel": "Back",
             "confirm": "Create World",
             "description": "Please choose a world name."
+        },
+        "join_world": {
+            "cancel": "Back"
         }
     }
 }

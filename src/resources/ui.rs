@@ -538,9 +538,14 @@ pub fn ui_view_worlds(
 
 pub fn ui_return_titlescreen(
     mut state: ResMut<State<GameState>>,
-    mut man: ResMut<UIManager>
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>
 ) {
     if man.queued_action == Some(UIClickAction::GoToTitleScreen) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.push(GameState::TitleScreen).unwrap();
     }
