@@ -5,7 +5,7 @@ use crate::consts::FATAL_ERROR;
 use crate::shared::saves::User;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct NPC {
+pub struct Npc {
     /// Who is this NPC?
     who: Who,
     /// What memories does this NPC find important?
@@ -24,10 +24,10 @@ pub struct NPC {
     // TODO: mood data bloq
 }
 
-impl NPC {
-    pub fn from_name_str(from: &str) -> NPC {
+impl Npc {
+    pub fn from_name_str(from: &str) -> Npc {
         let who = Who::from_str(from);
-        NPC {
+        Npc {
             who,
             memories: vec![],
             relationships: vec![],
@@ -63,10 +63,10 @@ impl Who {
         match self {
             _ => {
                 warn!("TODO: home position for {:?}", self);
-                return GridPosition {
+                GridPosition {
                     chunk: (0, 0),
                     tile: (0, 0)
-                };
+                }
             }
         }
     }
@@ -74,7 +74,7 @@ impl Who {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum Person {
-    NPC(Who),
+    Npc(Who),
     Player(User)
 }
 

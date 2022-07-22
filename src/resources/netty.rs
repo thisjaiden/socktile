@@ -31,7 +31,7 @@ impl Netty {
                 output: out
             };
             fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
-            return fin;
+            fin
         }
         else {
             if !google_exists() {
@@ -41,7 +41,7 @@ impl Netty {
                     output: Arc::new(Mutex::new(vec![]))
                 };
             }
-            return Netty {
+            Netty {
                 connection: ConnectionStatus::NoGGS,
                 input: Arc::new(Mutex::new(vec![])),
                 output: Arc::new(Mutex::new(vec![]))

@@ -3,7 +3,6 @@ use std::any::Any;
 use bevy::{
     utils::HashMap,
     reflect::TypeUuid,
-    prelude::*,
     asset::{
         AssetLoader,
         LoadContext,
@@ -17,7 +16,7 @@ use rand::prelude::SliceRandom;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::consts::{FATAL_ERROR, EMBED_ASSETS, PLAYER_HITBOX, DEV_BUILD};
+use crate::prelude::*;
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -43,17 +42,13 @@ impl ModularAssets {
         let potential_value = self.language_keys.get(&key.to_string());
         if let Some(value) = potential_value {
             match value {
-                LanguageValue::Value(val) => {
-                    return val.clone();
-                }
-                LanguageValue::RandomValue(vals) => {
-                    return Self::rand_array(vals.to_vec());
-                }
+                LanguageValue::Value(val) => val.clone(),
+                LanguageValue::RandomValue(vals) => Self::rand_array(vals.to_vec())
             }
         }
         else {
             warn!("No value found for language key {}", key);
-            return key.to_string();
+            key.to_string()
         }
     }
     pub fn get_audio(&self, name: &str) -> Handle<AudioSource> {
@@ -70,12 +65,12 @@ impl ModularAssets {
         let maybe_transition = self.get_transition_type(environment);
         if let Some((mut transition, main, sub)) = maybe_transition {
             let rendering = self.get_terrain_rendering(main, sub, &mut transition);
-            return (rendering, transition);
+            (rendering, transition)
         }
         else {
             // no valid transition is known. fallback time!
             let rendering = self.get_terrain_rendering(environment[4], environment[4], &mut TransitionType::Center);
-            return (rendering, TransitionType::Center);
+            (rendering, TransitionType::Center)
         }
     }
     /// Finds the appropriate rendering for a given terrain type and transition type
@@ -84,9 +79,9 @@ impl ModularAssets {
         let non_central = self.terrain_data.states[alt_id].name.clone();
         let transitions_maybe = self.terrain_data.transitions.get(&[central.clone(), non_central.clone()]);
         if let Some(transitions_map) = transitions_maybe {
-            let types_maybe = transitions_map.get(&transition);
+            let types_maybe = transitions_map.get(transition);
             if let Some(types) = types_maybe {
-                return Self::rand_array(types.to_vec());
+                Self::rand_array(types.to_vec())
             }
             else {
                 warn!("No transition {:?} for materials {} and {}, falling back", transition, central, non_central);
@@ -98,7 +93,7 @@ impl ModularAssets {
             // this is a submissive terrain state, so we just use the central point
             if self.terrain_data.transitions.get(&[non_central.clone(), central.clone()]).is_some() {
                 *transition = TransitionType::Center;
-                return self.get_terrain_rendering(terrain_id, terrain_id, transition);
+                self.get_terrain_rendering(terrain_id, terrain_id, transition)
             }
             else {
                 error!("No transition between materials {} and {}", central, non_central);
@@ -107,7 +102,7 @@ impl ModularAssets {
         }
     }
     fn rand_array<T: Any + Clone>(array: Vec<T>) -> T {
-        return array.choose(&mut rand::thread_rng()).clone().unwrap().clone();
+        array.choose(&mut rand::thread_rng()).unwrap().clone()
     }
     fn get_transition_type(&self, environment: [usize; 9]) -> Option<(TransitionType, usize, usize)> {
         // check environment validity
@@ -377,7 +372,7 @@ impl ModularAssets {
             warn!("Environment not handled: {:?}", environment);
         }
         // fallback to default
-        return None;
+        None
     }
 }
 
@@ -502,14 +497,13 @@ impl AssetLoader for ModularAssetsLoader {
                     ).unwrap();
                     for (style, data) in vec_styles {
                         let potential_old_data = existing_variants.get_mut(&style);
-                        let old_data;
-                        if let Some(data) = potential_old_data {
-                            old_data = data;
+                        let old_data = if let Some(data) = potential_old_data {
+                            data
                         }
                         else {
                             existing_variants.insert(style, vec![]);
-                            old_data = existing_variants.get_mut(&style).unwrap();
-                        }
+                            existing_variants.get_mut(&style).unwrap()
+                        };
                         if let Some(animation) = variant.animation {
                             match &definitions[data[0]] {
                                 ImageDefinition::Sprite(_image_handle) => {
@@ -605,7 +599,7 @@ fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType
     if let Some(value) = styles.inverted_down_right {
         output.push((TransitionType::InvertedDownRight, value));
     }
-    return output;
+    output
 }
 
 /// Takes the keys out of a json object and monosizes them into (Key, Value) pairs.
@@ -627,7 +621,7 @@ fn grab_keys_recursively(current_key: String, current_value: Value) -> Vec<(Stri
             returnable.append(&mut grab_keys_recursively(format!("{}.{}", current_key, key), value.clone()));
         }
     }
-    return returnable;
+    returnable
 }
 
 #[derive(Deserialize)]
@@ -734,7 +728,7 @@ impl TransitionType {
                 return true;
             }
         }
-        return false;
+        false
     }
     pub fn collider_dimensions(&self) -> &[(f64, f64, f64, f64)] {
         match self {
@@ -769,7 +763,7 @@ enum ImageDefinition {
 impl ImageDefinition {
     fn force_sprite(&self) -> Handle<Image> {
         match self {
-            Self::Sprite(handle) => return handle.clone(),
+            Self::Sprite(handle) => handle.clone(),
             Self::SpriteSheet(_, _) => panic!()
         }
     }
@@ -777,7 +771,7 @@ impl ImageDefinition {
         match self {
             Self::Sprite(_) => panic!(),
             Self::SpriteSheet(handle, (width, height)) =>
-                return (handle.clone(), *width, *height)
+                (handle.clone(), *width, *height)
         }
     }
 }

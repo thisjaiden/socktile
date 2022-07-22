@@ -16,6 +16,8 @@ mod shared;
 mod window_setup;
 mod modular_assets;
 mod assets;
+mod matrix;
+mod prelude;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -246,19 +248,18 @@ fn main() {
 
 fn log_setup() {
     tracing_log::LogTracer::init().unwrap();
-    let fmt_layer;
-    if consts::DEV_BUILD {
-        fmt_layer = tracing_subscriber::fmt::Layer::default()
+    let fmt_layer = if consts::DEV_BUILD {
+        tracing_subscriber::fmt::Layer::default()
             .without_time()
             .with_file(false)
-            .with_line_number(true);
+            .with_line_number(true)
     }
     else {
-        fmt_layer = tracing_subscriber::fmt::Layer::default()
+        tracing_subscriber::fmt::Layer::default()
             .without_time()
             .with_file(false)
-            .with_line_number(false);
-    }
+            .with_line_number(false)
+    };
     let subscriber = tracing_subscriber::Registry::default()
         .with(fmt_layer)
         .with(EnvFilter::new("INFO,wgpu=error,symphonia=error"));

@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 use bevy_asset_loader::AssetCollection;
 
-use crate::{shared::player::Item, modular_assets};
+use crate::prelude::*;
 
 #[derive(AssetCollection)]
 pub struct CoreAssets {
     #[asset(path = "e.nrf")]
-    pub core: Handle<modular_assets::ModularAssets>,
+    pub core: Handle<crate::modular_assets::ModularAssets>,
     #[asset(path = "core/title_screen.png")]
     pub title_screen: Handle<Image>,
     #[asset(path = "core/create_user.png")]
@@ -87,6 +87,6 @@ impl ItemAssets {
 
 #[derive(AssetCollection)]
 pub struct ObjectAssets {
-    #[asset(path = "object/placeholder.png")]
+    #[asset(path = "object/tree_ly.png")]
     pub tree: Handle<Image>
 }

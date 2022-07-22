@@ -45,10 +45,8 @@ impl Animator {
                         loc.scale.x -= 0.1;
                     }
                 }
-                else {
-                    if loc.scale.x < 1.0 {
-                        loc.scale.x += 0.1;
-                    }
+                else if loc.scale.x < 1.0 {
+                    loc.scale.x += 0.1;
                 }
             }
             // Saftey check: If the player has existed for 2 frames
@@ -70,13 +68,12 @@ impl Animator {
                     let state = *selfs.idle_animation_state.get(&mark).unwrap();
 
                     // Determine new animation state value.
-                    let new_state;
-                    if state > 100 {
-                        new_state = 1;
+                    let new_state = if state > 100 {
+                        1
                     }
                     else {
-                        new_state = state + 1;
-                    }
+                        state + 1
+                    };
 
                     // Update index with the new value.
                     selfs.idle_animation_state.insert(mark.clone(), new_state);

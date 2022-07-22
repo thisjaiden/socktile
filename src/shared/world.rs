@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::{components::GamePosition, server::npc::NPC, consts::{FATAL_ERROR, CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_SIZE}};
+use crate::{components::GamePosition, server::npc::Npc, consts::{FATAL_ERROR, CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_SIZE}};
 use super::{object::{Object, ObjectType}, saves::User, player::{PlayerData, Item}};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -28,11 +28,11 @@ impl World {
     }
     pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<usize> {
         if let Some(chunk_data) = self.terrain.get(&chunk) {
-            return chunk_data.clone();
+            chunk_data.clone()
         }
         else {
             self.generate_terrain(chunk);
-            return self.get_or_gen(chunk);
+            self.get_or_gen(chunk)
         }
     }
     fn generate_terrain(&mut self, chunk: (isize, isize)) {
@@ -73,17 +73,12 @@ impl World {
         let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut chunk_data = vec![];
         for layer in layers {
-            match layer.layer_instance_type.as_str() {
-                "IntGrid" => {
-                    for pot_height_layer in 0..CHUNK_HEIGHT {
-                        let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
-                        for width_layer in 0..CHUNK_WIDTH {
-                            chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
-                        }
+            if layer.layer_instance_type.as_str() == "IntGrid" {
+                for pot_height_layer in 0..CHUNK_HEIGHT {
+                    let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
+                    for width_layer in 0..CHUNK_WIDTH {
+                        chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
                     }
-                }
-                _ => {
-                    // ignored
                 }
             }
         }
@@ -139,67 +134,62 @@ impl World {
         let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut dupe_objects = vec![];
         for layer in layers {
-            match layer.layer_instance_type.as_str() {
-                "Entities" => {
-                    for entity in &layer.entity_instances {
-                        match entity.identifier.as_str() {
-                            "Tree" => {
-                                self.objects.push(Object {
-                                    pos: GamePosition {
-                                        x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                        y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                    },
-                                    rep: ObjectType::Tree,
-                                    uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
-                                });
-                                dupe_objects.push(self.objects[self.objects.len() - 1].clone());
-                            }
-                            "Item" => {
-                                for dataseg in &entity.field_instances {
-                                    if dataseg.identifier == "ItemName" {
-                                        let item = Item::from_str(dataseg.value.as_ref()
-                                            .expect("FATAL: LDtk entity of type Item had no ItemName")
-                                            .as_str().expect("FATAL: LDtk entity had a non-string ItemName")
-                                        );
-                                        self.objects.push(Object {
-                                            pos: GamePosition {
-                                                x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                                y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                            },
-                                            rep: ObjectType::GroundItem(item),
-                                            uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
-                                        });
-                                        dupe_objects.push(self.objects[self.objects.len() - 1].clone());
-                                    }
+            if layer.layer_instance_type.as_str() == "Entities" {
+                for entity in &layer.entity_instances {
+                    match entity.identifier.as_str() {
+                        "Tree" => {
+                            self.objects.push(Object {
+                                pos: GamePosition {
+                                    x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
+                                    y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
+                                },
+                                rep: ObjectType::Tree,
+                                uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                            });
+                            dupe_objects.push(self.objects[self.objects.len() - 1].clone());
+                        }
+                        "Item" => {
+                            for dataseg in &entity.field_instances {
+                                if dataseg.identifier == "ItemName" {
+                                    let item = Item::from_str(dataseg.value.as_ref()
+                                        .expect("FATAL: LDtk entity of type Item had no ItemName")
+                                        .as_str().expect("FATAL: LDtk entity had a non-string ItemName")
+                                    );
+                                    self.objects.push(Object {
+                                        pos: GamePosition {
+                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
+                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
+                                        },
+                                        rep: ObjectType::GroundItem(item),
+                                        uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                    });
+                                    dupe_objects.push(self.objects[self.objects.len() - 1].clone());
                                 }
-                            }
-                            "NPC" => {
-                                for dataseg in &entity.field_instances {
-                                    if dataseg.identifier == "NPCName" {
-                                        let npc = NPC::from_name_str(dataseg.value.as_ref()
-                                            .expect("FATAL: LDtk entity of type NPC had no NPCName")
-                                            .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
-                                        );
-                                        self.objects.push(Object {
-                                            pos: GamePosition {
-                                                x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                                y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                            },
-                                            rep: ObjectType::NPC(npc),
-                                            uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
-                                        });
-                                        dupe_objects.push(self.objects[self.objects.len() - 1].clone());
-                                    }
-                                }
-                            }
-                            _ => {
-                                // ignored or otherwise unknown.
                             }
                         }
+                        "NPC" => {
+                            for dataseg in &entity.field_instances {
+                                if dataseg.identifier == "NPCName" {
+                                    let npc = Npc::from_name_str(dataseg.value.as_ref()
+                                        .expect("FATAL: LDtk entity of type NPC had no NPCName")
+                                        .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
+                                    );
+                                    self.objects.push(Object {
+                                        pos: GamePosition {
+                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
+                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
+                                        },
+                                        rep: ObjectType::Npc(npc),
+                                        uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                    });
+                                    dupe_objects.push(self.objects[self.objects.len() - 1].clone());
+                                }
+                            }
+                        }
+                        _ => {
+                            // ignored or otherwise unknown.
+                        }
                     }
-                }
-                _ => {
-                    // ignored
                 }
             }
         }

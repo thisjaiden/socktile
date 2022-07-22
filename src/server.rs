@@ -6,16 +6,11 @@ use std::{
         Mutex
     }
 };
-use bevy::prelude::*;
+
 use bevy::utils::HashMap;
+use crate::prelude::*;
 use crate::{
-    components::GamePosition,
-    consts::{
-        NETTY_VERSION, FATAL_ERROR,
-        NETTY_PORT, TICK_TIME, SAVE_TIME
-    },
     shared::{
-        netty::Packet,
         saves::User,
         world::World,
         listing::GameListing,

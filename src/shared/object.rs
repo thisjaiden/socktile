@@ -1,7 +1,7 @@
 use bevy::prelude::Component;
 use serde::{Deserialize, Serialize};
 
-use crate::{components::GamePosition, server::npc::NPC};
+use crate::{components::GamePosition, server::npc::Npc};
 
 use super::player::Item;
 
@@ -25,14 +25,14 @@ impl Object {
 pub enum ObjectType {
     Tree,
     GroundItem(Item),
-    NPC(NPC)
+    Npc(Npc)
 }
 
 impl ObjectType {
     pub fn collider(&self) -> Option<(f64, f64)> {
         match self {
             Self::Tree => Some((64.0, 64.0)),
-            Self::NPC(_who) => Some((64.0, 64.0)),
+            Self::Npc(_who) => Some((64.0, 64.0)),
             _ => None
         }
     }
