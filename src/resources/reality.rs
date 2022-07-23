@@ -2,10 +2,10 @@ use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{Mo
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
 
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory}, object::{Object, ObjectType}}, assets::{FontAssets, AnimatorAssets, UIAssets, ObjectAssets, ItemAssets, NPCAssets, CoreAssets}, consts::{UI_TEXT, PLAYER_CHARACTERS, UI_IMG, FRONT_OBJECTS, CHUNK_WIDTH, CHUNK_HEIGHT, BACKGROUND, CHUNK_SIZE, TERRAIN_DEBUG, DEBUG, PLAYER_HITBOX, PLAYER_DEBUG}, modular_assets::{ModularAssets, TerrainRendering, TransitionType}};
+use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory, ItemAction}, object::{Object, ObjectType}}, modular_assets::{ModularAssets, TerrainRendering, TransitionType}};
 use crate::prelude::*;
 
-use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat};
+use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat, Animator};
 
 pub struct Reality {
     /// Player's current position
@@ -135,6 +135,51 @@ impl Reality {
     }
 
     // Systems
+    /// Clears pending action if the held item has no action.
+    pub fn system_action_none(
+        mut selfs: ResMut<Reality>
+    ) {
+        if selfs.waiting_for_action {
+            let action = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot].action();
+            if action == ItemAction::None {
+                selfs.waiting_for_action = false;
+            }
+        }
+    }
+    pub fn system_action_chop(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut animator: ResMut<Animator>,
+        mut netty: ResMut<Netty>,
+        disk: Res<Disk>,
+        objects: Query<(Entity, &Object)>
+    ) {
+        if selfs.waiting_for_action {
+            let action = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot].action();
+            if let ItemAction::Chop(power) = action {
+                // chop time!
+                info!("Executing player action 'Chop' with power {power}");
+                // mark action for animation
+                animator.mark_action(disk.user().unwrap(), action);
+                // send animation to others
+                netty.say(Packet::ActionAnimation(action));
+                // check for tree in range
+                objects.for_each(|(e, obj)| {
+                    if obj.rep == ObjectType::Tree {
+                        let distance = obj.pos.distance(selfs.player_position);
+                        if distance < TREE_CHOP_DISTANCE {
+                            // remove entity on server
+                            netty.say(Packet::RemoveObject(obj.uuid));
+                            // despawn entity locally
+                            commands.entity(e).despawn();
+                        }
+                    }
+                });
+                // cleanup state
+                selfs.waiting_for_action = false;
+            }
+        }
+    }
     /// Marks chunks to be rendered, downloaded, and unrendered. This system is essential to
     /// the world loading and collision loading
     pub fn system_mark_chunks(

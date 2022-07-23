@@ -219,6 +219,8 @@ fn main() {
                 .with_system(resources::Reality::system_chunk_derenderer)
                 .with_system(resources::Reality::system_rerender_edges)
                 .with_system(resources::Reality::system_render_waiting_chunks)
+                .with_system(resources::Reality::system_action_none)
+                .with_system(resources::Reality::system_action_chop)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Animator::system_player_initiator)
                 .with_system(resources::Chat::system_display_chat)

@@ -238,7 +238,11 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         for object in new_objs {
                             for (user, _, _) in saves[world_id].data.players.clone() {
                                 let ip = ip_by_user.get(&user).expect("A user online on a server had no IP address");
-                                all_players.push((Packet::CreateObject(object.clone()), *ip));
+                                // if this isn't the player joining...
+                                if ip != &from {
+                                    // send over the objects
+                                    all_players.push((Packet::CreateObject(object.clone()), *ip));
+                                }
                             }
                         }
                         let mut func_send = send.lock().unwrap();
@@ -381,6 +385,56 @@ pub fn startup(arguments: Vec<String>) -> ! {
                             func_send.push((Packet::NoWhitelistPermission, from));
                             drop(func_send);
                         }
+                    }
+                    Packet::ActionAnimation(action) => {
+                        // find assoc user
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::ActionAnimation");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::ActionAnimation");
+
+                        // for each player
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested animation");
+                            // if this isn't the player who sent originally
+                            if this_ip != &from {
+                                // send animation
+                                let mut func_send = send.lock().unwrap();
+                                func_send.push((Packet::ActionAnimation(action), *this_ip));
+                                drop(func_send);
+                            }
+                        }
+                    }
+                    Packet::RemoveObject(uuid) => {
+                        // find assoc user
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RemoveObject");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RemoveObject");
+
+                        // for each player
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested animation");
+                            // if this isn't the player who sent originally
+                            if this_ip != &from {
+                                // reflect removal
+                                let mut func_send = send.lock().unwrap();
+                                func_send.push((Packet::RemoveObject(uuid), *this_ip));
+                                drop(func_send);
+                            }
+                        }
+
+                        let mut object_index = None;
+                        // find given object on server
+                        for (index, object) in saves[*server].data.objects.iter().enumerate() {
+                            if object.uuid == uuid {
+                                object_index = Some(index);
+                            }
+                        }
+                        if object_index.is_none() {
+                            warn!("All objects: {:#?}", saves[*server].data.objects);
+                            warn!("Requested UUID: {:?}", uuid);
+                        }
+                        // remove object from server
+                        saves[*server].data.objects.remove(object_index.expect("No object found with given uuid for Packet::RemoveObject"));
                     }
                     _ => {
                         // Ignore this packet, we don't handle it.

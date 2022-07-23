@@ -11,6 +11,8 @@ use crate::{
 
 use serde::{Deserialize, Serialize};
 
+use super::player::ItemAction;
+
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
     /// Post the version of the network protocol being used.
@@ -84,7 +86,7 @@ pub enum Packet {
     /// Updates a given object on the client.
     /// (Updated Object)
     UpdateObject(Object),
-    /// Removes an object on the client by UUID.
+    /// Removes an object by UUID.
     /// (Object UUID)
     RemoveObject(uuid::Uuid),
     /// Creates an object on the client.
@@ -119,7 +121,10 @@ pub enum Packet {
     SendChatMessage(ChatMessage),
     /// Recieves a chat message.
     /// (Message)
-    ChatMessage(ChatMessage)
+    ChatMessage(ChatMessage),
+    /// Sends/Recieves an animation for a player using an item
+    /// (Action)
+    ActionAnimation(ItemAction)
 }
 
 impl Packet {

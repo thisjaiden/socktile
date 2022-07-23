@@ -5,6 +5,7 @@ pub use bevy::prelude::*;
 pub use crate::consts::*;
 pub use crate::matrix::*;
 pub use crate::components::*;
+pub use crate::assets::*;
 
 // Group imports
 pub use crate::resources::{Disk, Netty};

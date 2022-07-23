@@ -28,7 +28,7 @@ pub const EMBED_ASSETS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-22";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-23";
 /// Port for network connections
 pub const NETTY_PORT: u16 = 11111;
 /// Global game server address
@@ -49,6 +49,8 @@ pub const PLAYER_HITBOX: (f64, f64) = (64.0, 64.0);
 pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 /// The distance before an item on the ground is picked up by players
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
+/// The distance a player can be from a tree and still successfully hit it when chopping
+pub const TREE_CHOP_DISTANCE: f64 = (PLAYER_HITBOX.0 / 2.0) + 64.0;
 /// The offset between the cursor's render location and actual location
 pub const CURSOR_OFFSET: [f32; 2] = [-25.0, 31.0];
 /// Width of a chunk in tiles

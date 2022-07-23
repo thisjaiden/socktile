@@ -86,13 +86,6 @@ impl UIManager {
             self.queue_player_action = true;
         }
     }
-    fn grab_player_action(&mut self) -> bool {
-        if self.queue_player_action {
-            self.queue_player_action = false;
-            return true;
-        }
-        false
-    }
 }
 
 #[derive(Clone)]
@@ -191,7 +184,9 @@ pub fn ui_forward(
     mut man: ResMut<UIManager>,
     mut reality: ResMut<Reality>
 ) {
-    if man.grab_player_action() {
+    if man.queue_player_action {
+        info!("Player action queued!");
+        man.queue_player_action = false;
         reality.queue_action();
     }
 }
