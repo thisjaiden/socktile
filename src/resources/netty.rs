@@ -1,10 +1,6 @@
-use crate::{GameState, consts::*, shared::netty::Packet};
-
+use crate::prelude::*;
 use std::{net::TcpStream, sync::{Arc, Mutex}};
-
-use bevy::prelude::*;
-
-use super::{Reality, Disk, chat::ChatMessage};
+use super::{Reality, chat::ChatMessage};
 
 pub struct Netty {
     connection: ConnectionStatus,

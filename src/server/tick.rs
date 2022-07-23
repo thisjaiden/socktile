@@ -1,10 +1,6 @@
-use std::net::SocketAddr;
-
-use bevy::utils::HashMap;
-
 use crate::prelude::*;
-use crate::shared::{object::ObjectType, saves::User};
-
+use std::net::SocketAddr;
+use bevy::utils::HashMap;
 use super::SaveGame;
 
 #[allow(non_snake_case)]

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct GameListing {

@@ -1,13 +1,9 @@
-use bevy::{prelude::*, app::AppExit};
+use crate::prelude::*;
+use bevy::app::AppExit;
 use bevy_kira_audio::Audio;
 use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{
-    components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile},
-    PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp, RemoveOnStateChange},
-    assets::{FontAssets, AnimatorAssets, CoreAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}, modular_assets::ModularAssets};
-
-use super::{Netty, Reality, TextBox, Disk};
+use super::{Reality, TextBox};
 
 pub enum SettingsPage {
     Sound,
@@ -205,7 +201,6 @@ pub fn ui_manager(
 
 pub fn ui_game(
     mut commands: Commands,
-    unloads: Query<Entity, With<TileMarker>>,
     target_materials: Option<Res<AnimatorAssets>>,
     mut state: ResMut<State<GameState>>,
     mut netty: ResMut<Netty>,
@@ -228,11 +223,8 @@ pub fn ui_game(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
+            }).insert(disk.user().unwrap());
             netty.say(Packet::JoinWorld(game_id));
-            unloads.for_each(|e| {
-                commands.entity(e).despawn_recursive();
-            });
             man.reset_ui();
         }
     }
@@ -475,8 +467,7 @@ pub fn ui_disconnect_game(
     mut query: Query<
         Entity,
         Or<(
-            With<PlayerMarker>,
-            With<TileMarker>,
+            With<User>,
             With<Tile>,
             With<PauseMenuMarker>,
             With<HotbarMarker>,

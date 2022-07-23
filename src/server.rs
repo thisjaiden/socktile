@@ -9,21 +9,11 @@ use std::{
 
 use bevy::utils::HashMap;
 use crate::prelude::*;
-use crate::{
-    shared::{
-        saves::User,
-        world::World,
-        listing::GameListing,
-        player::PlayerData
-    }
-};
-use serde::{
-    Serialize,
-    Deserialize
-};
+use crate::shared::listing::GameListing;
 
 mod tick;
 pub mod npc;
+mod world;
 
 /// Starts the game server!
 pub fn startup(arguments: Vec<String>) -> ! {
@@ -171,7 +161,7 @@ pub fn startup(arguments: Vec<String>) -> ! {
                             SaveGame {
                                 public_name: name,
                                 internal_id: world_id,
-                                data: World::new(),
+                                data: world::World::new(),
                                 path,
                                 whitelist: vec![owner.clone()],
                                 played_before: vec![],
@@ -521,7 +511,7 @@ pub fn save_folder() -> PathBuf {
 pub struct SaveGame {
     pub public_name: String,
     pub internal_id: usize,
-    pub data: crate::shared::world::World,
+    pub data: world::World,
     pub path: PathBuf,
     pub whitelist: Vec<User>,
     pub played_before: Vec<User>,

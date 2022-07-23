@@ -1,9 +1,5 @@
-use serde::{Deserialize, Serialize};
-
-use bevy::{prelude::*, utils::HashMap};
-
-use crate::{components::GamePosition, server::npc::Npc, consts::{FATAL_ERROR, CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_SIZE}};
-use super::{object::{Object, ObjectType}, saves::User, player::{PlayerData, Item}};
+use crate::prelude::*;
+use bevy::utils::HashMap;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct World {

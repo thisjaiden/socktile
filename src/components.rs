@@ -1,5 +1,4 @@
-use bevy::prelude::Component;
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 /// A Text2dBundle with TextBox inserted will display the contents of the TextBox resource.
@@ -65,23 +64,11 @@ pub struct SettingsPageComp {
 #[derive(Clone, Copy, Debug, Component)]
 pub struct RemoveOnStateChange {}
 
-pub mod ldtk {
-    use crate::{shared::saves::User, modular_assets::TransitionType};
-    use bevy::prelude::Component;
+use crate::modular_assets::TransitionType;
 
-    #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-    pub struct TileMarker {}
-
-    #[derive(Clone, Debug, Eq, PartialEq, Component, Hash)]
-    pub struct PlayerMarker {
-        pub user: User,
-        pub isme: bool
-    }
-
-    #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-    pub struct Tile {
-        pub chunk: (isize, isize),
-        pub position: (usize, usize),
-        pub transition_type: TransitionType
-    }
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+pub struct Tile {
+    pub chunk: (isize, isize),
+    pub position: (usize, usize),
+    pub transition_type: TransitionType
 }

@@ -1,6 +1,5 @@
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_kira_audio::Audio;
-use crate::{assets::CoreAssets, modular_assets::ModularAssets};
 
 pub fn title_screen_loop(
     audio: Res<Audio>,

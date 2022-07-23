@@ -13,7 +13,6 @@ use bevy::{
 };
 use bevy_kira_audio::AudioSource;
 use rand::prelude::SliceRandom;
-use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
 use crate::prelude::*;

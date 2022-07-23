@@ -1,8 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-use bevy::prelude::*;
-
-use crate::consts::FATAL_ERROR;
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct PlayerData {

@@ -1,9 +1,4 @@
-use bevy::prelude::Component;
-use serde::{Deserialize, Serialize};
-
-use crate::{components::GamePosition, server::npc::Npc};
-
-use super::player::Item;
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Component)]
 /// Represents a single game object.

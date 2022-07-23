@@ -10,7 +10,6 @@ mod join_world;
 pub use join_world::join_world;
 
 use crate::prelude::*;
-use crate::{components::RemoveOnStateChange, GameState, consts::UI_TEXT, resources::ui::UIManager};
 
 pub fn clear_old(
     mut commands: Commands,

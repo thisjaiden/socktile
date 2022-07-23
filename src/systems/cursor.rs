@@ -1,9 +1,5 @@
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use crate::assets::FontAssets;
-use crate::components::UILocked;
-use crate::{components::CursorMarker};
-use crate::consts::{CURSOR, DEBUG, CURSOR_OFFSET, UI_DEBUG};
 
 pub fn cursor(
     windows: Res<Windows>,

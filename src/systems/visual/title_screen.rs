@@ -1,13 +1,6 @@
+use crate::prelude::*;
 use std::time::Duration;
-
-use bevy::prelude::*;
 use bevy_easings::{Ease, EaseFunction};
-use crate::{
-    assets::{FontAssets, CoreAssets},
-    components::RemoveOnStateChange,
-    components::TitleScreenUser,
-    consts::{UI_TEXT, BACKGROUND}, resources::ui::{UIManager, UIClickable, UIClickAction}, modular_assets::ModularAssets
-};
 
 pub fn title_screen(
     mut commands: Commands,

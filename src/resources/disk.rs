@@ -1,9 +1,5 @@
+use crate::prelude::*;
 use std::path::PathBuf;
-
-use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
-
-use crate::shared::saves::User;
 
 pub struct Disk {
     window_config: WindowConfig,

@@ -1,9 +1,5 @@
-use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
-
-use crate::{components::{ChatBox, UILocked}, consts::UI_TEXT, assets::FontAssets, shared::netty::Packet};
-
-use super::{Reality, reality::MenuState, TextBox, Disk, Netty};
+use crate::prelude::*;
+use super::{Reality, reality::MenuState, TextBox};
 
 pub struct Chat {
     pub history: Vec<ChatMessage>,

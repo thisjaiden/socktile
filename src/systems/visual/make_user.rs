@@ -1,5 +1,4 @@
-use bevy::prelude::*;
-use crate::{assets::{FontAssets, CoreAssets}, components::{TextBox, RemoveOnStateChange}, consts::{BACKGROUND, UI_TEXT}};
+use crate::prelude::*;
 
 pub fn make_user(
     mut commands: Commands,

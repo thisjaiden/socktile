@@ -1,11 +1,9 @@
-use bevy::{prelude::*, render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
+use crate::prelude::*;
+use bevy::{render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
-
-use crate::{components::{GamePosition, ldtk::{PlayerMarker, TileMarker, Tile}, PauseMenuMarker, UILocked, HotbarMarker}, shared::{netty::Packet, listing::GameListing, saves::User, player::{PlayerData, Inventory, ItemAction}, object::{Object, ObjectType}}, modular_assets::{ModularAssets, TerrainRendering, TransitionType}};
-use crate::prelude::*;
-
-use super::{Netty, ui::{UIManager, UIClickable, UIClickAction}, Disk, chat::ChatMessage, Chat, Animator};
+use crate::shared::{listing::GameListing, player::Inventory};
+use super::{chat::ChatMessage, Chat, Animator};
 
 pub struct Reality {
     /// Player's current position
@@ -544,18 +542,18 @@ impl Reality {
                     transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
                     texture: assets.not_animated.clone(),
                     ..Default::default()
-                }).insert(PlayerMarker { user, isme: false });
+                }).insert(user);
             }
         }
         selfs.players_to_spawn.clear();
     }
     pub fn system_player_unloader(
         mut selfs: ResMut<Reality>,
-        mut unloads: Query<(Entity, &mut PlayerMarker)>,
+        mut unloads: Query<(Entity, &mut User)>,
         mut commands: Commands
     ) {
         unloads.for_each_mut(|(e, m)| {
-            if selfs.players_to_despawn.contains(&m.user) {
+            if selfs.players_to_despawn.contains(&m) {
                 commands.entity(e).despawn();
             }
         });
@@ -938,15 +936,16 @@ impl Reality {
     }
     pub fn system_player_locator(
         mut selfs: ResMut<Reality>,
-        mut player: Query<(&mut Transform, &mut PlayerMarker)>
+        disk: Res<Disk>,
+        mut player: Query<(&mut Transform, &User)>
     ) {
         player.for_each_mut(|(mut l, m)| {
-            if m.isme {
+            if m == &disk.user().unwrap() {
                 l.translation.x = selfs.player_position.x as f32;
                 l.translation.y = selfs.player_position.y as f32;
             }
-            if selfs.players_to_move.contains_key(&m.user) {
-                let which = selfs.players_to_move.get(&m.user).unwrap();
+            if selfs.players_to_move.contains_key(&m) {
+                let which = selfs.players_to_move.get(&m).unwrap();
                 l.translation.x = which.x as f32;
                 l.translation.y = which.y as f32;
             }
@@ -980,7 +979,7 @@ impl Reality {
                     },
                     transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),
                     ..Default::default()
-                }).insert(TileMarker {});
+                }).insert(RemoveOnStateChange {});
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::JoinWorld(server.internal_id),
                     location: (-200.0, ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0),

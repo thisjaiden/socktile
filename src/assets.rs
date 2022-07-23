@@ -1,7 +1,5 @@
-use bevy::prelude::*;
-use bevy_asset_loader::AssetCollection;
-
 use crate::prelude::*;
+use bevy_asset_loader::AssetCollection;
 
 #[derive(AssetCollection)]
 pub struct CoreAssets {

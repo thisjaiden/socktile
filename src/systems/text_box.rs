@@ -1,12 +1,4 @@
-use bevy::prelude::*;
-
-use crate::{
-    components::{TextBox, ldtk::{TileMarker, PlayerMarker}, RemoveOnStateChange},
-    resources::{Netty, Disk, ui::{UIManager, UIClickAction}},
-    shared::{netty::Packet, saves::User},
-    GameState, assets::{FontAssets, AnimatorAssets, CoreAssets},
-    consts::{PLAYER_CHARACTERS, UI_TEXT}, modular_assets::ModularAssets
-};
+use crate::prelude::*;
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
@@ -117,7 +109,6 @@ pub fn game_creation(
     mut state: ResMut<State<GameState>>,
     disk: Res<Disk>,
     materials: Res<AnimatorAssets>,
-    unloads: Query<Entity, With<TileMarker>>
 ) {
     let (entity, mut text) = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer();
@@ -142,11 +133,7 @@ pub fn game_creation(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
-
-            unloads.for_each(|e| {
-                commands.entity(e).despawn_recursive();
-            });
+            }).insert(disk.user().unwrap());
         }
     }
 }

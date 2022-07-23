@@ -1,6 +1,4 @@
-use bevy::prelude::*;
-
-use crate::{assets::{FontAssets, CoreAssets}, modular_assets::ModularAssets, resources::ui::{UIManager, UIClickable, UIClickAction}, consts::{BACKGROUND, UI_TEXT}, components::RemoveOnStateChange};
+use crate::prelude::*;
 
 pub fn create_world(
     mut commands: Commands,

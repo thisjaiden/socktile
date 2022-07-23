@@ -1,7 +1,5 @@
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_kira_audio::Audio;
-
-use crate::resources::Disk;
 
 pub fn audio_setup(
     audio: Res<Audio>,

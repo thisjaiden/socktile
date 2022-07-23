@@ -1,15 +1,15 @@
 pub use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-use crate::{components::{ldtk::PlayerMarker}, assets::AnimatorAssets, shared::{player::ItemAction, saves::User}};
+use crate::{assets::AnimatorAssets, shared::{player::ItemAction, saves::User}};
 
 pub struct Animator {
-    player_prev_pos: HashMap<PlayerMarker, Transform>,
-    last_dir_left: HashMap<PlayerMarker, bool>,
+    player_prev_pos: HashMap<User, Transform>,
+    last_dir_left: HashMap<User, bool>,
     /// =0 | not idling
     /// >0 | num of frames idling
     /// resets to 1 every 100 frames (101 -> 1)
-    idle_animation_state: HashMap<PlayerMarker, u8>,
+    idle_animation_state: HashMap<User, u8>,
     /// =0 | no animation
     /// >0 | num of frames into animation
     /// resets to 0 after N frames (action dependent)
@@ -35,7 +35,7 @@ impl Animator {
             for (key, _value) in selfs.player_prev_pos.clone() {
                 if !selfs.idle_animation_state.contains_key(&key) {
                     selfs.idle_animation_state.insert(key.clone(), 0);
-                    selfs.action_animation_state.insert(key.user, (ItemAction::None, 0));
+                    selfs.action_animation_state.insert(key, (ItemAction::None, 0));
                 }
             }
         }
@@ -43,7 +43,7 @@ impl Animator {
     pub fn system_player_animator(
         mut selfs: ResMut<Animator>,
         materials: Res<AnimatorAssets>,
-        mut players: Query<(&mut Handle<Image>, &mut Transform, &mut PlayerMarker)>
+        mut players: Query<(&mut Handle<Image>, &mut Transform, &mut User)>
     ) {
         // Animation for every player
         players.for_each_mut(|(mut tex, mut loc, mark)| {

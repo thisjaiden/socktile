@@ -1,8 +1,4 @@
-use serde::{Serialize, Deserialize};
-use bevy::prelude::*;
-
-use crate::consts::FATAL_ERROR;
-use crate::shared::saves::User;
+use crate::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Npc {
