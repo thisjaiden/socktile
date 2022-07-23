@@ -214,16 +214,12 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         for (us, gp, _) in &saves[world_id].data.players {
                             constructable_players.push((us.clone(), *gp));
                         }
-                        // TODO: matrixop3x3()
-                        let mut new_objs = saves[world_index].data.try_generating_objects(spawn_centre_chnks_lack);
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1)));
+                        let mut new_objs = vec![];
+                        run_matrix_nxn(-1..1, |x, y| {
+                            new_objs.append(&mut saves[world_index].data.try_generating_objects(
+                                (spawn_centre_chnks_lack.0 + x, spawn_centre_chnks_lack.1 + y)
+                            ));
+                        });
                         let mut all_players = vec![];
                         for object in new_objs {
                             for (user, _, _) in saves[world_id].data.players.clone() {

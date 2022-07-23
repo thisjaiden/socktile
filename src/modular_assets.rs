@@ -30,7 +30,6 @@ impl Plugin for ModularAssetsPlugin {
 #[derive(TypeUuid, Debug)]
 #[uuid = "8d513cb4-0fa2-4069-b6ad-fb7e8dd37031"]
 pub struct ModularAssets {
-    // TODO: will contain all assets loaded from modules and json
     audio_samples: Vec<(AudioSampleMetadata, Handle<AudioSource>)>,
     language_keys: HashMap<String, LanguageValue>,
     terrain_data: TerrainData

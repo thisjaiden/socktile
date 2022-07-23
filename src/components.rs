@@ -9,7 +9,7 @@ pub struct TextBox {}
 pub struct CursorMarker {}
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-// todo: move this
+// todo: remove this
 pub struct GamePosition {
     pub x: f64,
     pub y: f64

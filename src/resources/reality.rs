@@ -329,7 +329,7 @@ impl Reality {
                                         transition_type: rendering.1
                                     });
                                 },
-                                TerrainRendering::AnimatedSprite(imgs, animation) => {
+                                TerrainRendering::AnimatedSprite(_imgs, _animation) => {
                                     todo!()
                                 },
                                 TerrainRendering::AnimatedSpriteSheet(_, _) => {
@@ -604,43 +604,84 @@ impl Reality {
                 ((selfs.player_position.x - (1920 * centered_chunk.0) as f64 + (1920.0 / 2.0)) / 64.0) as isize,
                 ((selfs.player_position.y - (1088 * centered_chunk.1) as f64 + (1088.0 / 2.0)) / 64.0) as isize + 1
             );
-            let needed_tiles = [
-                centered_tile,
-                (centered_tile.0, centered_tile.1 + 1),
-                (centered_tile.0, centered_tile.1 - 1),
-                (centered_tile.0 + 1, centered_tile.1 + 1),
-                (centered_tile.0 + 1, centered_tile.1 - 1),
-                (centered_tile.0 + 1, centered_tile.1),
-                (centered_tile.0 - 1, centered_tile.1 + 1),
-                (centered_tile.0 - 1, centered_tile.1 - 1),
-                (centered_tile.0 - 1, centered_tile.1),
-            ];
+            // get a 3x3 matrix
+            let mut needed_tiles: Vec<(isize, isize)> = get_matrix_nxn(-1..=1);
+            // offset by centered_tile's location
+            run_matrix_nxn((-1 as isize)..=1, |x, y| {
+                needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].0 += centered_tile.0;
+                needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].1 += centered_tile.1;
+            });
             let mut needed_pairs = vec![];
             let mut needed_chunks = vec![];
-            // TODO: BUG: ERROR GRABBING COLLISION IN OTHER CHUNKS
+            let l_width = CHUNK_WIDTH as isize;
+            let l_height = CHUNK_HEIGHT as isize;
             for tile in needed_tiles {
-                if tile.0 == -1 && tile.1 != 0 {
-                    needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1), (29, tile.1 as usize)));
-                    if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1)) {
-                        needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1));
+                // location is right one chunk
+                if tile.0 >= l_width {
+                    if tile.1 < l_height && tile.1 >= 0 {
+                        // location is right one chunk
+                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1), (0, tile.1)));
+                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1)) {
+                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1));
+                        }
+                    }
+                    else if tile.1 >= l_height {
+                        // location is right and up one chunk
+                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1 + 1), (0, 0)));
+                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1 + 1)) {
+                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1 + 1));
+                        }
+                    }
+                    else {
+                        // location is right and down one chunk
+                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1 - 1), (0, l_height - 1)));
+                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1 - 1)) {
+                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1 - 1));
+                        }
                     }
                 }
-                else if tile.0 != -1 && tile.1 == 0 {
-                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 - 1), (tile.0 as usize, 17)));
-                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 - 1)) {
-                        needed_chunks.push((centered_chunk.0, centered_chunk.1 - 1));
+                else if tile.0 < 0 {
+                    if tile.1 < l_height && tile.1 >= 0 {
+                        // location is left one chunk
+                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1), (l_width - 1, tile.1)));
+                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1)) {
+                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1));
+                        }
+                    }
+                    else if tile.1 >= l_height {
+                        // location is left and up one chunk
+                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 + 1), (l_width - 1, 0)));
+                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 + 1)) {
+                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 + 1));
+                        }
+                    }
+                    else {
+                        // location is left and down one chunk
+                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 - 1), (l_width - 1, l_height - 1)));
+                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 - 1)) {
+                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 - 1));
+                        }
                     }
                 }
-                else if tile.0 == -1 && tile.1 == 0 {
-                    needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 - 1), (29, 17)));
-                    if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 - 1)) {
-                        needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 - 1));
+                else if tile.1 < l_height && tile.1 >= 0 {
+                    // location is centered
+                    needed_pairs.push((centered_chunk, tile));
+                    if !needed_chunks.contains(&centered_chunk) {
+                        needed_chunks.push(centered_chunk);
+                    }
+                }
+                else if tile.1 >= l_height {
+                    // location is up one chunk
+                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 + 1), (tile.0, 0)));
+                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 + 1)) {
+                        needed_chunks.push((centered_chunk.0, centered_chunk.1 + 1));
                     }
                 }
                 else {
-                    needed_pairs.push((centered_chunk, (tile.0 as usize, tile.1 as usize)));
-                    if !needed_chunks.contains(&centered_chunk) {
-                        needed_chunks.push(centered_chunk);
+                    // location is down one chunk
+                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 - 1), (tile.0, l_height - 1)));
+                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 - 1)) {
+                        needed_chunks.push((centered_chunk.0, centered_chunk.1 - 1));
                     }
                 }
             }
@@ -648,7 +689,7 @@ impl Reality {
             queries.p0().for_each(|tile| {
                 if needed_chunks.contains(&tile.chunk) {
                     for (chunk, n_tile) in &needed_pairs {
-                        if tile.chunk == *chunk && tile.position == *n_tile {
+                        if tile.chunk == *chunk && tile.position == (n_tile.0 as usize, n_tile.1 as usize) {
                             pulled_tiles.push(*tile);
                         }
                     }
