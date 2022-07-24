@@ -8,6 +8,8 @@ mod create_world;
 pub use create_world::create_world;
 mod join_world;
 pub use join_world::join_world;
+mod settings;
+pub use settings::*;
 
 use crate::prelude::*;
 

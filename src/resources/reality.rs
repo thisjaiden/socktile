@@ -36,7 +36,7 @@ pub struct Reality {
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
     /// Data for all chunks
-    chunk_data: HashMap<(isize, isize), Vec<usize>>,
+    chunk_data: HashMap<(isize, isize), Vec<(usize, usize)>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
 }
 
@@ -106,7 +106,7 @@ impl Reality {
         self.in_valid_world = true;
     }
     /// Add brand new chunk data for a not seen before chunk
-    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
+    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize)>) {
         self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
         // we should never be sent a chunk we haven't requested and therefore don't have metadata for
         let status = self.chunk_status.get_mut(&chunk_position).unwrap();
@@ -285,7 +285,7 @@ impl Reality {
                         let tile_y = index / CHUNK_WIDTH;
                         let pot_rendering = get_tile_rendering(tile_x, tile_y, mod_assets, data, &selfs, chunk, &mut inserts, top);
                         if let Some(rendering) = pot_rendering {
-                            match rendering.0 {
+                            match rendering.0.0 {
                                 TerrainRendering::Sprite(img) => {
                                     commands.spawn_bundle(SpriteBundle {
                                         transform: Transform::from_xyz(
@@ -299,7 +299,8 @@ impl Reality {
                                     .insert(Tile {
                                         chunk: *chunk,
                                         position: (tile_x, tile_y),
-                                        transition_type: rendering.1
+                                        transition_type: rendering.0.1,
+                                        harsh: rendering.1
                                     });
                                 },
                                 TerrainRendering::SpriteSheet(img, width, height, loc) => {
@@ -326,7 +327,8 @@ impl Reality {
                                     .insert(Tile {
                                         chunk: *chunk,
                                         position: (tile_x, tile_y),
-                                        transition_type: rendering.1
+                                        transition_type: rendering.0.1,
+                                        harsh: rendering.1
                                     });
                                 },
                                 TerrainRendering::AnimatedSprite(_imgs, _animation) => {
@@ -942,36 +944,37 @@ impl Reality {
     ) {
         if TERRAIN_DEBUG {
             tiles.for_each(|tile| {
-                let dta = tile.transition_type.collider_dimensions();
-                for collider in dta {
-                    let true_x = collider.0 + (tile.position.0 as f64 * 64.0) + (tile.chunk.0 as f64 * 1920.0) - (1920.0 / 2.0);
-                    let true_y = collider.1 + (tile.position.1 as f64 * 64.0) + (tile.chunk.1 as f64 * 1088.0) - (1088.0 / 2.0) - 66.0;
-                    lines.line_colored(
-                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
-                        0.0,
-                        Color::RED
-                    );
-                    lines.line_colored(
-                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
-                        0.0,
-                        Color::RED
-                    );
-                    lines.line_colored(
-                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
-                        0.0,
-                        Color::RED
-                    );
-                    lines.line_colored(
-                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
-                        0.0,
-                        Color::RED
-                    );
+                if tile.harsh {
+                    let dta = tile.transition_type.collider_dimensions();
+                    for collider in dta {
+                        let true_x = collider.0 + (tile.position.0 as f64 * 64.0) + (tile.chunk.0 as f64 * 1920.0) - (1920.0 / 2.0);
+                        let true_y = collider.1 + (tile.position.1 as f64 * 64.0) + (tile.chunk.1 as f64 * 1088.0) - (1088.0 / 2.0) - 66.0;
+                        lines.line_colored(
+                            Vec3::new(true_x as f32, true_y as f32, DEBUG),
+                            Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                            0.0,
+                            Color::RED
+                        );
+                        lines.line_colored(
+                            Vec3::new(true_x as f32, true_y as f32, DEBUG),
+                            Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                            0.0,
+                            Color::RED
+                        );
+                        lines.line_colored(
+                            Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                            Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                            0.0,
+                            Color::RED
+                        );
+                        lines.line_colored(
+                            Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                            Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                            0.0,
+                            Color::RED
+                        );
+                    }
                 }
-                
             });
         }
     }
@@ -1043,10 +1046,12 @@ pub enum MenuState {
 /// true if collided, false otherwise
 fn calc_player_against_tiles(tiles: &[Tile], player: (f64, f64)) -> bool {
     for tile in tiles {
-        let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
-        let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
-        if tile.transition_type.collides(player, offset_x, offset_y) {
-            return true;
+        if tile.harsh {
+            let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
+            let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
+            if tile.transition_type.collides(player, offset_x, offset_y) {
+                return true;
+            }
         }
     }
     false
@@ -1098,23 +1103,27 @@ const CHUNK_EDGES: [usize; (CHUNK_WIDTH * 2) + ((CHUNK_HEIGHT - 2) * 2)] = [
     59, 89, 119, 149, 179, 209, 239, 269, 299, 329, 259, 289, 419, 449, 479
 ];
 
+fn all_equal<T: PartialEq>(arr: &[T]) -> bool {
+    arr.windows(2).all(|w| w[0] == w[1])
+}
+
 fn get_tile_rendering(
     tile_x: usize,
     tile_y: usize,
     mod_assets: &ModularAssets,
-    data: &[usize],
+    data: &[(usize, usize)],
     selfs: &ResMut<Reality>,
     chunk: &(isize, isize),
     inserts: &mut Vec<((isize, isize), ChunkStatus)>,
     top: usize,
-) -> Option<(TerrainRendering, TransitionType)> {
-    let rendering;
+) -> Option<((TerrainRendering, TransitionType), bool)> {
+    let data_group;
     if tile_x > 0 {
         if tile_x < CHUNK_WIDTH - 1 {
             if tile_y > 0 {
                 if tile_y < CHUNK_HEIGHT - 1 {
                     // all tiles are within this chunk
-                    rendering = mod_assets.get_tile([
+                    data_group = [
                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                         data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                         data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1126,13 +1135,13 @@ fn get_tile_rendering(
                         data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                         data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                         data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                    ]);
+                    ];
                 }
                 else {
                     // some y tiles are one chunk above
                     let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
                     if let Some(data_up) = pot_data_up {
-                        rendering = mod_assets.get_tile([
+                        data_group = [
                             data_up[tile_x - 1],
                             data_up[tile_x],
                             data_up[tile_x + 1],
@@ -1144,7 +1153,7 @@ fn get_tile_rendering(
                             data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                             data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                             data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                        ]);
+                        ];
                     }
                     else {
                         // we don't have that chunk in memory, so don't render this tile.
@@ -1157,7 +1166,7 @@ fn get_tile_rendering(
                 // some y tiles are one chunk below
                 let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
                 if let Some(data_down) = pot_data_down {
-                    rendering = mod_assets.get_tile([
+                    data_group = [
                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                         data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                         data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1169,7 +1178,7 @@ fn get_tile_rendering(
                         data_down[tile_x - 1],
                         data_down[tile_x],
                         data_down[tile_x + 1]
-                    ]);
+                    ];
                 }
                 else {
                     // we don't have that chunk in memory, so don't render this tile.
@@ -1183,7 +1192,7 @@ fn get_tile_rendering(
                 // some x tiles are one chunk right
                 let pot_data_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1));
                 if let Some(data_right) = pot_data_right {
-                    rendering = mod_assets.get_tile([
+                    data_group = [
                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                         data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                         data_right[((tile_y + 1) * CHUNK_WIDTH)],
@@ -1195,7 +1204,7 @@ fn get_tile_rendering(
                         data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                         data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                         data_right[((tile_y - 1) * CHUNK_WIDTH)]
-                    ]);
+                    ];
                 }
                 else {
                     // we don't have one of the chunks we need, so don't render this tile.
@@ -1218,7 +1227,7 @@ fn get_tile_rendering(
                 let data_right = pot_data_right.unwrap();
                 let data_up = pot_data_up.unwrap();
                 let data_up_right = pot_data_up_right.unwrap();
-                rendering = mod_assets.get_tile([
+                data_group = [
                     data_up[tile_x - 1],
                     data_up[tile_x],
                     data_up_right[0],
@@ -1230,7 +1239,7 @@ fn get_tile_rendering(
                     data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                     data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                     data_right[((tile_y - 1) * CHUNK_WIDTH)]
-                ]);
+                ];
             }
         }
         else {
@@ -1248,7 +1257,7 @@ fn get_tile_rendering(
             let data_right = pot_data_right.unwrap();
             let data_down = pot_data_down.unwrap();
             let data_down_right = pot_data_down_right.unwrap();
-            rendering = mod_assets.get_tile([
+            data_group = [
                 data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                 data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                 data_right[(tile_y * CHUNK_WIDTH)],
@@ -1260,7 +1269,7 @@ fn get_tile_rendering(
                 data_down[tile_x - 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
                 data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
                 data_down_right[CHUNK_WIDTH * (CHUNK_HEIGHT - 1)]
-            ]);
+            ];
         }
     }
     else if tile_y > 0 {
@@ -1268,7 +1277,7 @@ fn get_tile_rendering(
             // some x tiles are one chunk left
             let pot_data_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1));
             if let Some(data_left) = pot_data_left {
-                rendering = mod_assets.get_tile([
+                data_group = [
                     data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
                     data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
                     data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1280,7 +1289,7 @@ fn get_tile_rendering(
                     data_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                     data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                     data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                ]);
+                ];
             }
             else {
                 // we don't have one of the chunks we need, so don't render this tile.
@@ -1303,7 +1312,7 @@ fn get_tile_rendering(
             let data_left = pot_data_left.unwrap();
             let data_up = pot_data_up.unwrap();
             let data_up_left = pot_data_up_left.unwrap();
-            rendering = mod_assets.get_tile([
+            data_group = [
                 data_up_left[CHUNK_WIDTH - 1],
                 data_up[tile_x],
                 data_up[tile_x + 1],
@@ -1315,7 +1324,7 @@ fn get_tile_rendering(
                 data_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
                 data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
                 data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-            ]);
+            ];
         }
     }
     else {
@@ -1333,7 +1342,7 @@ fn get_tile_rendering(
         let data_left = pot_data_left.unwrap();
         let data_down = pot_data_down.unwrap();
         let data_down_left = pot_data_down_left.unwrap();
-        rendering = mod_assets.get_tile([
+        data_group = [
             data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
             data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
             data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1345,7 +1354,19 @@ fn get_tile_rendering(
             data_down_left[CHUNK_SIZE - 1],
             data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
             data_down[tile_x + 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))]
-        ]);
+        ];
     }
-    Some(rendering)
+
+    let type_array = [
+        data_group[0].0, data_group[1].0, data_group[2].0,
+        data_group[3].0, data_group[4].0, data_group[5].0,
+        data_group[6].0, data_group[7].0, data_group[8].0
+    ];
+    let height_array = [
+        data_group[0].1, data_group[1].1, data_group[2].1,
+        data_group[3].1, data_group[4].1, data_group[5].1,
+        data_group[6].1, data_group[7].1, data_group[8].1
+    ];
+    let harsh = !all_equal(&height_array);
+    Some((mod_assets.get_tile(type_array, harsh), harsh))
 }

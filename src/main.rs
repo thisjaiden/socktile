@@ -1,10 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_asset_loader::AssetLoader;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
-use consts::EMBED_ASSETS;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
 mod components;
@@ -127,11 +126,13 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_resume(GameState::TitleScreen)
+                .with_system(systems::visual::clear_settings)
                 .with_system(systems::visual::title_screen)
         )
         .add_system_set(
             SystemSet::on_resume(GameState::Play)
                 .with_system(resources::ui::ui_resume_game_settings)
+                .with_system(systems::visual::clear_settings)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::OfflineTitle)
@@ -147,11 +148,12 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Settings)
+                .with_system(systems::visual::settings_video)
                 .with_system(resources::ui::ui_settings_camera)
         )
         .add_system_set(
             SystemSet::on_update(GameState::Settings)
-                .with_system(resources::ui::ui_video_settings_tab)
+                .with_system(resources::ui::ui_settings_tab)
                 .with_system(resources::ui::ui_toggle_fullscreen)
                 .with_system(resources::ui::ui_return_titlescreen)
         )

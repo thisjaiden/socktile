@@ -59,23 +59,23 @@ impl ModularAssets {
         panic!("{FATAL_ERROR}");
     }
     // NOTE: INPUT ENVIRONMENT IS FLIPPED VERTICALLY (IN HUMAN LOGICAL ORDER)
-    pub fn get_tile(&self, environment: [usize; 9]) -> (TerrainRendering, TransitionType) {
+    pub fn get_tile(&self, environment: [usize; 9], harsh: bool) -> (TerrainRendering, TransitionType) {
         let maybe_transition = self.get_transition_type(environment);
         if let Some((mut transition, main, sub)) = maybe_transition {
-            let rendering = self.get_terrain_rendering(main, sub, &mut transition);
+            let rendering = self.get_terrain_rendering(main, sub, &mut transition, harsh);
             (rendering, transition)
         }
         else {
             // no valid transition is known. fallback time!
-            let rendering = self.get_terrain_rendering(environment[4], environment[4], &mut TransitionType::Center);
+            let rendering = self.get_terrain_rendering(environment[4], environment[4], &mut TransitionType::Center, false);
             (rendering, TransitionType::Center)
         }
     }
     /// Finds the appropriate rendering for a given terrain type and transition type
-    fn get_terrain_rendering(&self, terrain_id: usize, alt_id: usize, transition: &mut TransitionType) -> TerrainRendering {
+    fn get_terrain_rendering(&self, terrain_id: usize, alt_id: usize, transition: &mut TransitionType, harsh: bool) -> TerrainRendering {
         let central = self.terrain_data.states[terrain_id].name.clone();
         let non_central = self.terrain_data.states[alt_id].name.clone();
-        let transitions_maybe = self.terrain_data.transitions.get(&[central.clone(), non_central.clone()]);
+        let transitions_maybe = self.terrain_data.transitions.get(&(central.clone(), non_central.clone(), harsh));
         if let Some(transitions_map) = transitions_maybe {
             let types_maybe = transitions_map.get(transition);
             if let Some(types) = types_maybe {
@@ -89,12 +89,12 @@ impl ModularAssets {
         }
         else {
             // this is a submissive terrain state, so we just use the central point
-            if self.terrain_data.transitions.get(&[non_central.clone(), central.clone()]).is_some() {
+            if self.terrain_data.transitions.get(&(non_central.clone(), central.clone(), harsh)).is_some() {
                 *transition = TransitionType::Center;
-                self.get_terrain_rendering(terrain_id, terrain_id, transition)
+                self.get_terrain_rendering(terrain_id, terrain_id, transition, false)
             }
             else {
-                error!("No transition between materials {} and {}", central, non_central);
+                error!("No transition between materials {} and {} (harsh = {harsh})", central, non_central);
                 panic!("{FATAL_ERROR}");
             }
         }
@@ -480,20 +480,20 @@ impl AssetLoader for ModularAssetsLoader {
                     dependencies.push(path);
                 }
                 
-                let transitions: &mut HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>> = &mut final_out.terrain_data.transitions;
+                let transitions: &mut HashMap<(String, String, bool), HashMap<TransitionType, Vec<TerrainRendering>>> = &mut final_out.terrain_data.transitions;
                 // for every transition declaration
                 for variant in meta.variants {
                     let vec_styles = conjoin_styles(variant.clone());
                     let has_value = transitions.contains_key(
-                        &[transition.names[0].clone(), transition.names[1].clone()]
+                        &(transition.names[0].clone(), transition.names[1].clone(), variant.harsh)
                     );
                     if !has_value {
-                        transitions.insert([transition.names[0].clone(), transition.names[1].clone()], default());
+                        transitions.insert((transition.names[0].clone(), transition.names[1].clone(), variant.harsh), default());
                     }
                     let existing_variants = transitions.get_mut(
-                        &[transition.names[0].clone(), transition.names[1].clone()]
+                        &(transition.names[0].clone(), transition.names[1].clone(), variant.harsh)
                     ).unwrap();
-                    for (style, data) in vec_styles {
+                    for (style, harsh, data) in vec_styles {
                         let potential_old_data = existing_variants.get_mut(&style);
                         let old_data = if let Some(data) = potential_old_data {
                             data
@@ -556,46 +556,46 @@ impl AssetLoader for ModularAssetsLoader {
 
 // This is gross. There must be a better way to do this (I know there is)
 // But I don't know how I would do it and I don't care enough. It's *fine*.
-fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType, Vec<usize>)> {
+fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType, bool, Vec<usize>)> {
     let mut output = vec![];
     if let Some(value) = styles.center {
-        output.push((TransitionType::Center, value));
+        output.push((TransitionType::Center, styles.harsh, value));
     }
     if let Some(value) = styles.down {
-        output.push((TransitionType::Down, value));
+        output.push((TransitionType::Down, styles.harsh, value));
     }
     if let Some(value) = styles.left {
-        output.push((TransitionType::Left, value));
+        output.push((TransitionType::Left, styles.harsh, value));
     }
     if let Some(value) = styles.right {
-        output.push((TransitionType::Right, value));
+        output.push((TransitionType::Right, styles.harsh, value));
     }
     if let Some(value) = styles.up {
-        output.push((TransitionType::Up, value));
+        output.push((TransitionType::Up, styles.harsh, value));
     }
     if let Some(value) = styles.up_left {
-        output.push((TransitionType::UpLeft, value));
+        output.push((TransitionType::UpLeft, styles.harsh, value));
     }
     if let Some(value) = styles.up_right {
-        output.push((TransitionType::UpRight, value));
+        output.push((TransitionType::UpRight, styles.harsh, value));
     }
     if let Some(value) = styles.down_left {
-        output.push((TransitionType::DownLeft, value));
+        output.push((TransitionType::DownLeft, styles.harsh, value));
     }
     if let Some(value) = styles.down_right {
-        output.push((TransitionType::DownRight, value));
+        output.push((TransitionType::DownRight, styles.harsh, value));
     }
     if let Some(value) = styles.inverted_up_left {
-        output.push((TransitionType::InvertedUpLeft, value));
+        output.push((TransitionType::InvertedUpLeft, styles.harsh, value));
     }
     if let Some(value) = styles.inverted_up_right {
-        output.push((TransitionType::InvertedUpRight, value));
+        output.push((TransitionType::InvertedUpRight, styles.harsh, value));
     }
     if let Some(value) = styles.inverted_down_left {
-        output.push((TransitionType::InvertedDownLeft, value));
+        output.push((TransitionType::InvertedDownLeft, styles.harsh, value));
     }
     if let Some(value) = styles.inverted_down_right {
-        output.push((TransitionType::InvertedDownRight, value));
+        output.push((TransitionType::InvertedDownRight, styles.harsh, value));
     }
     output
 }
@@ -651,7 +651,7 @@ struct TerrainData {
     minimum_height: usize,
     maximum_height: usize,
     states: Vec<TerrainState>,
-    transitions: HashMap<[String; 2], HashMap<TransitionType, Vec<TerrainRendering>>>
+    transitions: HashMap<(String, String, bool), HashMap<TransitionType, Vec<TerrainRendering>>>
 }
 
 impl Default for TerrainData {
@@ -801,6 +801,7 @@ struct TerrainRenderingFileJSON {
 
 #[derive(Deserialize, Clone)]
 struct TerrainRenderingTransitionJSON {
+    harsh: bool,
     animation: Option<AnimationInfo>,
     center: Option<Vec<usize>>,
     up: Option<Vec<usize>>,

@@ -5,6 +5,7 @@ use bevy_prototype_debug_lines::DebugLines;
 
 use super::{Reality, TextBox};
 
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum SettingsPage {
     Sound,
     Video,
@@ -16,7 +17,8 @@ pub struct UIManager {
     active_clickables: Vec<UIClickable>,
     pub queued_action: Option<UIClickAction>,
     queue_player_action: bool,
-    settings_page: SettingsPage
+    pub settings_page: SettingsPage,
+    pub on_page: bool
 }
 
 impl UIManager {
@@ -25,7 +27,8 @@ impl UIManager {
             active_clickables: vec![],
             queued_action: None,
             queue_player_action: false,
-            settings_page: SettingsPage::Video
+            settings_page: SettingsPage::Video,
+            on_page: false
         }
     }
     pub fn add_ui(&mut self, new: UIClickable) {
@@ -322,65 +325,28 @@ pub fn ui_settings_camera(
     });
 }
 
-pub fn ui_video_settings_tab(
-    mut commands: Commands,
-    despawns: Query<Entity, With<SettingsPageComp>>,
-    mut man: ResMut<UIManager>,
-    fonts: Res<FontAssets>,
-    disk: Res<Disk>
+pub fn ui_settings_tab(
+    mut man: ResMut<UIManager>
 ) {
     if man.queued_action == Some(UIClickAction::TabVideoSettings) {
-        despawns.for_each(|entity| {
-            commands.entity(entity).despawn();
-        });
+        man.on_page = false;
         man.settings_page = SettingsPage::Video;
         man.remove_tag("Settings");
-        man.add_ui(UIClickable {
-            action: UIClickAction::ToggleFullscreen,
-            location: (0.0, 0.0),
-            size: (200.0, 36.0),
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        man.add_ui(UIClickable {
-            action: UIClickAction::IncreaseWindowScaling,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        man.add_ui(UIClickable {
-            action: UIClickAction::DecreaseWindowScaling,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        man.add_ui(UIClickable {
-            action: UIClickAction::ToggleVSync,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        commands.spawn_bundle(Text2dBundle {
-            text: Text {
-                sections: vec![TextSection {
-                    value: format!("Fullscreen: {}", disk.window_config().fullscreen),
-                    style: TextStyle {
-                        font: fonts.simvoni.clone(),
-                        font_size: 36.0,
-                        color: Color::BLACK
-                    }
-                }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Top,
-                    horizontal: HorizontalAlign::Left
-                }
-            },
-            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-            ..default()
-        }).insert(SettingsPageComp { type_: 1 });
+    }
+    else if man.queued_action == Some(UIClickAction::TabSoundSettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Sound;
+        man.remove_tag("Settings");
+    }
+    else if man.queued_action == Some(UIClickAction::TabGameplaySettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Gameplay;
+        man.remove_tag("Settings");
+    }
+    else if man.queued_action == Some(UIClickAction::TabOnlineSettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Online;
+        man.remove_tag("Settings");
     }
 }
 

@@ -1,6 +1,6 @@
 use num::Integer;
 
-pub fn run_matrix_nxp<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer + Copy>(n: R, p: R, mut operation: F) {
+pub fn _run_matrix_nxp<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer + Copy>(n: R, p: R, mut operation: F) {
     for x in n {
         for y in p.clone() {
             operation(x, y);

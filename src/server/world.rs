@@ -7,7 +7,7 @@ pub struct World {
     pub offline_players: Vec<(User, GamePosition, PlayerData)>,
     /// All of the generated terrain in the world.
     /// (chunk coords, terrain data array)
-    pub terrain: HashMap<(isize, isize), Vec<usize>>,
+    pub terrain: HashMap<(isize, isize), Vec<(usize, usize)>>,
     pub objects: Vec<Object>,
     pub generated_objects: Vec<(isize, isize)>
 }
@@ -22,7 +22,7 @@ impl World {
             generated_objects: vec![]
         }
     }
-    pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<usize> {
+    pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<(usize, usize)> {
         if let Some(chunk_data) = self.terrain.get(&chunk) {
             chunk_data.clone()
         }
@@ -68,24 +68,44 @@ impl World {
         let level = selected_level.expect("FATAL: LDTK file missing required backup environment");
         let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut chunk_data = vec![];
+        let mut chunk_height = vec![];
         for layer in layers {
             if layer.layer_instance_type.as_str() == "IntGrid" {
-                for pot_height_layer in 0..CHUNK_HEIGHT {
-                    let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
-                    for width_layer in 0..CHUNK_WIDTH {
-                        chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
+                if layer.identifier == "Terrain" {
+                    for pot_height_layer in 0..CHUNK_HEIGHT {
+                        let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
+                        for width_layer in 0..CHUNK_WIDTH {
+                            chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
+                        }
+                    }
+                }
+                else if layer.identifier == "Heightmap" {
+                    for pot_height_layer in 0..CHUNK_HEIGHT {
+                        let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
+                        for width_layer in 0..CHUNK_WIDTH {
+                            chunk_height.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
+                        }
                     }
                 }
             }
         }
         // check data
         if chunk_data.len() != CHUNK_SIZE {
-            error!("Chunk size was improper ({} != {CHUNK_SIZE})", chunk_data.len());
+            error!("Chunk terrain data was improper ({} != {CHUNK_SIZE})", chunk_data.len());
             error!("Chunk location: ({}, {})", chunk.0, chunk.1);
             panic!("{FATAL_ERROR}");
         }
+        if chunk_height.len() != CHUNK_SIZE {
+            error!("Chunk heightmap was improper ({} != {CHUNK_SIZE})", chunk_data.len());
+            error!("Chunk location: ({}, {})", chunk.0, chunk.1);
+            panic!("{FATAL_ERROR}");
+        }
+        let mut final_data = vec![];
+        for i in 0..chunk_data.len() {
+            final_data.push((chunk_data[i], chunk_height[i]));
+        }
         // save data
-        self.terrain.insert(chunk, chunk_data);
+        self.terrain.insert(chunk, final_data);
     }
     pub fn try_generating_objects(&mut self, chunk: (isize, isize)) -> Vec<Object> {
         if self.generated_objects.contains(&chunk) {
@@ -194,7 +214,7 @@ impl World {
 
         dupe_objects
     }
-    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
+    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: (usize, usize)) {
         let mut dta = self.get_or_gen(chunk);
         dta[tile.0 + (tile.1 * CHUNK_WIDTH)] = state;
         self.terrain.insert(chunk, dta);

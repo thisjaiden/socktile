@@ -8,6 +8,7 @@
     ],
     "variants": [
         {
+            "harsh": false,
             "up": [0, 1],
             "down": [0, 17],
             "left": [0, 8],

@@ -55,7 +55,7 @@ pub struct TitleScreenUser {}
 
 #[derive(Clone, Copy, Debug, Component)]
 pub struct SettingsPageComp {
-    /// what component this is
+    /// What type of component this is
     /// 0 | unimportant/misc
     /// 1 | video settings fullscreen text
     pub type_: u8
@@ -70,5 +70,6 @@ use crate::modular_assets::TransitionType;
 pub struct Tile {
     pub chunk: (isize, isize),
     pub position: (usize, usize),
-    pub transition_type: TransitionType
+    pub transition_type: TransitionType,
+    pub harsh: bool
 }

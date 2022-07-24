@@ -28,7 +28,7 @@ pub const EMBED_ASSETS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-23";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-24";
 /// Port for network connections
 pub const NETTY_PORT: u16 = 11111;
 /// Global game server address
