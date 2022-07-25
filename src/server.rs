@@ -6,29 +6,14 @@ use std::{
         Mutex
     }
 };
-use bevy::prelude::*;
+
 use bevy::utils::HashMap;
-use crate::{
-    components::GamePosition,
-    consts::{
-        NETTY_VERSION, FATAL_ERROR,
-        NETTY_PORT, TICK_TIME, SAVE_TIME
-    },
-    shared::{
-        netty::Packet,
-        saves::User,
-        world::World,
-        listing::GameListing,
-        player::PlayerData
-    }
-};
-use serde::{
-    Serialize,
-    Deserialize
-};
+use crate::prelude::*;
+use crate::shared::listing::GameListing;
 
 mod tick;
 pub mod npc;
+mod world;
 
 /// Starts the game server!
 pub fn startup(arguments: Vec<String>) -> ! {
@@ -176,7 +161,7 @@ pub fn startup(arguments: Vec<String>) -> ! {
                             SaveGame {
                                 public_name: name,
                                 internal_id: world_id,
-                                data: World::new(),
+                                data: world::World::new(),
                                 path,
                                 whitelist: vec![owner.clone()],
                                 played_before: vec![],
@@ -229,20 +214,21 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         for (us, gp, _) in &saves[world_id].data.players {
                             constructable_players.push((us.clone(), *gp));
                         }
-                        let mut new_objs = saves[world_index].data.try_generating_objects(spawn_centre_chnks_lack);
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1)));
-                        new_objs.append(&mut saves[world_index].data.try_generating_objects((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1)));
+                        let mut new_objs = vec![];
+                        run_matrix_nxn(-1..1, |x, y| {
+                            new_objs.append(&mut saves[world_index].data.try_generating_objects(
+                                (spawn_centre_chnks_lack.0 + x, spawn_centre_chnks_lack.1 + y)
+                            ));
+                        });
                         let mut all_players = vec![];
                         for object in new_objs {
                             for (user, _, _) in saves[world_id].data.players.clone() {
                                 let ip = ip_by_user.get(&user).expect("A user online on a server had no IP address");
-                                all_players.push((Packet::CreateObject(object.clone()), *ip));
+                                // if this isn't the player joining...
+                                if ip != &from {
+                                    // send over the objects
+                                    all_players.push((Packet::CreateObject(object.clone()), *ip));
+                                }
                             }
                         }
                         let mut func_send = send.lock().unwrap();
@@ -250,17 +236,18 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         func_send.push((Packet::InventoryState(player_info.2.inventory), from));
                         func_send.push((Packet::OnlinePlayers(constructable_players), from));
                         func_send.push((Packet::AllObjects(saves[world_index].data.objects.clone()), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk(spawn_centre_chnks_lack)), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 + 1, spawn_centre_chnks_lack.1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 + 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1 - 1))), from));
-                        func_send.push((Packet::ChangesChunk(spawn_centre_chnks_lack, saves[world_index].data.clone_chunk((spawn_centre_chnks_lack.0 - 1, spawn_centre_chnks_lack.1))), from));
                         func_send.append(&mut other_players);
                         func_send.append(&mut all_players);
+                        drop(func_send);
+                    }
+                    Packet::RequestChunk(chunk) => {
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RequestChunk");
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RequestChunk");
+
+                        let chunk_data = saves[*server].data.get_or_gen(chunk);
+
+                        let mut func_send = send.lock().unwrap();
+                        func_send.push((Packet::ChunkData(chunk, chunk_data), from));
                         drop(func_send);
                     }
                     Packet::SendChatMessage(msg) => {
@@ -385,6 +372,56 @@ pub fn startup(arguments: Vec<String>) -> ! {
                             drop(func_send);
                         }
                     }
+                    Packet::ActionAnimation(action) => {
+                        // find assoc user
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::ActionAnimation");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::ActionAnimation");
+
+                        // for each player
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested animation");
+                            // if this isn't the player who sent originally
+                            if this_ip != &from {
+                                // send animation
+                                let mut func_send = send.lock().unwrap();
+                                func_send.push((Packet::ActionAnimation(action), *this_ip));
+                                drop(func_send);
+                            }
+                        }
+                    }
+                    Packet::RemoveObject(uuid) => {
+                        // find assoc user
+                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::RemoveObject");
+                        
+                        let server = server_by_user.get(owner).expect("Owner is not in a server for Packet::RemoveObject");
+
+                        // for each player
+                        for player in &saves[*server].data.players {
+                            let this_ip = ip_by_user.get(&player.0).expect("Online player has no IP for a requested animation");
+                            // if this isn't the player who sent originally
+                            if this_ip != &from {
+                                // reflect removal
+                                let mut func_send = send.lock().unwrap();
+                                func_send.push((Packet::RemoveObject(uuid), *this_ip));
+                                drop(func_send);
+                            }
+                        }
+
+                        let mut object_index = None;
+                        // find given object on server
+                        for (index, object) in saves[*server].data.objects.iter().enumerate() {
+                            if object.uuid == uuid {
+                                object_index = Some(index);
+                            }
+                        }
+                        if object_index.is_none() {
+                            warn!("All objects: {:#?}", saves[*server].data.objects);
+                            warn!("Requested UUID: {:?}", uuid);
+                        }
+                        // remove object from server
+                        saves[*server].data.objects.remove(object_index.expect("No object found with given uuid for Packet::RemoveObject"));
+                    }
                     _ => {
                         // Ignore this packet, we don't handle it.
                     }
@@ -470,7 +507,7 @@ pub fn save_folder() -> PathBuf {
 pub struct SaveGame {
     pub public_name: String,
     pub internal_id: usize,
-    pub data: World,
+    pub data: world::World,
     pub path: PathBuf,
     pub whitelist: Vec<User>,
     pub played_before: Vec<User>,

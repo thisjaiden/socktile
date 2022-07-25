@@ -1,15 +1,11 @@
+use crate::prelude::*;
 use crate::{
-    components::GamePosition,
+    resources::ChatMessage,
     shared::{
-        object::Object,
-        saves::User,
-        terrain::TerrainState,
         listing::GameListing,
         player::Inventory
-    }, resources::ChatMessage
+    }
 };
-
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub enum Packet {
@@ -69,19 +65,22 @@ pub enum Packet {
     /// A list of online users for a given world
     /// (Array (User, Position))
     OnlinePlayers(Vec<(User, GamePosition)>),
-    /// The server sends over the information relating to some terrain.
-    /// (Chunk, Array (Tile, Tile Override))
-    ChangesChunk((isize, isize), Vec<(usize, usize, TerrainState)>),
-    /// An update has occurred in a chunk.
-    /// (Chunk, Tile, Tile Override)
-    ChunkUpdate((isize, isize), (usize, usize), TerrainState),
+    /// A client requests full data pertaining to a chunk
+    /// (Chunk Location)
+    RequestChunk((isize, isize)),
+    /// The server sends over a chunk of terrain
+    /// (Chunk Location, [(Tile ID, Height)])
+    ChunkData((isize, isize), Vec<(usize, usize)>),
+    /// An update has occurred to a single tile.
+    /// (Chunk Location, Tile Location, New State, New Height)
+    TileUpdate((isize, isize), (usize, usize), usize, usize),
     /// Sends over all game objects.
     /// (Game Objects)
     AllObjects(Vec<Object>),
     /// Updates a given object on the client.
     /// (Updated Object)
     UpdateObject(Object),
-    /// Removes an object on the client by UUID.
+    /// Removes an object by UUID.
     /// (Object UUID)
     RemoveObject(uuid::Uuid),
     /// Creates an object on the client.
@@ -116,7 +115,10 @@ pub enum Packet {
     SendChatMessage(ChatMessage),
     /// Recieves a chat message.
     /// (Message)
-    ChatMessage(ChatMessage)
+    ChatMessage(ChatMessage),
+    /// Sends/Recieves an animation for a player using an item
+    /// (Action)
+    ActionAnimation(ItemAction)
 }
 
 impl Packet {

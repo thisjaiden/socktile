@@ -1,15 +1,19 @@
 pub use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-use crate::{components::{ldtk::PlayerMarker}, assets::AnimatorAssets};
+use crate::{assets::AnimatorAssets, shared::{player::ItemAction, saves::User}};
 
 pub struct Animator {
-    player_prev_pos: HashMap<PlayerMarker, Transform>,
-    last_dir_left: HashMap<PlayerMarker, bool>,
+    player_prev_pos: HashMap<User, Transform>,
+    last_dir_left: HashMap<User, bool>,
     /// =0 | not idling
     /// >0 | num of frames idling
     /// resets to 1 every 100 frames (101 -> 1)
-    idle_animation_state: HashMap<PlayerMarker, u8>
+    idle_animation_state: HashMap<User, u8>,
+    /// =0 | no animation
+    /// >0 | num of frames into animation
+    /// resets to 0 after N frames (action dependent)
+    action_animation_state: HashMap<User, (ItemAction, u8)>
 }
 
 impl Animator {
@@ -17,8 +21,12 @@ impl Animator {
         Animator {
             player_prev_pos: HashMap::default(),
             last_dir_left: HashMap::default(),
-            idle_animation_state: HashMap::default()
+            idle_animation_state: HashMap::default(),
+            action_animation_state: HashMap::default(),
         }
+    }
+    pub fn mark_action(&mut self, player: User, action: ItemAction) {
+        self.action_animation_state.insert(player, (action, 1));
     }
     pub fn system_player_initiator(
         mut selfs: ResMut<Animator>
@@ -26,7 +34,8 @@ impl Animator {
         if selfs.idle_animation_state.len() < selfs.player_prev_pos.len() {
             for (key, _value) in selfs.player_prev_pos.clone() {
                 if !selfs.idle_animation_state.contains_key(&key) {
-                    selfs.idle_animation_state.insert(key, 0);
+                    selfs.idle_animation_state.insert(key.clone(), 0);
+                    selfs.action_animation_state.insert(key, (ItemAction::None, 0));
                 }
             }
         }
@@ -34,7 +43,7 @@ impl Animator {
     pub fn system_player_animator(
         mut selfs: ResMut<Animator>,
         materials: Res<AnimatorAssets>,
-        mut players: Query<(&mut Handle<Image>, &mut Transform, &mut PlayerMarker)>
+        mut players: Query<(&mut Handle<Image>, &mut Transform, &mut User)>
     ) {
         // Animation for every player
         players.for_each_mut(|(mut tex, mut loc, mark)| {
@@ -45,10 +54,8 @@ impl Animator {
                         loc.scale.x -= 0.1;
                     }
                 }
-                else {
-                    if loc.scale.x < 1.0 {
-                        loc.scale.x += 0.1;
-                    }
+                else if loc.scale.x < 1.0 {
+                    loc.scale.x += 0.1;
                 }
             }
             // Saftey check: If the player has existed for 2 frames
@@ -70,13 +77,12 @@ impl Animator {
                     let state = *selfs.idle_animation_state.get(&mark).unwrap();
 
                     // Determine new animation state value.
-                    let new_state;
-                    if state > 100 {
-                        new_state = 1;
+                    let new_state = if state > 100 {
+                        1
                     }
                     else {
-                        new_state = state + 1;
-                    }
+                        state + 1
+                    };
 
                     // Update index with the new value.
                     selfs.idle_animation_state.insert(mark.clone(), new_state);

@@ -1,13 +1,10 @@
+use crate::prelude::*;
 use std::path::PathBuf;
-
-use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
-
-use crate::shared::saves::User;
 
 pub struct Disk {
     window_config: WindowConfig,
     control_config: ControlConfig,
+    audio_config: AudioConfig,
     user: Option<User>
 }
 
@@ -64,10 +61,22 @@ impl Disk {
                 ControlConfig::default()
             };
 
+            let mut audio_config_path = files_dir();
+            audio_config_path.push("audio_config.bic");
+            let audio_config_data = std::fs::read(audio_config_path);
+            let audio_config = if let Ok(data) = audio_config_data {
+                bincode::deserialize(&data)
+                    .expect("Encountered corrupted audio configuration data.")
+            }
+            else {
+                AudioConfig::default()
+            };
+
             Disk {
                 window_config,
                 control_config,
-                user
+                user,
+                audio_config
             }
         }
     }
@@ -99,6 +108,24 @@ impl Disk {
         if let Ok(bytes) = control_config_data {
             if std::fs::write(control_config_path, bytes).is_ok() {
                 self.control_config = new;
+                return true;
+            }
+            false
+        }
+        else {
+            false
+        }
+    }
+    pub fn audio_config(&self) -> AudioConfig {
+        self.audio_config
+    }
+    pub fn _update_audio_config(&mut self, new: AudioConfig) -> bool {
+        let mut audio_config_path = files_dir();
+        audio_config_path.push("audio_config.bic");
+        let audio_config_data = bincode::serialize(&new);
+        if let Ok(bytes) = audio_config_data {
+            if std::fs::write(audio_config_path, bytes).is_ok() {
+                self.audio_config = new;
                 return true;
             }
             false
@@ -184,4 +211,17 @@ fn files_dir() -> PathBuf {
     let mut dir = std::env::current_exe().expect("Unable to get the executable's path.");
     dir.pop();
     dir
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub struct AudioConfig {
+    pub volume: f32
+}
+
+impl Default for AudioConfig {
+    fn default() -> Self {
+        AudioConfig {
+            volume: 1.0
+        }
+    }
 }

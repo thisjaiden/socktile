@@ -19,12 +19,16 @@ pub const DEV_BUILD: bool = true;
 pub const ALLOW_GGS: bool = true;
 /// Show debug lines over UI hitboxes?
 pub const UI_DEBUG: bool = true;
+/// Show debug lines over terrain hitboxes?
+pub const TERRAIN_DEBUG: bool = true;
+/// Show debug lines over player hitboxes?
+pub const PLAYER_DEBUG: bool = true;
 /// Should assets be included in the exe?
 pub const EMBED_ASSETS: bool = true;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
-pub const NETTY_VERSION: &str = "closed-alpha-iteration-20";
+pub const NETTY_VERSION: &str = "closed-alpha-iteration-24";
 /// Port for network connections
 pub const NETTY_PORT: u16 = 11111;
 /// Global game server address
@@ -39,12 +43,22 @@ pub const TICK_TIME: u64 = 25;
 /// Time in minutes between game saves on the server
 pub const SAVE_TIME: u64 = 30;
 
+/// Size of the player hitbox in pixels
+pub const PLAYER_HITBOX: (f64, f64) = (64.0, 64.0);
 /// The distance before an item on the ground is drawn to players
 pub const ITEM_MAGNET_DISTANCE: f32 = 256.0;
 /// The distance before an item on the ground is picked up by players
 pub const ITEM_PICKUP_DISTANCE: f32 = 16.0;
+/// The distance a player can be from a tree and still successfully hit it when chopping
+pub const TREE_CHOP_DISTANCE: f64 = (PLAYER_HITBOX.0 / 2.0) + 64.0;
 /// The offset between the cursor's render location and actual location
 pub const CURSOR_OFFSET: [f32; 2] = [-25.0, 31.0];
+/// Width of a chunk in tiles
+pub const CHUNK_WIDTH: usize = 30;
+/// Height of a chunk in tiles
+pub const CHUNK_HEIGHT: usize = 17;
+/// Amount of tiles in a chunk
+pub const CHUNK_SIZE: usize = CHUNK_WIDTH * CHUNK_HEIGHT;
 
 /// The message used for panic!s when a non-recoverable error occurs
 pub const FATAL_ERROR: &str = "A fatal error occured and socktile cannot continue";

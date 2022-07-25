@@ -1,10 +1,11 @@
-use bevy::{prelude::*, app::AppExit};
+use crate::prelude::*;
+use bevy::app::AppExit;
+use bevy_kira_audio::Audio;
 use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{components::{CursorMarker, ldtk::{TileMarker, PlayerMarker, Tile}, PauseMenuMarker, GamePosition, UILocked, HotbarMarker, SettingsPageComp}, ldtk::{LDtkMap, load_level}, assets::{MapAssets, FontAssets, AnimatorAssets}, GameState, consts::{PLAYER_CHARACTERS, UI_TEXT, UI_DEBUG, DEBUG, CURSOR_OFFSET}, shared::{netty::Packet, object::Object}};
+use super::{Reality, TextBox};
 
-use super::{Netty, Reality, TextBox, Disk};
-
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum SettingsPage {
     Sound,
     Video,
@@ -14,18 +15,20 @@ pub enum SettingsPage {
 
 pub struct UIManager {
     active_clickables: Vec<UIClickable>,
-    queued_actions: Vec<UIClickAction>,
+    pub queued_action: Option<UIClickAction>,
     queue_player_action: bool,
-    settings_page: SettingsPage
+    pub settings_page: SettingsPage,
+    pub on_page: bool
 }
 
 impl UIManager {
     pub fn init() -> UIManager {
         UIManager {
             active_clickables: vec![],
-            queued_actions: vec![],
+            queued_action: None,
             queue_player_action: false,
-            settings_page: SettingsPage::Video
+            settings_page: SettingsPage::Video,
+            on_page: false
         }
     }
     pub fn add_ui(&mut self, new: UIClickable) {
@@ -35,7 +38,7 @@ impl UIManager {
     }
     pub fn reset_ui(&mut self) {
         self.active_clickables.clear();
-        self.queued_actions.clear();
+        self.queued_action = None;
     }
     pub fn remove_tag(&mut self, tag: &str) {
         let mut removed = 0;
@@ -46,27 +49,10 @@ impl UIManager {
             }
         }
     }
-    fn scene_changes(&mut self) -> Option<String> {
-        if self.queued_actions.get(0).is_some() {
-            match self.queued_actions[0].clone() {
-                UIClickAction::ChangeScene(scene) => {
-                    self.next();
-                    Some(scene)
-                }
-                _ => {
-                    None
-                }
-            }
-        }
-        else {
-            None
-        }
-    }
     fn join_game(&mut self) -> Option<usize> {
-        if self.queued_actions.get(0).is_some() {
-            match self.queued_actions[0].clone() {
+        if self.queued_action.is_some() {
+            match self.queued_action.unwrap() {
                 UIClickAction::JoinWorld(world) => {
-                    self.next();
                     Some(world)
                 }
                 _ => {
@@ -78,46 +64,17 @@ impl UIManager {
             None
         }
     }
-    fn quick_exit(&mut self) -> bool {
-        if self.queued_actions.get(0).is_some() {
-            match self.queued_actions[0].clone() {
-                UIClickAction::GameplayTrigger(trigger) => {
-                    trigger == "ExitProgramQuick"
-                }
-                _ => {
-                    false
-                }
-            }
-        }
-        else {
-            false
-        }
-    }
-    fn gameplay_trigger(&mut self) -> Option<String> {
-        if self.queued_actions.get(0).is_some() {
-            match self.queued_actions[0].clone() {
-                UIClickAction::GameplayTrigger(trigger) => {
-                    Some(trigger)
-                }
-                _ => {
-                    None
-                }
-            }
-        }
-        else {
-            None
-        }
-    }
-    fn next(&mut self) {
-        self.queued_actions.remove(0);
-    }
     fn clicked(&mut self, location: (f32, f32)) {
         let mut removed = 0;
         let mut did_action = false;
         for (index, clickable) in self.active_clickables.clone().iter().enumerate() {
             if clickable.is_contained(location) {
                 did_action = true;
-                self.queued_actions.push(clickable.action.clone());
+                if self.queued_action.is_some() {
+                    warn!("A UI action occured while one was waiting. Discarding old action");
+                }
+                info!("Click occured on an actionable location.");
+                self.queued_action = Some(clickable.action);
                 if clickable.removed_on_use {
                     self.active_clickables.remove(index - removed);
                     removed += 1;
@@ -127,13 +84,6 @@ impl UIManager {
         if !did_action {
             self.queue_player_action = true;
         }
-    }
-    fn grab_player_action(&mut self) -> bool {
-        if self.queue_player_action {
-            self.queue_player_action = false;
-            return true;
-        }
-        false
     }
 }
 
@@ -160,10 +110,38 @@ impl UIClickable {
     }
 }
 
-#[derive(Clone)]
+impl Default for UIClickable {
+    fn default() -> UIClickable {
+        UIClickable {
+            action: UIClickAction::CloseProgram,
+            location: (0.0, 0.0),
+            size: (0.0, 0.0),
+            removed_on_use: true,
+            tag: None
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum UIClickAction {
-    ChangeScene(String),
-    GameplayTrigger(String),
+    CloseProgram,
+    ClosePauseMenu,
+    ToggleFullscreen,
+    ToggleVSync,
+    IncreaseWindowScaling,
+    DecreaseWindowScaling,
+    InvitePlayer,
+    DisconnectFromWorld,
+    GoToCreateWorld,
+    GoToTitleScreen,
+    CreateWorld,
+    ViewWorldList,
+    OpenSettings,
+    CloseSettings,
+    TabSoundSettings,
+    TabVideoSettings,
+    TabGameplaySettings,
+    TabOnlineSettings,
     JoinWorld(usize)
 }
 
@@ -205,7 +183,9 @@ pub fn ui_forward(
     mut man: ResMut<UIManager>,
     mut reality: ResMut<Reality>
 ) {
-    if man.grab_player_action() {
+    if man.queue_player_action {
+        info!("Player action queued!");
+        man.queue_player_action = false;
         reality.queue_action();
     }
 }
@@ -224,15 +204,19 @@ pub fn ui_manager(
 
 pub fn ui_game(
     mut commands: Commands,
-    unloads: Query<Entity, With<TileMarker>>,
     target_materials: Option<Res<AnimatorAssets>>,
     mut state: ResMut<State<GameState>>,
     mut netty: ResMut<Netty>,
     mut man: ResMut<UIManager>,
-    disk: Res<Disk>
+    disk: Res<Disk>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
 ) {
     if let Some(materials) = target_materials {
         if let Some(game_id) = man.join_game() {
+            let assets = core_serve.get(core.core.clone()).unwrap();
+            audio.play(assets.get_audio("click"));
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
                 texture: materials.not_animated.clone(),
@@ -242,21 +226,18 @@ pub fn ui_game(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
+            }).insert(disk.user().unwrap());
             netty.say(Packet::JoinWorld(game_id));
-            unloads.for_each(|e| {
-                commands.entity(e).despawn_recursive();
-            });
             man.reset_ui();
         }
     }
 }
 
 pub fn ui_quick_exit(
-    mut man: ResMut<UIManager>,
+    man: Res<UIManager>,
     mut exit: EventWriter<AppExit>
 ) {
-    if man.quick_exit() {
+    if man.queued_action == Some(UIClickAction::CloseProgram) {
         exit.send(AppExit);
     }
 }
@@ -265,8 +246,7 @@ pub fn ui_close_pause_menu(
     mut man: ResMut<UIManager>,
     mut selfs: ResMut<Reality>,
 ) {
-    if man.gameplay_trigger() == Some(String::from("ClosePauseMenu")) {
-        man.next();
+    if man.queued_action == Some(UIClickAction::ClosePauseMenu) {
         man.reset_ui();
         selfs.pause_closed();
     }
@@ -279,8 +259,7 @@ pub fn ui_invite_menu(
     desps: Query<Entity, With<PauseMenuMarker>>,
     mut tb: ResMut<TextBox>
 ) {
-    if man.gameplay_trigger() == Some(String::from("InvitePlayer")) {
-        man.next();
+    if man.queued_action == Some(UIClickAction::InvitePlayer) {
         man.reset_ui();
         desps.for_each(|e| {
             commands.entity(e).despawn();
@@ -346,100 +325,40 @@ pub fn ui_settings_camera(
     });
 }
 
-pub fn ui_settings_page(
-    mut commands: Commands,
-    despawns: Query<Entity, With<SettingsPageComp>>,
+pub fn ui_settings_tab(
+    mut man: ResMut<UIManager>
+) {
+    if man.queued_action == Some(UIClickAction::TabVideoSettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Video;
+        man.remove_tag("Settings");
+    }
+    else if man.queued_action == Some(UIClickAction::TabSoundSettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Sound;
+        man.remove_tag("Settings");
+    }
+    else if man.queued_action == Some(UIClickAction::TabGameplaySettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Gameplay;
+        man.remove_tag("Settings");
+    }
+    else if man.queued_action == Some(UIClickAction::TabOnlineSettings) {
+        man.on_page = false;
+        man.settings_page = SettingsPage::Online;
+        man.remove_tag("Settings");
+    }
+}
+
+pub fn ui_toggle_fullscreen(
     mut man: ResMut<UIManager>,
-    fonts: Res<FontAssets>,
     mut disk: ResMut<Disk>
 ) {
-    if let Some(trigger) = man.gameplay_trigger() {
-        match trigger.as_str() {
-            "SoundSettings" => {
-                man.settings_page = SettingsPage::Sound;
-                despawns.for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
-            }
-            "VideoSettings" => {
-                despawns.for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
-                man.settings_page = SettingsPage::Video;
-                man.remove_tag("Settings");
-                man.add_ui(UIClickable {
-                    action: UIClickAction::GameplayTrigger(String::from("ToggleFullscreen")),
-                    location: (0.0, 0.0),
-                    size: (200.0, 36.0),
-                    removed_on_use: false,
-                    tag: Some(String::from("Settings"))
-                });
-                man.add_ui(UIClickable {
-                    action: UIClickAction::GameplayTrigger(String::from("IncreaseWindowScaling")),
-                    location: (0.0, 0.0), // TODO
-                    size: (0.0, 0.0), // TODO
-                    removed_on_use: false,
-                    tag: Some(String::from("Settings"))
-                });
-                man.add_ui(UIClickable {
-                    action: UIClickAction::GameplayTrigger(String::from("DecreaseWindowScaling")),
-                    location: (0.0, 0.0), // TODO
-                    size: (0.0, 0.0), // TODO
-                    removed_on_use: false,
-                    tag: Some(String::from("Settings"))
-                });
-                man.add_ui(UIClickable {
-                    action: UIClickAction::GameplayTrigger(String::from("ToggleVSync")),
-                    location: (0.0, 0.0), // TODO
-                    size: (0.0, 0.0), // TODO
-                    removed_on_use: false,
-                    tag: Some(String::from("Settings"))
-                });
-                commands.spawn_bundle(Text2dBundle {
-                    text: Text {
-                        sections: vec![TextSection {
-                            value: format!("Fullscreen: {}", disk.window_config().fullscreen),
-                            style: TextStyle {
-                                font: fonts.simvoni.clone(),
-                                font_size: 36.0,
-                                color: Color::BLACK
-                            }
-                        }],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Top,
-                            horizontal: HorizontalAlign::Left
-                        }
-                    },
-                    transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-                    ..default()
-                }).insert(SettingsPageComp { type_: 1 });
-            }
-            "GameplaySettings" => {
-                man.settings_page = SettingsPage::Gameplay;
-                despawns.for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
-            }
-            "OnlineSettings" => {
-                man.settings_page = SettingsPage::Online;
-                despawns.for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
-            }
-            "LeaveSettings" => {
-                man.settings_page = SettingsPage::Video;
-                despawns.for_each(|entity| {
-                    commands.entity(entity).despawn();
-                });
-            }
-            "ToggleFullscreen" => {
-                let mut winconf = disk.window_config();
-                winconf.fullscreen = !winconf.fullscreen;
-                disk.update_window_config(winconf);
-            }
-            _ => { return } // do nothing
-        }
-        man.next();
+    if man.queued_action == Some(UIClickAction::ToggleFullscreen) {
+        let mut winconf = disk.window_config();
+        winconf.fullscreen = !winconf.fullscreen;
+        disk.update_window_config(winconf);
+        man.queued_action = None;
     }
 }
 
@@ -458,13 +377,12 @@ pub fn ui_close_settings(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
     mut state: ResMut<State<GameState>>,
-    query: Query<Entity, With<TileMarker>>
+    query: Query<Entity, With<RemoveOnStateChange>>
 ) {
-    if man.gameplay_trigger() == Some(String::from("LeaveSettings")) {
+    if man.queued_action == Some(UIClickAction::CloseSettings) {
         query.for_each(|e| {
             commands.entity(e).despawn();
         });
-        man.next();
         man.reset_ui();
         state.pop().unwrap();
     }
@@ -474,28 +392,28 @@ pub fn ui_resume_game_settings(
     mut uiman: ResMut<UIManager>
 ) {
     uiman.add_ui(UIClickable {
-        action: UIClickAction::GameplayTrigger(String::from("ClosePauseMenu")),
+        action: UIClickAction::ClosePauseMenu,
         location: (-150.0, 110.0 - 27.5),
         size: (300.0, 55.0),
         removed_on_use: false,
         tag: None
     });
     uiman.add_ui(UIClickable {
-        action: UIClickAction::GameplayTrigger(String::from("InvitePlayer")),
+        action: UIClickAction::InvitePlayer,
         location: (-150.0, 55.0 - 27.5),
         size: (300.0, 55.0),
         removed_on_use: false,
         tag: None
     });
     uiman.add_ui(UIClickable {
-        action: UIClickAction::ChangeScene(String::from("Settings")),
+        action: UIClickAction::OpenSettings,
         location: (-150.0, -27.5),
         size: (300.0, 55.0),
         removed_on_use: false,
         tag: None
     });
     uiman.add_ui(UIClickable {
-        action: UIClickAction::GameplayTrigger(String::from("LeaveGame")),
+        action: UIClickAction::DisconnectFromWorld,
         location: (-150.0, -55.0 - 27.5),
         size: (300.0, 55.0),
         removed_on_use: false,
@@ -509,11 +427,13 @@ pub fn ui_disconnect_game(
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
     mut query: Query<
         Entity,
         Or<(
-            With<PlayerMarker>,
-            With<TileMarker>,
+            With<User>,
             With<Tile>,
             With<PauseMenuMarker>,
             With<HotbarMarker>,
@@ -521,67 +441,74 @@ pub fn ui_disconnect_game(
         )>
     >
 ) {
-    if man.gameplay_trigger() == Some(String::from("LeaveGame")) {
-        man.next();
+    if man.queued_action == Some(UIClickAction::DisconnectFromWorld) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
-        state.set(GameState::TitleScreen).unwrap();
         query.for_each_mut(|e| {
             commands.entity(e).despawn();
         });
-        man.add_ui(UIClickable {
-            action: UIClickAction::ChangeScene(String::from("Title_screen")),
-            location: (-2.5, -2.5),
-            size: (5.0, 5.0),
-            removed_on_use: true,
-            tag: None
-        });
-        man.clicked((0.0, 0.0));
         // We do this so UI doesn't get misaligned
         reality.set_player_position(GamePosition::zero());
         // Fully reset because making things not conflict is hard :P
         reality.reset();
+        // Switch to titlescreen
+        state.set(GameState::TitleScreen).unwrap();
     }
 }
 
-pub fn ui_scene(
-    mut commands: Commands,
-    unloads: Query<Entity, With<TileMarker>>,
-    mapsatt: Option<ResMut<Assets<LDtkMap>>>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-    target_mapsatt: Option<Res<MapAssets>>,
+pub fn ui_return_create_world(
     mut state: ResMut<State<GameState>>,
-    font_assetsatt: Option<Res<FontAssets>>,
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
+) {
+    if man.queued_action == Some(UIClickAction::GoToCreateWorld) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
+        man.reset_ui();
+        state.replace(GameState::MakeGame).unwrap();
+    }
+}
+
+pub fn ui_view_worlds(
+    mut state: ResMut<State<GameState>>,
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>,
+) {
+    if man.queued_action == Some(UIClickAction::ViewWorldList) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
+        man.reset_ui();
+        state.replace(GameState::ServerList).unwrap();
+    }
+}
+
+pub fn ui_return_titlescreen(
+    mut state: ResMut<State<GameState>>,
+    mut man: ResMut<UIManager>,
+    audio: Res<Audio>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>
+) {
+    if man.queued_action == Some(UIClickAction::GoToTitleScreen) {
+        let assets = core_serve.get(core.core.clone()).unwrap();
+        audio.play(assets.get_audio("click"));
+        man.reset_ui();
+        state.push(GameState::TitleScreen).unwrap();
+    }
+}
+
+pub fn ui_open_settings(
+    mut state: ResMut<State<GameState>>,
     mut man: ResMut<UIManager>
 ) {
-    if let Some(font_assets) = font_assetsatt {
-        if let Some(target_maps) = target_mapsatt {
-            if let Some(mut maps) = mapsatt {
-                if let Some(goto) = man.scene_changes() {
-                    man.reset_ui();
-                    let a = maps.get_mut(target_maps.core.clone()).unwrap();
-                    let level = a.get_level(goto.as_str());
-                    load_level(unloads, level, a, texture_atlases, font_assets.clone(), man, &mut commands);
-                    match goto.as_str() {
-                        "Settings" => {
-                            state.push(GameState::Settings).unwrap();
-                        }
-                        "Create_world" => {
-                            state.replace(GameState::MakeGame).unwrap();
-                        }
-                        "Create_profile" => {
-                            state.replace(GameState::MakeUser).unwrap();
-                        }
-                        "Server_list" => {
-                            state.replace(GameState::ServerList).unwrap();
-                        }
-                        "Title_screen" => {
-                            state.replace(GameState::TitleScreen).unwrap();
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
+    if man.queued_action == Some(UIClickAction::OpenSettings) {
+        man.reset_ui();
+        state.push(GameState::Settings).unwrap();
     }
 }

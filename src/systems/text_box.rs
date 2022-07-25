@@ -1,11 +1,8 @@
-use bevy::prelude::*;
-
-use crate::{components::{TextBox, ldtk::{TileMarker, PlayerMarker}}, resources::{Netty, ui::UIManager, Disk}, shared::{netty::Packet, saves::User}, GameState, ldtk::{load_level, LDtkMap}, assets::{FontAssets, MapAssets, AnimatorAssets}, consts::{PLAYER_CHARACTERS, UI_TEXT}};
+use crate::prelude::*;
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
-    mut char_evr: EventReader<ReceivedCharacter>,
-    keys: Res<Input<KeyCode>>
+    mut char_evr: EventReader<ReceivedCharacter>
 ) {
     for char in char_evr.iter() {
         tb.update_buffer(char.char);
@@ -13,65 +10,74 @@ pub fn text_input(
             tb.eat_buffer();
             tb.update_buffer('\n');
         }
-    }
-    if keys.just_pressed(KeyCode::Back) {
-        tb.eat_buffer();
-    }
-}
-
-pub fn text_backspace(
-    mut tb: ResMut<crate::resources::TextBox>,
-    keys: Res<Input<KeyCode>>
-) {
-    if keys.just_pressed(KeyCode::Back) {
-        tb.eat_buffer();
+        // If we recieve a backspace character...
+        if char.char == '\x08' {
+            // Remove backspace character
+            tb.eat_buffer();
+            // Remove one more (the actual backspace action)
+            tb.eat_buffer();
+        }
+        // If we recieve an escape character...
+        if char.char == '\x27' {
+            // Remove the escape character
+            tb.eat_buffer();
+        }
     }
 }
 
 pub fn user_creation(
     mut commands: Commands,
     mut tb: ResMut<crate::resources::TextBox>,
-    mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
+    mut tb_q: Query<&mut Text, With<TextBox>>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut disk: ResMut<Disk>,
-    unloads: Query<Entity, With<TileMarker>>,
-    mut maps: ResMut<Assets<LDtkMap>>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-    target_maps: Res<MapAssets>,
-    font_assets: Res<FontAssets>,
-    uiman: ResMut<UIManager>
+    unloads: Query<Entity, With<RemoveOnStateChange>>,
+    core: Res<CoreAssets>,
+    core_serve: Res<Assets<ModularAssets>>
 ) {
-    let (entity, mut text) = tb_q.single_mut();
+    let core_assets = core_serve.get(core.core.clone()).unwrap();
+    let mut text = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't contain hashtags.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_hashtags");
     }
     else if tb.grab_buffer().contains('/') || tb.grab_buffer().contains('\\') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't contain slashes.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_slashes");
     }
     else if tb.grab_buffer().starts_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't start with a space.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_start");
     }
     else if tb.grab_buffer().ends_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = String::from("\nUsernames can't end with a space.");
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_end");
+    }
+    else if tb.grab_buffer().chars().count() < 3 {
+        text.sections[0].style.color = Color::RED;
+        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_short");
+        if tb.grab_buffer().contains('\n') {
+            tb.eat_buffer();
+        }
     }
     else if !tb.grab_buffer().is_empty() {
         // Reset text to normal if all is okay
-        text.sections[1].value = String::from("\n");
+        text.sections[1].value = String::from("\n ");
         text.sections[0].style.color = Color::BLACK;
         // Warnings for inconvenient but not disallowed names
         if tb.grab_buffer().chars().count() > 20 {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = String::from("\nUsernames over 20 characters may be inconvenient.");
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_long");
         }
         else if tb.grab_buffer().contains("  ") {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = String::from("\nUsernames with multiple spaces in a row may be inconvenient.");
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.double_space");
+        }
+        else if !tb.grab_buffer().is_ascii() {
+            text.sections[0].style.color = Color::ORANGE;
+            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.non_ascii");
         }
         if tb.grab_buffer().contains('\n') {
             let mut mode = tb.grab_buffer();
@@ -86,11 +92,10 @@ pub fn user_creation(
                 tag: 0
             }) {}
             tb.clear_buffer();
+            unloads.for_each(|e| {
+                commands.entity(e).despawn();
+            });
             state.replace(GameState::TitleScreen).unwrap();
-            commands.entity(entity).despawn_recursive();
-            let a = maps.get_mut(target_maps.core.clone()).unwrap();
-            let level = a.get_level("Title_screen");
-            load_level(unloads, level, a, texture_atlases, font_assets.clone(), uiman, &mut commands);
         }
     }
 }
@@ -99,11 +104,11 @@ pub fn game_creation(
     mut commands: Commands,
     mut tb: ResMut<crate::resources::TextBox>,
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
+    uiman: Res<UIManager>,
     mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     disk: Res<Disk>,
     materials: Res<AnimatorAssets>,
-    unloads: Query<Entity, With<TileMarker>>
 ) {
     let (entity, mut text) = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer();
@@ -112,7 +117,7 @@ pub fn game_creation(
     }
     else {
         text.sections[0].style.color = Color::BLACK;
-        if tb.grab_buffer().contains('\n') {
+        if tb.grab_buffer().contains('\n') || uiman.queued_action == Some(UIClickAction::CreateWorld) {
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
@@ -128,11 +133,7 @@ pub fn game_creation(
                     PLAYER_CHARACTERS
                 ),
                 ..Default::default()
-            }).insert(PlayerMarker { user: disk.user().unwrap(), isme: true });
-
-            unloads.for_each(|e| {
-                commands.entity(e).despawn_recursive();
-            });
+            }).insert(disk.user().unwrap());
         }
     }
 }
@@ -160,5 +161,7 @@ pub fn game_creation_once(
         },
         transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
         ..Default::default()
-    }).insert(TextBox {});
+    })
+    .insert(TextBox {})
+    .insert(RemoveOnStateChange {});
 }

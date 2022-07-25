@@ -1,0 +1,15 @@
+{
+    "files": [
+        {
+            "location": "heightmaps/water.png",
+            "width": 1,
+            "height": 1
+        }
+    ],
+    "variants": [
+        {
+            "harsh": false,
+            "center": [0, 0]
+        }
+    ]
+}

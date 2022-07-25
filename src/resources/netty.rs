@@ -1,10 +1,6 @@
-use crate::{GameState, consts::*, shared::netty::Packet};
-
+use crate::prelude::*;
 use std::{net::TcpStream, sync::{Arc, Mutex}};
-
-use bevy::prelude::*;
-
-use super::{Reality, Disk, chat::ChatMessage};
+use super::{Reality, chat::ChatMessage};
 
 pub struct Netty {
     connection: ConnectionStatus,
@@ -31,7 +27,7 @@ impl Netty {
                 output: out
             };
             fin.say(Packet::NettyVersion(String::from(NETTY_VERSION)));
-            return fin;
+            fin
         }
         else {
             if !google_exists() {
@@ -41,7 +37,7 @@ impl Netty {
                     output: Arc::new(Mutex::new(vec![]))
                 };
             }
-            return Netty {
+            Netty {
                 connection: ConnectionStatus::NoGGS,
                 input: Arc::new(Mutex::new(vec![])),
                 output: Arc::new(Mutex::new(vec![]))
@@ -77,8 +73,8 @@ impl Netty {
                     reality.set_player_position(mypos);
                     reality.set_ownership(ownership);
                 }
-                Packet::ChangesChunk(chunk, changes) => {
-                    reality.add_chunk(chunk, changes);
+                Packet::ChunkData(chunk, data) => {
+                    reality.add_chunk(chunk, data);
                 }
                 Packet::ServerList(servers) => {
                     reality.set_avalable_servers(servers);
@@ -148,13 +144,23 @@ impl Netty {
     }
     pub fn system_startup_checks(
         mut netty: ResMut<Netty>,
-        mut state: ResMut<State<GameState>>
+        mut state: ResMut<State<GameState>>,
+        disk: Res<Disk>
     ) {
         match netty.connection() {
             ConnectionStatus::Connected | ConnectionStatus::Stable => {
-                state.set(GameState::TitleScreen).unwrap();
+                if disk.user().is_some() {
+                    info!("Logging in user");
+                    netty.say(Packet::UserPresence(disk.user().unwrap()));
+                    state.set(GameState::TitleScreen).unwrap();
+                }
+                else {
+                    info!("Opening user creation screen");
+                    state.set(GameState::MakeUser).unwrap();
+                }
             }
             _ => {
+                info!("No network connection");
                 state.set(GameState::OfflineTitle).unwrap();
             }
         }

@@ -1,5 +1,4 @@
-use bevy::prelude::Component;
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 /// A Text2dBundle with TextBox inserted will display the contents of the TextBox resource.
@@ -10,7 +9,7 @@ pub struct TextBox {}
 pub struct CursorMarker {}
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-// todo: move this
+// todo: remove this
 pub struct GamePosition {
     pub x: f64,
     pub y: f64
@@ -50,34 +49,27 @@ pub struct HotbarMarker {
 }
 
 #[derive(Clone, Copy, Debug, Component)]
+/// Indicates a Text object that is used to show the user's username
+/// on the titlescreen in the bottom left.
 pub struct TitleScreenUser {}
 
 #[derive(Clone, Copy, Debug, Component)]
 pub struct SettingsPageComp {
-    /// what component this is
+    /// What type of component this is
     /// 0 | unimportant/misc
     /// 1 | video settings fullscreen text
     pub type_: u8
 }
 
-pub mod ldtk {
-    use crate::shared::saves::User;
-    use bevy::prelude::Component;
+#[derive(Clone, Copy, Debug, Component)]
+pub struct RemoveOnStateChange {}
 
-    #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-    pub struct TileMarker {}
+use crate::modular_assets::TransitionType;
 
-    #[derive(Clone, Debug, Eq, PartialEq, Component, Hash)]
-    pub struct PlayerMarker {
-        pub user: User,
-        pub isme: bool
-    }
-
-    #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-    pub struct Tile {
-        pub chunk: (isize, isize),
-        pub position: (usize, usize),
-        /// (Spritesheet index, Sprite index)
-        pub sprite: (usize, usize)
-    }
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+pub struct Tile {
+    pub chunk: (isize, isize),
+    pub position: (usize, usize),
+    pub transition_type: TransitionType,
+    pub harsh: bool
 }

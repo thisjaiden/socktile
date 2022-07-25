@@ -1,10 +1,11 @@
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_kira_audio::Audio;
-use crate::assets::AudioAssets;
 
 pub fn title_screen_loop(
     audio: Res<Audio>,
-    samples: Res<AudioAssets>
+    assets: Res<CoreAssets>,
+    server: Res<Assets<ModularAssets>>
 ) {
-    audio.play_looped(samples.title_screen_loop.clone());
+    let core_assets = server.get(assets.core.clone()).unwrap();
+    audio.play_looped(core_assets.get_audio("title screen loop"));
 }

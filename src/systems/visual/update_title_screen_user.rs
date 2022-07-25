@@ -1,6 +1,4 @@
-use bevy::prelude::*;
-
-use crate::{resources::Disk, components::TitleScreenUser};
+use crate::prelude::*;
 
 pub fn update_title_screen_user(
     disk: Res<Disk>,

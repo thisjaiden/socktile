@@ -1,5 +1,4 @@
-use bevy::{prelude::*, window::PresentMode};
-use crate::resources::Disk;
+use crate::prelude::*;
 
 pub fn window_setup(
     mut commands: Commands,
@@ -10,10 +9,10 @@ pub fn window_setup(
     let window_conf = conf.window_config();
 
     if window_conf.vsync {
-        window.set_present_mode(PresentMode::Fifo);
+        window.set_present_mode(bevy::window::PresentMode::Fifo);
     }
     else {
-        window.set_present_mode(PresentMode::Immediate);
+        window.set_present_mode(bevy::window::PresentMode::Immediate);
     }
     
     window.set_title(String::from("socktile"));
@@ -42,10 +41,10 @@ pub fn window_update(
         let window_conf = conf.window_config();
 
         if window_conf.vsync {
-            window.set_present_mode(PresentMode::Fifo);
+            window.set_present_mode(bevy::window::PresentMode::Fifo);
         }
         else {
-            window.set_present_mode(PresentMode::Immediate);
+            window.set_present_mode(bevy::window::PresentMode::Immediate);
         }
         
         if window_conf.fullscreen {

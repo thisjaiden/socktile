@@ -1,8 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-use bevy::prelude::*;
-
-use crate::consts::FATAL_ERROR;
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct PlayerData {
@@ -73,6 +69,7 @@ impl Item {
     }
 }
 
+#[derive(PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum ItemAction {
     /// Item has no action.
     None,
@@ -82,7 +79,7 @@ pub enum ItemAction {
     Fish(usize)
 }
 
-#[derive(Clone, Copy, PartialEq, Deserialize, Serialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Debug)]
 pub struct Stats {
     pub mining: usize,
     pub fishing: usize,

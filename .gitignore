@@ -3,6 +3,7 @@ me.bic
 /saves
 /users
 .DS_Store
-/assets/*.png~
+*.png~
+*.png.kra
 /testenv
 *.ini

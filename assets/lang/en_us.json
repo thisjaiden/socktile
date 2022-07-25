@@ -1,0 +1,38 @@
+{
+    "core": {
+        "title_screen": {
+            "no_network": "An internet connection is required to play the Alpha.",
+            "no_ggs": "The server is down right now. Check back in later.",
+            "quit": "Quit Game",
+            "settings": "Settings",
+            "new_game": "Create World",
+            "join_game": "Join World",
+            "title": "Socktile Closed Alpha 0",
+            "splash": [
+                "\"It just works.\" - Todd Howard",
+                "It's Playable!",
+                "Still Unfinished",
+                "Shameless plagarism!",
+                "Hatsune Miku"
+            ]
+        },
+        "create_user": {
+            "no_hashtags": "\nUsernames can't contain hashtags.",
+            "no_slashes": "\nUsernames can't contain slashes.",
+            "space_start": "\nUsernames can't start with a space.",
+            "space_end": "\nUsernames can't end with a space.",
+            "too_short": "\nUsernames must be at least 3 characters long.",
+            "too_long": "\nUsernames over 20 characters may be inconvenient.",
+            "double_space": "\nUsernames with multiple spaces in a row may be inconvenient.",
+            "non_ascii": "\nUsernames with emojis or other non-ascii characters may be inconvenient."
+        },
+        "create_world": {
+            "cancel": "Back",
+            "confirm": "Create World",
+            "description": "Please choose a world name."
+        },
+        "join_world": {
+            "cancel": "Back"
+        }
+    }
+}

@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
+use crate::prelude::*;
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Component)]
 pub struct User {
     pub username: String,
     pub tag: u16

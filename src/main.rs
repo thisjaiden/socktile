@@ -1,10 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
-use bevy::prelude::*;
+use crate::prelude::*;
 use bevy_asset_loader::AssetLoader;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
-use consts::EMBED_ASSETS;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
 mod components;
@@ -14,12 +13,16 @@ mod consts;
 mod server;
 mod shared;
 mod window_setup;
-mod ldtk;
+mod modular_assets;
 mod assets;
+mod matrix;
+mod prelude;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
+    /// Loads logo from disk and continues to `Load`
+    PreLoadLoad,
     /// Loads assets from disk
     Load,
     /// Checks network status
@@ -84,25 +87,31 @@ fn main() {
     // Register all the assets we need loaded
     AssetLoader::new(GameState::Load)
         .continue_to_state(GameState::NetworkCheck)
-        .with_collection::<assets::MapAssets>()
+        .with_collection::<assets::CoreAssets>()
         .with_collection::<assets::FontAssets>()
         .with_collection::<assets::AnimatorAssets>()
         .with_collection::<assets::UIAssets>()
         .with_collection::<assets::ItemAssets>()
         .with_collection::<assets::ObjectAssets>()
         .with_collection::<assets::NPCAssets>()
-        .with_collection::<assets::AudioAssets>()
         .build(&mut app);
     
     // Add plugins and systems to our app, then run it
     app
-        .add_plugin(ldtk::LDtkPlugin)
+        .insert_resource(ClearColor(Color::WHITE))
+        .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
+        .add_plugin(bevy_easings::EasingsPlugin)
         .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
-        .add_state(GameState::Load)
+        .add_state(GameState::PreLoadLoad)
+        .add_system_set(
+            SystemSet::on_enter(GameState::PreLoadLoad)
+                .with_system(systems::visual::logo)
+        )
         .add_system_set(
             SystemSet::on_enter(GameState::Load)
                 .with_system(window_setup::window_setup)
+                .with_system(systems::audio::audio_setup)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
@@ -111,24 +120,27 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::TitleScreen)
-                .with_system(systems::visual::load_title_screen_map)
-                .with_system(systems::audio::title_screen_loop)
+                .with_system(systems::visual::title_screen.label("any"))
+                .with_system(systems::audio::title_screen_loop.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_resume(GameState::TitleScreen)
-                .with_system(systems::visual::load_title_screen_map)
+                .with_system(systems::visual::clear_settings)
+                .with_system(systems::visual::title_screen)
         )
         .add_system_set(
             SystemSet::on_resume(GameState::Play)
                 .with_system(resources::ui::ui_resume_game_settings)
+                .with_system(systems::visual::clear_settings)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::OfflineTitle)
-                .with_system(systems::visual::load_offline_title_map)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeUser)
-                .with_system(systems::visual::load_user_creation_map)
+                .with_system(systems::visual::make_user.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeUser)
@@ -136,40 +148,46 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Settings)
-                .with_system(systems::visual::load_settings_map)
+                .with_system(systems::visual::settings_video)
                 .with_system(resources::ui::ui_settings_camera)
         )
         .add_system_set(
             SystemSet::on_update(GameState::Settings)
-                .with_system(resources::ui::ui_settings_page)
+                .with_system(resources::ui::ui_settings_tab)
+                .with_system(resources::ui::ui_toggle_fullscreen)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
-                .with_system(systems::text_box::game_creation_once)
+                .with_system(systems::visual::clear_old.before("any"))
+                .with_system(systems::text_box::game_creation_once.label("any"))
+                .with_system(systems::visual::create_world.label("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::MakeGame)
                 .with_system(systems::text_box::game_creation)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
-                .with_system(resources::Netty::system_server_list)
+                .with_system(resources::Netty::system_server_list.label("any"))
+                .with_system(systems::visual::join_world.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::ServerList)
                 .with_system(resources::Reality::system_server_list_renderer)
+                .with_system(resources::ui::ui_game)
+                .with_system(resources::ui::ui_return_titlescreen)
         )
         .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
         .add_system(systems::text_box::text_input)
-        .add_system(systems::text_box::text_backspace)
         .add_system(resources::Netty::system_step)
-        .add_system(resources::ui::ui_scene)
-        .add_system(resources::ui::ui_game)
+        .add_system(resources::ui::ui_open_settings)
         .add_system(resources::ui::ui_manager.after("cursor").before("player"))
         .add_system(resources::ui::ui_quick_exit)
         .add_system(resources::ui::ui_close_pause_menu)
-        .add_system(resources::ui::ui_disconnect_game)
         .add_system(resources::ui::ui_invite_menu)
         .add_system(resources::ui::ui_close_settings)
         .add_system(resources::ui::ui_debug_lines)
@@ -185,8 +203,7 @@ fn main() {
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_spawn_objects)
                 .with_system(resources::Reality::system_pause_menu)
-                .with_system(resources::Reality::system_chunk_loader)
-                .with_system(resources::Reality::system_chunk_unloader)
+                .with_system(resources::Reality::system_chunk_requester)
                 .with_system(resources::Reality::system_player_loader)
                 .with_system(resources::Reality::system_player_unloader)
                 .with_system(resources::Reality::system_player_controls)
@@ -199,7 +216,13 @@ fn main() {
                 .with_system(resources::Reality::system_update_objects)
                 .with_system(resources::Reality::system_remove_objects)
                 .with_system(resources::Reality::system_update_hotbar)
+                .with_system(resources::Reality::system_hitbox_debug_lines)
+                .with_system(resources::Reality::system_player_debug_lines)
+                .with_system(resources::Reality::system_chunk_derenderer)
+                .with_system(resources::Reality::system_rerender_edges)
                 .with_system(resources::Reality::system_render_waiting_chunks)
+                .with_system(resources::Reality::system_action_none)
+                .with_system(resources::Reality::system_action_chop)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Animator::system_player_initiator)
                 .with_system(resources::Chat::system_display_chat)
@@ -208,35 +231,39 @@ fn main() {
                 .with_system(resources::Chat::system_type_chat)
                 .with_system(resources::Chat::system_send_chat)
                 .with_system(resources::ui::ui_forward)
+                .with_system(resources::ui::ui_disconnect_game)
+                .with_system(resources::Reality::system_mark_chunks)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::Play)
-                .with_system(resources::Reality::system_spawn_hotbar)
-                .with_system(resources::Chat::system_init)
+                .with_system(resources::Reality::system_spawn_hotbar.label("any"))
+                .with_system(resources::Chat::system_init.label("any"))
+                .with_system(systems::visual::clear_old.before("any"))
         )
         .add_system_set(
             SystemSet::on_update(GameState::TitleScreen)
                 .with_system(systems::visual::update_title_screen_user)
                 .with_system(systems::visual::update_title_screen_camera)
+                .with_system(resources::ui::ui_return_create_world)
+                .with_system(resources::ui::ui_view_worlds)
         )
         .run();
 }
 
 fn log_setup() {
     tracing_log::LogTracer::init().unwrap();
-    let fmt_layer;
-    if consts::DEV_BUILD {
-        fmt_layer = tracing_subscriber::fmt::Layer::default()
+    let fmt_layer = if consts::DEV_BUILD {
+        tracing_subscriber::fmt::Layer::default()
             .without_time()
             .with_file(false)
-            .with_line_number(true);
+            .with_line_number(true)
     }
     else {
-        fmt_layer = tracing_subscriber::fmt::Layer::default()
+        tracing_subscriber::fmt::Layer::default()
             .without_time()
             .with_file(false)
-            .with_line_number(false);
-    }
+            .with_line_number(false)
+    };
     let subscriber = tracing_subscriber::Registry::default()
         .with(fmt_layer)
         .with(EnvFilter::new("INFO,wgpu=error,symphonia=error"));
