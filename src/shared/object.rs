@@ -18,7 +18,7 @@ impl Object {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 /// Represents the type of a game object.
 pub enum ObjectType {
-    Tree,
+    Tree(usize),
     GroundItem(Item),
     Npc(Npc)
 }
@@ -26,7 +26,7 @@ pub enum ObjectType {
 impl ObjectType {
     pub fn collider(&self) -> Option<(f64, f64)> {
         match self {
-            Self::Tree => Some((64.0, 64.0)),
+            Self::Tree(_str) => Some((64.0, 64.0)),
             Self::Npc(_who) => Some((64.0, 64.0)),
             _ => None
         }

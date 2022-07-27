@@ -21,6 +21,21 @@
             "inverted_up_right": [0, 4],
             "inverted_down_left": [0, 11],
             "inverted_down_right": [0, 12]
+        },
+        {
+            "harsh": true,
+            "up": [0, 25],
+            "down": [0, 41],
+            "left": [0, 32],
+            "right": [0, 34],
+            "up_left": [0, 24],
+            "up_right": [0, 26],
+            "down_left": [0, 40],
+            "down_right": [0, 42],
+            "inverted_up_left": [0, 27],
+            "inverted_up_right": [0, 28],
+            "inverted_down_left": [0, 35],
+            "inverted_down_right": [0, 36]
         }
     ]
 }

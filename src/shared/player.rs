@@ -46,7 +46,8 @@ impl Inventory {
 pub enum Item {
     None,
     DemoAxe,
-    DemoRod
+    DemoRod,
+    Wood
 }
 
 impl Item {
@@ -54,6 +55,7 @@ impl Item {
         match from {
             "DemoAxe" => Item::DemoAxe,
             "DemoRod" => Item::DemoRod,
+            "Wood" => Item::Wood,
             invalid_name => {
                 error!("No item with name {invalid_name}");
                 panic!("{FATAL_ERROR}");
@@ -62,9 +64,9 @@ impl Item {
     }
     pub fn action(&self) -> ItemAction {
         match self {
-            Item::None => ItemAction::None,
             Item::DemoAxe => ItemAction::Chop(1),
             Item::DemoRod => ItemAction::Fish(1),
+            _ => ItemAction::None
         }
     }
 }

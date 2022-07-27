@@ -159,7 +159,7 @@ impl World {
                                     x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
                                     y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
                                 },
-                                rep: ObjectType::Tree,
+                                rep: ObjectType::Tree(3),
                                 uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                             });
                             dupe_objects.push(self.objects[self.objects.len() - 1].clone());

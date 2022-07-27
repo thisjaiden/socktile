@@ -77,7 +77,7 @@ pub enum Packet {
     /// Sends over all game objects.
     /// (Game Objects)
     AllObjects(Vec<Object>),
-    /// Updates a given object on the client.
+    /// Updates a given object.
     /// (Updated Object)
     UpdateObject(Object),
     /// Removes an object by UUID.

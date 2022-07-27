@@ -70,7 +70,9 @@ pub struct ItemAssets {
     #[asset(path = "item/demo_axe.png")]
     pub demo_axe: Handle<Image>,
     #[asset(path = "item/placeholder.png")]
-    pub demo_rod: Handle<Image>
+    pub demo_rod: Handle<Image>,
+    #[asset(path = "item/wood.png")]
+    pub wood: Handle<Image>
 }
 
 impl ItemAssets {
@@ -78,7 +80,8 @@ impl ItemAssets {
         match item {
             Item::None => self.none.clone(),
             Item::DemoAxe => self.demo_axe.clone(),
-            Item::DemoRod => self.demo_rod.clone()
+            Item::DemoRod => self.demo_rod.clone(),
+            Item::Wood => self.wood.clone()
         }
     }
 }

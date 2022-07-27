@@ -150,7 +150,7 @@ impl Reality {
         mut animator: ResMut<Animator>,
         mut netty: ResMut<Netty>,
         disk: Res<Disk>,
-        objects: Query<(Entity, &Object)>
+        mut objects: Query<(Entity, &mut Object)>
     ) {
         if selfs.waiting_for_action {
             let action = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot].action();
@@ -162,14 +162,23 @@ impl Reality {
                 // send animation to others
                 netty.say(Packet::ActionAnimation(action));
                 // check for tree in range
-                objects.for_each(|(e, obj)| {
-                    if obj.rep == ObjectType::Tree {
+                objects.for_each_mut(|(e, mut obj)| {
+                    if let ObjectType::Tree(strength) = obj.rep {
                         let distance = obj.pos.distance(selfs.player_position);
                         if distance < TREE_CHOP_DISTANCE {
-                            // remove entity on server
-                            netty.say(Packet::RemoveObject(obj.uuid));
-                            // despawn entity locally
-                            commands.entity(e).despawn();
+                            if strength > power {
+                                // damage tree
+                                obj.rep = ObjectType::Tree(strength - power);
+                                // update entity on server
+                                netty.say(Packet::UpdateObject(obj.clone()));
+                            }
+                            else {
+                                // destroy tree
+                                // remove entity on server
+                                netty.say(Packet::RemoveObject(obj.uuid));
+                                // despawn entity locally
+                                commands.entity(e).despawn();
+                            }
                         }
                     }
                 });
@@ -411,7 +420,7 @@ impl Reality {
     ) {
         for object in &selfs.queued_objects {
             match &object.rep {
-                ObjectType::Tree => {
+                ObjectType::Tree(_str) => {
                     commands.spawn_bundle(SpriteBundle {
                         texture: obj_assets.tree.clone(),
                         transform: Transform {
