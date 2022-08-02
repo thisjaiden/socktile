@@ -29,7 +29,7 @@ pub fn window_setup(
     window.set_scale_factor_override(Some(window_conf.scale_factor));
     window.set_cursor_visibility(false);
     
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 pub fn window_update(

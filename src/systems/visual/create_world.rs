@@ -7,7 +7,7 @@ pub fn create_world(
     core_serve: Res<Assets<ModularAssets>>,
     mut ui: ResMut<UIManager>
 ) {
-    let core_assets = core_serve.get(core.core.clone()).unwrap();
+    let core_assets = core_serve.get(&core.core).unwrap();
     // Background
     commands.spawn_bundle(SpriteBundle {
         texture: core.create_world.clone(),

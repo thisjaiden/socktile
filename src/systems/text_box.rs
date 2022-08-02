@@ -36,7 +36,7 @@ pub fn user_creation(
     core: Res<CoreAssets>,
     core_serve: Res<Assets<ModularAssets>>
 ) {
-    let core_assets = core_serve.get(core.core.clone()).unwrap();
+    let core_assets = core_serve.get(&core.core).unwrap();
     let mut text = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {

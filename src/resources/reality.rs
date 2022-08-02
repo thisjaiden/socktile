@@ -271,7 +271,7 @@ impl Reality {
         core_serve: Res<Assets<ModularAssets>>,
         mut atlas_serve: ResMut<Assets<TextureAtlas>>
     ) {
-        let mod_assets = core_serve.get(core.core.clone()).unwrap();
+        let mod_assets = core_serve.get(&core.core).unwrap();
         let mut inserts = vec![];
         for (chunk, status) in selfs.chunk_status.iter() {
             if status.waiting_to_render && status.downloaded {

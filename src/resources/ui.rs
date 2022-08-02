@@ -215,7 +215,7 @@ pub fn ui_game(
 ) {
     if let Some(materials) = target_materials {
         if let Some(game_id) = man.join_game() {
-            let assets = core_serve.get(core.core.clone()).unwrap();
+            let assets = core_serve.get(&core.core).unwrap();
             audio.play(assets.get_audio("click"));
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
@@ -442,7 +442,7 @@ pub fn ui_disconnect_game(
     >
 ) {
     if man.queued_action == Some(UIClickAction::DisconnectFromWorld) {
-        let assets = core_serve.get(core.core.clone()).unwrap();
+        let assets = core_serve.get(&core.core).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
@@ -454,7 +454,7 @@ pub fn ui_disconnect_game(
         // Fully reset because making things not conflict is hard :P
         reality.reset();
         // Switch to titlescreen
-        state.set(GameState::TitleScreen).unwrap();
+        state.overwrite_set(GameState::TitleScreen).unwrap();
     }
 }
 
@@ -466,7 +466,7 @@ pub fn ui_return_create_world(
     core_serve: Res<Assets<ModularAssets>>,
 ) {
     if man.queued_action == Some(UIClickAction::GoToCreateWorld) {
-        let assets = core_serve.get(core.core.clone()).unwrap();
+        let assets = core_serve.get(&core.core).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.replace(GameState::MakeGame).unwrap();
@@ -481,7 +481,7 @@ pub fn ui_view_worlds(
     core_serve: Res<Assets<ModularAssets>>,
 ) {
     if man.queued_action == Some(UIClickAction::ViewWorldList) {
-        let assets = core_serve.get(core.core.clone()).unwrap();
+        let assets = core_serve.get(&core.core).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.replace(GameState::ServerList).unwrap();
@@ -496,7 +496,7 @@ pub fn ui_return_titlescreen(
     core_serve: Res<Assets<ModularAssets>>
 ) {
     if man.queued_action == Some(UIClickAction::GoToTitleScreen) {
-        let assets = core_serve.get(core.core.clone()).unwrap();
+        let assets = core_serve.get(&core.core).unwrap();
         audio.play(assets.get_audio("click"));
         man.reset_ui();
         state.push(GameState::TitleScreen).unwrap();

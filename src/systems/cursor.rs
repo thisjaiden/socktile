@@ -39,18 +39,22 @@ pub fn spawn(
     fonts: Res<FontAssets>
 ) {
     commands.spawn_bundle(Text2dBundle {
-        text: Text::with_section(
-            '\u{f790}',
-            TextStyle {
-                font: fonts.kreative_square.clone(),
-                font_size: 34.0,
-                color: Color::BLACK
-            },
-            TextAlignment {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: String::from('\u{f790}'),
+                    style: TextStyle {
+                        font: fonts.kreative_square.clone(),
+                        font_size: 34.0,
+                        color: Color::BLACK
+                    }
+                }
+            ],
+            alignment: TextAlignment {
                 vertical: VerticalAlign::Bottom,
                 horizontal: HorizontalAlign::Right
             }
-        ),
+        },
         transform: Transform::from_xyz(0.0, 0.0, CURSOR),
         ..Default::default()
     }).insert(CursorMarker {}).insert(UILocked {});

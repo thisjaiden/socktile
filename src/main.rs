@@ -2,7 +2,7 @@
 #![allow(clippy::type_complexity)]
 
 use crate::prelude::*;
-use bevy_asset_loader::AssetLoader;
+use bevy_asset_loader::prelude::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use tracing_subscriber::{prelude::*, EnvFilter};
 
@@ -84,20 +84,20 @@ fn main() {
                 .disable::<bevy::log::LogPlugin>()
         }
     });
-    // Register all the assets we need loaded
-    AssetLoader::new(GameState::Load)
-        .continue_to_state(GameState::NetworkCheck)
-        .with_collection::<assets::CoreAssets>()
-        .with_collection::<assets::FontAssets>()
-        .with_collection::<assets::AnimatorAssets>()
-        .with_collection::<assets::UIAssets>()
-        .with_collection::<assets::ItemAssets>()
-        .with_collection::<assets::ObjectAssets>()
-        .with_collection::<assets::NPCAssets>()
-        .build(&mut app);
     
-    // Add plugins and systems to our app, then run it
+    // Add assets, plugins and systems to our app, then run it
     app
+        .add_loading_state(
+            LoadingState::new(GameState::Load)
+                .continue_to_state(GameState::NetworkCheck)
+                .with_collection::<assets::CoreAssets>()
+                .with_collection::<assets::FontAssets>()
+                .with_collection::<assets::AnimatorAssets>()
+                .with_collection::<assets::UIAssets>()
+                .with_collection::<assets::ItemAssets>()
+                .with_collection::<assets::ObjectAssets>()
+                .with_collection::<assets::NPCAssets>()
+        )
         .insert_resource(ClearColor(Color::WHITE))
         .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)

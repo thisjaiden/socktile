@@ -6,6 +6,6 @@ pub fn title_screen_loop(
     assets: Res<CoreAssets>,
     server: Res<Assets<ModularAssets>>
 ) {
-    let core_assets = server.get(assets.core.clone()).unwrap();
+    let core_assets = server.get(&assets.core).unwrap();
     audio.play_looped(core_assets.get_audio("title screen loop"));
 }

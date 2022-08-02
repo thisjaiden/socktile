@@ -7,7 +7,7 @@ pub fn join_world(
     core_serve: Res<Assets<ModularAssets>>,
     mut ui: ResMut<UIManager>
 ) {
-    let core_assets = core_serve.get(core.core.clone()).unwrap();
+    let core_assets = core_serve.get(&core.core).unwrap();
     // Background
     commands.spawn_bundle(SpriteBundle {
         texture: core.join_world.clone(),

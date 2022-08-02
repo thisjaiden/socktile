@@ -152,16 +152,16 @@ impl Netty {
                 if disk.user().is_some() {
                     info!("Logging in user");
                     netty.say(Packet::UserPresence(disk.user().unwrap()));
-                    state.set(GameState::TitleScreen).unwrap();
+                    state.overwrite_set(GameState::TitleScreen).unwrap();
                 }
                 else {
                     info!("Opening user creation screen");
-                    state.set(GameState::MakeUser).unwrap();
+                    state.overwrite_set(GameState::MakeUser).unwrap();
                 }
             }
             _ => {
                 info!("No network connection");
-                state.set(GameState::OfflineTitle).unwrap();
+                state.overwrite_set(GameState::OfflineTitle).unwrap();
             }
         }
     }

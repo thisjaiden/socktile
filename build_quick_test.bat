@@ -11,7 +11,8 @@ copy "target\debug\socktile.exe" "testenv\server\socktile.exe"
 xcopy /q /e /i "assets" "testenv\client\assets"
 echo socktile.exe server > testenv\server\launch.bat
 echo pause >> testenv\server\launch.bat
-echo socktile.exe > testenv\client\crash_debug.bat
+echo set RUST_BACKTRACE=full > testenv\client\crash_debug.bat
+echo socktile.exe >> testenv\client\crash_debug.bat
 echo pause >> testenv\client\crash_debug.bat
 echo "[3/3] Starting programs..."
 start /d "testenv\server" launch.bat

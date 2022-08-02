@@ -63,5 +63,5 @@ pub fn logo(
         },
         ..default()
     }).insert(RemoveOnStateChange {});
-    state.set(GameState::Load).unwrap();
+    state.overwrite_set(GameState::Load).unwrap();
 }

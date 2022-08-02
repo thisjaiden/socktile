@@ -9,7 +9,7 @@ pub fn title_screen(
     core_serve: Res<Assets<ModularAssets>>,
     mut ui: ResMut<UIManager>
 ) {
-    let core_assets = core_serve.get(core.core.clone()).unwrap();
+    let core_assets = core_serve.get(&core.core).unwrap();
     commands.spawn_bundle(SpriteBundle {
         texture: core.title_screen.clone(),
         transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
