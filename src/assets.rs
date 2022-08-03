@@ -1,10 +1,14 @@
 use crate::prelude::*;
 use bevy_asset_loader::prelude::*;
 
+pub mod language;
+
 #[derive(AssetCollection)]
 pub struct CoreAssets {
     #[asset(path = "e.nrf")]
     pub core: Handle<crate::modular_assets::ModularAssets>,
+    #[asset(path = "lang/en_us.json")]
+    pub lang: Handle<LanguageKeys>,
     #[asset(path = "core/title_screen.png")]
     pub title_screen: Handle<Image>,
     #[asset(path = "core/create_user.png")]

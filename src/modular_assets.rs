@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use bevy::{
     utils::HashMap,
     reflect::TypeUuid,
@@ -12,18 +10,19 @@ use bevy::{
     }
 };
 use bevy_kira_audio::AudioSource;
-use rand::prelude::SliceRandom;
-use serde_json::Value;
 
-use crate::prelude::*;
+use crate::prelude::{*, language::{LanguageKeys, LanguageKeysLoader}};
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
 
 impl Plugin for ModularAssetsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset::<ModularAssets>()
-            .add_asset_loader(ModularAssetsLoader);
+        app
+            .add_asset::<ModularAssets>()
+            .add_asset_loader(ModularAssetsLoader)
+            .add_asset::<LanguageKeys>()
+            .add_asset_loader(LanguageKeysLoader);
     }
 }
 
@@ -31,24 +30,10 @@ impl Plugin for ModularAssetsPlugin {
 #[uuid = "8d513cb4-0fa2-4069-b6ad-fb7e8dd37031"]
 pub struct ModularAssets {
     audio_samples: Vec<(AudioSampleMetadata, Handle<AudioSource>)>,
-    language_keys: HashMap<String, LanguageValue>,
     terrain_data: TerrainData
 }
 
 impl ModularAssets {
-    pub fn get_lang(&self, key: &str) -> String {
-        let potential_value = self.language_keys.get(&key.to_string());
-        if let Some(value) = potential_value {
-            match value {
-                LanguageValue::Value(val) => val.clone(),
-                LanguageValue::RandomValue(vals) => Self::rand_array(vals.to_vec())
-            }
-        }
-        else {
-            warn!("No value found for language key {}", key);
-            key.to_string()
-        }
-    }
     pub fn get_audio(&self, name: &str) -> Handle<AudioSource> {
         for (meta, handle) in &self.audio_samples {
             if meta.name == name {
@@ -79,7 +64,7 @@ impl ModularAssets {
         if let Some(transitions_map) = transitions_maybe {
             let types_maybe = transitions_map.get(transition);
             if let Some(types) = types_maybe {
-                Self::rand_array(types.to_vec())
+                rand_from_array(types.to_vec())
             }
             else {
                 warn!("No transition {:?} for materials {} and {}, falling back", transition, central, non_central);
@@ -98,9 +83,6 @@ impl ModularAssets {
                 panic!("{FATAL_ERROR}");
             }
         }
-    }
-    fn rand_array<T: Any + Clone>(array: Vec<T>) -> T {
-        array.choose(&mut rand::thread_rng()).unwrap().clone()
     }
     fn get_transition_type(&self, environment: [usize; 9]) -> Option<(TransitionType, usize, usize)> {
         // check environment validity
@@ -385,23 +367,19 @@ impl AssetLoader for ModularAssetsLoader {
         Box::pin(async move {
             let mut final_out = ModularAssets {
                 audio_samples: vec![],
-                language_keys: default(),
                 terrain_data: default()
             };
             let audio_core: AudioMetadata;
-            let lang_core: Value;
             let terrain_core: TerrainDataJSON;
             let transition_core: Vec<TerrainTransitionJSON>;
 
             if EMBED_ASSETS {
                 audio_core = serde_json::from_slice(include_bytes!("../assets/metadata/audio.json")).unwrap();
-                lang_core = serde_json::from_slice(include_bytes!("../assets/lang/en_us.json")).unwrap();
                 terrain_core = serde_json::from_slice(include_bytes!("../assets/metadata/terrain.json")).unwrap();
                 transition_core = serde_json::from_slice(include_bytes!("../assets/metadata/transitions.json")).unwrap();
             }
             else {
                 audio_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/audio.json").unwrap()).unwrap();
-                lang_core = serde_json::from_str(&std::fs::read_to_string("../assets/lang/en_us.json").unwrap()).unwrap();
                 terrain_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/terrain.json").unwrap()).unwrap();
                 transition_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/transitions.json").unwrap()).unwrap();
             }
@@ -535,13 +513,6 @@ impl AssetLoader for ModularAssetsLoader {
             }
             info!("{} terrain transitions loaded", final_out.terrain_data.transitions.len());
             
-
-            let keys = grab_keys_recursively(String::from("en_us"), lang_core);
-            for (key, value) in keys {
-                final_out.language_keys.insert(key, value);
-            }
-            info!("{} language keys loaded", final_out.language_keys.len());
-            
             let loaded_asset = LoadedAsset::new(final_out);
             load_context.set_default_asset(loaded_asset.with_dependencies(dependencies));
             Ok(())
@@ -600,28 +571,6 @@ fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType
     output
 }
 
-/// Takes the keys out of a json object and monosizes them into (Key, Value) pairs.
-/// Subobjects are appended with a .[object] phrase
-fn grab_keys_recursively(current_key: String, current_value: Value) -> Vec<(String, LanguageValue)> {
-    let mut returnable = vec![];
-    for (key, value) in current_value.as_object().unwrap() {
-        if value.is_string() {
-            returnable.push((format!("{}.{}", current_key, key), LanguageValue::Value(value.as_str().unwrap().to_string())));
-        }
-        if value.is_array() {
-            let mut smallarray = vec![];
-            for element in value.as_array().unwrap() {
-                smallarray.push(element.as_str().unwrap().to_string());
-            }
-            returnable.push((format!("{}.{}", current_key, key), LanguageValue::RandomValue(smallarray)));
-        }
-        if value.is_object() {
-            returnable.append(&mut grab_keys_recursively(format!("{}.{}", current_key, key), value.clone()));
-        }
-    }
-    returnable
-}
-
 #[derive(Deserialize)]
 struct AudioMetadata {
     pub audio_samples: Vec<AudioSampleMetadata>
@@ -631,12 +580,6 @@ struct AudioMetadata {
 struct AudioSampleMetadata {
     pub name: String,
     pub meta_location: String
-}
-
-#[derive(Debug)]
-enum LanguageValue {
-    Value(String),
-    RandomValue(Vec<String>)
 }
 
 #[derive(Deserialize)]

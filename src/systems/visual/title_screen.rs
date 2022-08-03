@@ -6,10 +6,10 @@ pub fn title_screen(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    lang_serve: Res<Assets<LanguageKeys>>,
     mut ui: ResMut<UIManager>
 ) {
-    let core_assets = core_serve.get(&core.core).unwrap();
+    let lang = lang_serve.get(&core.lang).unwrap();
     commands.spawn_bundle(SpriteBundle {
         texture: core.title_screen.clone(),
         transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
@@ -21,7 +21,7 @@ pub fn title_screen(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.title_screen.new_game"),
+                    value: lang.get("en_us.core.title_screen.new_game"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -50,7 +50,7 @@ pub fn title_screen(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.title_screen.join_game"),
+                    value: lang.get("en_us.core.title_screen.join_game"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -79,7 +79,7 @@ pub fn title_screen(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.title_screen.quit"),
+                    value: lang.get("en_us.core.title_screen.quit"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -108,7 +108,7 @@ pub fn title_screen(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.title_screen.settings"),
+                    value: lang.get("en_us.core.title_screen.settings"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -137,7 +137,7 @@ pub fn title_screen(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.title_screen.splash"),
+                    value: lang.get("en_us.core.title_screen.splash"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 40.0,

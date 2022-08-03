@@ -4,10 +4,10 @@ pub fn join_world(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    lang_serve: Res<Assets<LanguageKeys>>,
     mut ui: ResMut<UIManager>
 ) {
-    let core_assets = core_serve.get(&core.core).unwrap();
+    let lang = lang_serve.get(&core.lang).unwrap();
     // Background
     commands.spawn_bundle(SpriteBundle {
         texture: core.join_world.clone(),
@@ -20,7 +20,7 @@ pub fn join_world(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: core_assets.get_lang("en_us.core.join_world.cancel"),
+                    value: lang.get("en_us.core.join_world.cancel"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,

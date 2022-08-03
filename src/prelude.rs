@@ -20,3 +20,4 @@ pub use crate::modular_assets::{ModularAssets, TransitionType, TerrainRendering}
 pub use crate::shared::netty::Packet;
 pub use crate::shared::saves::User;
 pub use crate::GameState;
+pub use crate::language::LanguageKeys;

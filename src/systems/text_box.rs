@@ -34,30 +34,30 @@ pub fn user_creation(
     mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<RemoveOnStateChange>>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>
+    lang_serve: Res<Assets<LanguageKeys>>
 ) {
-    let core_assets = core_serve.get(&core.core).unwrap();
+    let lang = lang_serve.get(&core.lang).unwrap();
     let mut text = tb_q.single_mut();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_hashtags");
+        text.sections[1].value = lang.get("en_us.core.create_user.no_hashtags");
     }
     else if tb.grab_buffer().contains('/') || tb.grab_buffer().contains('\\') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.no_slashes");
+        text.sections[1].value = lang.get("en_us.core.create_user.no_slashes");
     }
     else if tb.grab_buffer().starts_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_start");
+        text.sections[1].value = lang.get("en_us.core.create_user.space_start");
     }
     else if tb.grab_buffer().ends_with(' ') {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.space_end");
+        text.sections[1].value = lang.get("en_us.core.create_user.space_end");
     }
     else if tb.grab_buffer().chars().count() < 3 {
         text.sections[0].style.color = Color::RED;
-        text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_short");
+        text.sections[1].value = lang.get("en_us.core.create_user.too_short");
         if tb.grab_buffer().contains('\n') {
             tb.eat_buffer();
         }
@@ -69,15 +69,15 @@ pub fn user_creation(
         // Warnings for inconvenient but not disallowed names
         if tb.grab_buffer().chars().count() > 20 {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.too_long");
+            text.sections[1].value = lang.get("en_us.core.create_user.too_long");
         }
         else if tb.grab_buffer().contains("  ") {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.double_space");
+            text.sections[1].value = lang.get("en_us.core.create_user.double_space");
         }
         else if !tb.grab_buffer().is_ascii() {
             text.sections[0].style.color = Color::ORANGE;
-            text.sections[1].value = core_assets.get_lang("en_us.core.create_user.non_ascii");
+            text.sections[1].value = lang.get("en_us.core.create_user.non_ascii");
         }
         if tb.grab_buffer().contains('\n') {
             let mut mode = tb.grab_buffer();

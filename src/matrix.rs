@@ -1,4 +1,6 @@
+use std::any::Any;
 use num::Integer;
+use rand::seq::SliceRandom;
 
 pub fn _run_matrix_nxp<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer + Copy>(n: R, p: R, mut operation: F) {
     for x in n {
@@ -34,4 +36,8 @@ pub fn get_matrix_nxn<R: Iterator<Item = N> + Clone, N: Integer + Copy>(n: R) ->
         }
     }
     out
+}
+
+pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
+    array.choose(&mut rand::thread_rng()).unwrap().clone()
 }
