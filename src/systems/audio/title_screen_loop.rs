@@ -3,9 +3,9 @@ use bevy_kira_audio::Audio;
 
 pub fn title_screen_loop(
     audio: Res<Audio>,
-    assets: Res<CoreAssets>,
-    server: Res<Assets<ModularAssets>>
+    core: Res<CoreAssets>,
+    audio_serve: Res<Assets<AudioSamples>>
 ) {
-    let core_assets = server.get(&assets.core).unwrap();
-    audio.play_looped(core_assets.get_audio("title screen loop"));
+    let samples = audio_serve.get(&core.audio).unwrap();
+    audio.play_looped(samples.get("title screen loop"));
 }

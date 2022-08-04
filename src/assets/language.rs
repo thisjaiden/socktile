@@ -56,7 +56,7 @@ impl AssetLoader for LanguageKeysLoader {
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             let mut keys: HashMap<String, LanguageValue> = default();
-            let lang_core = serde_json::from_slice(bytes).unwrap();
+            let lang_core = serde_json::from_slice(bytes)?;
             let fresh_keys = grab_keys_recursively(load_context.path().file_stem().unwrap().to_str().unwrap(), lang_core);
             for (key, value) in fresh_keys {
                 keys.insert(key, value);
@@ -68,7 +68,7 @@ impl AssetLoader for LanguageKeysLoader {
         })
     }
     fn extensions(&self) -> &[&str] {
-        &["json"]
+        &["ljson"]
     }
 }
 

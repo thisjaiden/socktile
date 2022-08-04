@@ -211,12 +211,12 @@ pub fn ui_game(
     disk: Res<Disk>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    audio_serve: Res<Assets<AudioSamples>>,
 ) {
     if let Some(materials) = target_materials {
         if let Some(game_id) = man.join_game() {
-            let assets = core_serve.get(&core.core).unwrap();
-            audio.play(assets.get_audio("click"));
+            let samples = audio_serve.get(&core.audio).unwrap();
+            audio.play(samples.get("click"));
             state.replace(GameState::Play).unwrap();
             commands.spawn_bundle(SpriteBundle {
                 texture: materials.not_animated.clone(),
@@ -429,7 +429,7 @@ pub fn ui_disconnect_game(
     mut reality: ResMut<Reality>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    audio_serve: Res<Assets<AudioSamples>>,
     mut query: Query<
         Entity,
         Or<(
@@ -442,8 +442,8 @@ pub fn ui_disconnect_game(
     >
 ) {
     if man.queued_action == Some(UIClickAction::DisconnectFromWorld) {
-        let assets = core_serve.get(&core.core).unwrap();
-        audio.play(assets.get_audio("click"));
+        let samples = audio_serve.get(&core.audio).unwrap();
+        audio.play(samples.get("click"));
         man.reset_ui();
         netty.say(Packet::LeaveWorld);
         query.for_each_mut(|e| {
@@ -463,11 +463,11 @@ pub fn ui_return_create_world(
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    audio_serve: Res<Assets<AudioSamples>>,
 ) {
     if man.queued_action == Some(UIClickAction::GoToCreateWorld) {
-        let assets = core_serve.get(&core.core).unwrap();
-        audio.play(assets.get_audio("click"));
+        let samples = audio_serve.get(&core.audio).unwrap();
+        audio.play(samples.get("click"));
         man.reset_ui();
         state.replace(GameState::MakeGame).unwrap();
     }
@@ -478,11 +478,11 @@ pub fn ui_view_worlds(
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>,
+    audio_serve: Res<Assets<AudioSamples>>,
 ) {
     if man.queued_action == Some(UIClickAction::ViewWorldList) {
-        let assets = core_serve.get(&core.core).unwrap();
-        audio.play(assets.get_audio("click"));
+        let samples = audio_serve.get(&core.audio).unwrap();
+        audio.play(samples.get("click"));
         man.reset_ui();
         state.replace(GameState::ServerList).unwrap();
     }
@@ -493,11 +493,11 @@ pub fn ui_return_titlescreen(
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
-    core_serve: Res<Assets<ModularAssets>>
+    audio_serve: Res<Assets<AudioSamples>>
 ) {
     if man.queued_action == Some(UIClickAction::GoToTitleScreen) {
-        let assets = core_serve.get(&core.core).unwrap();
-        audio.play(assets.get_audio("click"));
+        let samples = audio_serve.get(&core.audio).unwrap();
+        audio.play(samples.get("click"));
         man.reset_ui();
         state.push(GameState::TitleScreen).unwrap();
     }

@@ -9,9 +9,8 @@ use bevy::{
         AssetPath
     }
 };
-use bevy_kira_audio::AudioSource;
 
-use crate::prelude::{*, language::{LanguageKeys, LanguageKeysLoader}};
+use crate::prelude::{*, language::LanguageKeysLoader, audio::AudioSamplesLoader};
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -22,27 +21,19 @@ impl Plugin for ModularAssetsPlugin {
             .add_asset::<ModularAssets>()
             .add_asset_loader(ModularAssetsLoader)
             .add_asset::<LanguageKeys>()
-            .add_asset_loader(LanguageKeysLoader);
+            .add_asset_loader(LanguageKeysLoader)
+            .add_asset::<AudioSamples>()
+            .add_asset_loader(AudioSamplesLoader);
     }
 }
 
 #[derive(TypeUuid, Debug)]
 #[uuid = "8d513cb4-0fa2-4069-b6ad-fb7e8dd37031"]
 pub struct ModularAssets {
-    audio_samples: Vec<(AudioSampleMetadata, Handle<AudioSource>)>,
     terrain_data: TerrainData
 }
 
 impl ModularAssets {
-    pub fn get_audio(&self, name: &str) -> Handle<AudioSource> {
-        for (meta, handle) in &self.audio_samples {
-            if meta.name == name {
-                return handle.clone();
-            }
-        }
-        error!("Unable to find an audio sample with the name '{}'", name);
-        panic!("{FATAL_ERROR}");
-    }
     // NOTE: INPUT ENVIRONMENT IS FLIPPED VERTICALLY (IN HUMAN LOGICAL ORDER)
     pub fn get_tile(&self, environment: [usize; 9], harsh: bool) -> (TerrainRendering, TransitionType) {
         let maybe_transition = self.get_transition_type(environment);
@@ -366,37 +357,21 @@ impl AssetLoader for ModularAssetsLoader {
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             let mut final_out = ModularAssets {
-                audio_samples: vec![],
                 terrain_data: default()
             };
-            let audio_core: AudioMetadata;
             let terrain_core: TerrainDataJSON;
             let transition_core: Vec<TerrainTransitionJSON>;
 
             if EMBED_ASSETS {
-                audio_core = serde_json::from_slice(include_bytes!("../assets/metadata/audio.json")).unwrap();
                 terrain_core = serde_json::from_slice(include_bytes!("../assets/metadata/terrain.json")).unwrap();
                 transition_core = serde_json::from_slice(include_bytes!("../assets/metadata/transitions.json")).unwrap();
             }
             else {
-                audio_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/audio.json").unwrap()).unwrap();
                 terrain_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/terrain.json").unwrap()).unwrap();
                 transition_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/transitions.json").unwrap()).unwrap();
             }
 
             let mut dependencies = vec![];
-
-            // audio dependencies
-            for sample in audio_core.audio_samples {
-                let path: AssetPath = load_context
-                    .path()
-                    .parent()
-                    .unwrap()
-                    .join(format!("audio/{}", sample.meta_location))
-                    .into();
-                final_out.audio_samples.push((sample, load_context.get_handle(path.clone())));
-                dependencies.push(path);
-            }
 
             // terrain metadata
             final_out.terrain_data.maximum_height = terrain_core.maximum_height;
@@ -406,8 +381,8 @@ impl AssetLoader for ModularAssetsLoader {
                 final_out.terrain_data.states.push(TerrainState {
                     name: definition.name,
                     approx_color: definition.approx_color,
-                    walk_sound: final_out.get_audio(&definition.walk_sound),
-                    run_sound: final_out.get_audio(&definition.run_sound)
+                    walk_sound: definition.walk_sound,
+                    run_sound: definition.run_sound
                 });
             }
             info!("{} terrain states loaded", final_out.terrain_data.states.len());
@@ -572,21 +547,10 @@ fn conjoin_styles(styles: TerrainRenderingTransitionJSON) -> Vec<(TransitionType
 }
 
 #[derive(Deserialize)]
-struct AudioMetadata {
-    pub audio_samples: Vec<AudioSampleMetadata>
-}
-
-#[derive(Deserialize, Debug)]
-struct AudioSampleMetadata {
-    pub name: String,
-    pub meta_location: String
-}
-
-#[derive(Deserialize)]
 struct TerrainDataJSON {
     minimum_height: usize,
     maximum_height: usize,
-    states: Vec<TerrainStateJSON>,
+    states: Vec<TerrainState>,
 }
 
 #[derive(Debug)]
@@ -611,19 +575,11 @@ impl Default for TerrainData {
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// Represents the state of a single tile of terrain.
-struct TerrainStateJSON {
+struct TerrainState {
     name: String,
     approx_color: String,
     walk_sound: String,
     run_sound: String
-}
-
-#[derive(Debug)]
-struct TerrainState {
-    name: String,
-    approx_color: String,
-    walk_sound: Handle<AudioSource>,
-    run_sound: Handle<AudioSource>
 }
 
 #[derive(Deserialize)]

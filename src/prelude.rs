@@ -21,3 +21,4 @@ pub use crate::shared::netty::Packet;
 pub use crate::shared::saves::User;
 pub use crate::GameState;
 pub use crate::language::LanguageKeys;
+pub use crate::audio::AudioSamples;
