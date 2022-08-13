@@ -11,14 +11,16 @@ pub use crate::server::npc::*;
 
 // Group imports
 pub use serde::{Deserialize, Serialize};
-pub use crate::resources::{Disk, Netty};
+pub use crate::resources::{Disk};
 pub use crate::shared::player::{Item, PlayerData, ItemAction};
 pub use crate::resources::ui::{UIManager, UIClickable, UIClickAction};
 pub use crate::modular_assets::{ModularAssets, TransitionType, TerrainRendering};
 
 // Individual imports
-pub use crate::shared::netty::Packet;
+pub use crate::shared::network::Packet;
+pub use crate::server::Globals;
 pub use crate::shared::saves::User;
 pub use crate::GameState;
 pub use crate::language::LanguageKeys;
 pub use crate::audio::AudioSamples;
+pub use netty::client::Client;

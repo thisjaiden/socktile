@@ -1,5 +1,5 @@
 pub mod listing;
 pub mod saves;
-pub mod netty;
+pub mod network;
 pub mod object;
 pub mod player;

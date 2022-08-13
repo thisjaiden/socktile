@@ -5,6 +5,7 @@ use crate::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use tracing_subscriber::{prelude::*, EnvFilter};
+use iyes_progress::ProgressPlugin;
 
 mod components;
 mod systems;
@@ -89,7 +90,6 @@ fn main() {
     app
         .add_loading_state(
             LoadingState::new(GameState::Load)
-                .continue_to_state(GameState::NetworkCheck)
                 .with_collection::<assets::CoreAssets>()
                 .with_collection::<assets::FontAssets>()
                 .with_collection::<assets::AnimatorAssets>()
@@ -98,6 +98,7 @@ fn main() {
                 .with_collection::<assets::ObjectAssets>()
                 .with_collection::<assets::NPCAssets>()
         )
+        .add_plugin(ProgressPlugin::new(GameState::Load).continue_to(GameState::NetworkCheck))
         .insert_resource(ClearColor(Color::WHITE))
         .add_plugin(modular_assets::ModularAssetsPlugin)
         .add_plugin(bevy_kira_audio::AudioPlugin)
@@ -114,8 +115,12 @@ fn main() {
                 .with_system(systems::audio::audio_setup)
         )
         .add_system_set(
+            SystemSet::on_update(GameState::Load)
+                .with_system(systems::visual::loading_prog)
+        )
+        .add_system_set(
             SystemSet::on_enter(GameState::NetworkCheck)
-                .with_system(resources::Netty::system_startup_checks)
+                .with_system(resources::network::system_startup_checks)
                 .with_system(systems::cursor::spawn)
         )
         .add_system_set(
@@ -170,7 +175,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(GameState::ServerList)
-                .with_system(resources::Netty::system_server_list.label("any"))
+                .with_system(resources::network::system_server_list.label("any"))
                 .with_system(systems::visual::join_world.label("any"))
                 .with_system(systems::visual::clear_old.before("any"))
         )
@@ -183,7 +188,7 @@ fn main() {
         .add_system(window_setup::window_update)
         .add_system(systems::cursor::cursor.label("cursor"))
         .add_system(systems::text_box::text_input)
-        .add_system(resources::Netty::system_step)
+        .add_system(resources::network::system_step)
         .add_system(resources::ui::ui_open_settings)
         .add_system(resources::ui::ui_manager.after("cursor").before("player"))
         .add_system(resources::ui::ui_quick_exit)
@@ -195,7 +200,7 @@ fn main() {
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())
-        .insert_resource(resources::Netty::init())
+        .insert_resource(resources::network::init())
         .insert_resource(resources::ui::UIManager::init())
         .insert_resource(resources::Disk::init())
         .insert_resource(resources::Chat::init())
@@ -251,22 +256,34 @@ fn main() {
 }
 
 fn log_setup() {
-    tracing_log::LogTracer::init().unwrap();
-    let fmt_layer = if consts::DEV_BUILD {
-        tracing_subscriber::fmt::Layer::default()
-            .without_time()
-            .with_file(false)
-            .with_line_number(true)
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        tracing_log::LogTracer::init().unwrap();
+        let fmt_layer = if consts::DEV_BUILD {
+            tracing_subscriber::fmt::Layer::default()
+                .without_time()
+                .with_file(false)
+                .with_line_number(true)
+        }
+        else {
+            tracing_subscriber::fmt::Layer::default()
+                .without_time()
+                .with_file(false)
+                .with_line_number(false)
+        };
+        let subscriber = tracing_subscriber::Registry::default()
+            .with(fmt_layer)
+            .with(EnvFilter::new("INFO,wgpu=error,symphonia=error"));
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("Couldn't set global tracing subscriber");
     }
-    else {
-        tracing_subscriber::fmt::Layer::default()
-            .without_time()
-            .with_file(false)
-            .with_line_number(false)
-    };
-    let subscriber = tracing_subscriber::Registry::default()
-        .with(fmt_layer)
-        .with(EnvFilter::new("INFO,wgpu=error,symphonia=error"));
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Couldn't set global tracing subscriber");
+    #[cfg(target_arch = "wasm32")]
+    {
+        tracing_wasm::set_as_global_default_with_config(
+            tracing_wasm::WASMLayerConfigBuilder::new()
+                .set_max_level(tracing::Level::WARN)
+                .build()
+        );
+        console_error_panic_hook::set_once();
+    }
 }

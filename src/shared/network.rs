@@ -121,6 +121,16 @@ pub enum Packet {
     ActionAnimation(ItemAction)
 }
 
+impl netty::Packet for Packet {
+    fn from_reader<R: std::io::Read>(_: &mut R) -> Option<Self> {
+        todo!()
+    }
+
+    fn write<W: std::io::Write + ?Sized>(&self, _: &mut W) -> () {
+        todo!()
+    }
+}
+
 impl Packet {
     pub fn from_read<R: std::io::Read>(read: &mut R) -> Packet {
         bincode::deserialize_from(read).unwrap_or(Packet::FailedDeserialize)

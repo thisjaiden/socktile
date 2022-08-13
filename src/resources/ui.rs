@@ -206,7 +206,7 @@ pub fn ui_game(
     mut commands: Commands,
     target_materials: Option<Res<AnimatorAssets>>,
     mut state: ResMut<State<GameState>>,
-    mut netty: ResMut<Netty>,
+    mut netty: ResMut<Client<Packet>>,
     mut man: ResMut<UIManager>,
     disk: Res<Disk>,
     audio: Res<Audio>,
@@ -227,7 +227,7 @@ pub fn ui_game(
                 ),
                 ..Default::default()
             }).insert(disk.user().unwrap());
-            netty.say(Packet::JoinWorld(game_id));
+            netty.send(Packet::JoinWorld(game_id));
             man.reset_ui();
         }
     }
@@ -424,7 +424,7 @@ pub fn ui_resume_game_settings(
 pub fn ui_disconnect_game(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
-    mut netty: ResMut<Netty>,
+    mut netty: ResMut<Client<Packet>>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
     audio: Res<Audio>,
@@ -445,7 +445,7 @@ pub fn ui_disconnect_game(
         let samples = audio_serve.get(&core.audio).unwrap();
         audio.play(samples.get("click"));
         man.reset_ui();
-        netty.say(Packet::LeaveWorld);
+        netty.send(Packet::LeaveWorld);
         query.for_each_mut(|e| {
             commands.entity(e).despawn();
         });

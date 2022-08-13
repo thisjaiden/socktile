@@ -367,8 +367,17 @@ impl AssetLoader for ModularAssetsLoader {
                 transition_core = serde_json::from_slice(include_bytes!("../assets/metadata/transitions.json")).unwrap();
             }
             else {
-                terrain_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/terrain.json").unwrap()).unwrap();
-                transition_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/transitions.json").unwrap()).unwrap();
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    terrain_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/terrain.json").unwrap()).unwrap();
+                    transition_core = serde_json::from_str(&std::fs::read_to_string("../assets/metadata/transitions.json").unwrap()).unwrap();
+                }
+                #[cfg(target_arch = "wasm32")]
+                {
+                    // TODO: This whole thing needs to be nuked and redone for better native wasm
+                    terrain_core = TerrainDataJSON { minimum_height: 0, maximum_height: 5, states: vec![] };
+                    transition_core = vec![]; //TerrainTransitionJSON { names: vec![], meta_location: String::new() };
+                }
             }
 
             let mut dependencies = vec![];
@@ -402,6 +411,7 @@ impl AssetLoader for ModularAssetsLoader {
                     contents += "\"}";
                 }
                 contents += "],";
+                #[cfg(not(target_arch = "wasm32"))]
                 std::fs::write("./injectable.json", contents).unwrap();
                 info!("injectable.json written");
             }

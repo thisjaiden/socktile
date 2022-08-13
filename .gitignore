@@ -7,3 +7,4 @@ me.bic
 *.png.kra
 /testenv
 *.ini
+/dist

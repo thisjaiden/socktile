@@ -15,6 +15,7 @@ impl Disk {
             return Disk {
                 window_config: WindowConfig::default(),
                 control_config: ControlConfig::default(),
+                audio_config: AudioConfig::default(),
                 user: None
             }
         }

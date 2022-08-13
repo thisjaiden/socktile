@@ -148,7 +148,7 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         mut animator: ResMut<Animator>,
-        mut netty: ResMut<Netty>,
+        mut netty: ResMut<Client<Packet>>,
         disk: Res<Disk>,
         mut objects: Query<(Entity, &mut Object)>
     ) {
@@ -160,7 +160,7 @@ impl Reality {
                 // mark action for animation
                 animator.mark_action(disk.user().unwrap(), action);
                 // send animation to others
-                netty.say(Packet::ActionAnimation(action));
+                netty.send(Packet::ActionAnimation(action));
                 // check for tree in range
                 objects.for_each_mut(|(e, mut obj)| {
                     if let ObjectType::Tree(strength) = obj.rep {
@@ -170,12 +170,12 @@ impl Reality {
                                 // damage tree
                                 obj.rep = ObjectType::Tree(strength - power);
                                 // update entity on server
-                                netty.say(Packet::UpdateObject(obj.clone()));
+                                netty.send(Packet::UpdateObject(obj.clone()));
                             }
                             else {
                                 // destroy tree
                                 // remove entity on server
-                                netty.say(Packet::RemoveObject(obj.uuid));
+                                netty.send(Packet::RemoveObject(obj.uuid));
                                 // despawn entity locally
                                 commands.entity(e).despawn();
                             }
@@ -237,11 +237,11 @@ impl Reality {
     /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Netty>
+        mut netty: ResMut<Client<Packet>>
     ) {
         for (chunk, status) in selfs.chunk_status.iter_mut() {
             if !status.downloaded {
-                netty.say(Packet::RequestChunk(*chunk));
+                netty.send(Packet::RequestChunk(*chunk));
                 status.needs_download_request = false;
             }
         }
@@ -588,7 +588,7 @@ impl Reality {
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Netty>,
+        mut netty: ResMut<Client<Packet>>,
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
@@ -757,7 +757,7 @@ impl Reality {
             // send to server
             if had_movement {
                 selfs.set_player_position(new_pos);
-                netty.say(Packet::RequestMove(selfs.player_position));
+                netty.send(Packet::RequestMove(selfs.player_position));
             }
         }
     }
@@ -871,7 +871,7 @@ impl Reality {
     }
     pub fn system_pause_invite(
         mut tb: ResMut<crate::resources::TextBox>,
-        mut netty: ResMut<Netty>,
+        mut netty: ResMut<Client<Packet>>,
         mut selfs: ResMut<Reality>,
         mut tbe: Query<&mut Text, With<crate::components::TextBox>>
     ) {
@@ -894,7 +894,7 @@ impl Reality {
             strs = String::from(strs.trim_end_matches('\n'));
             let tag = strs.split('#').nth(1).unwrap().parse::<u16>();
             if let Ok(val) = tag {
-                netty.say(Packet::WhitelistUser(User {
+                netty.send(Packet::WhitelistUser(User {
                     username: tb.grab_buffer().split('#').next().unwrap().to_string(),
                     tag: val
                 }));

@@ -1,13 +1,27 @@
 use crate::prelude::*;
 use std::net::SocketAddr;
-use bevy::utils::HashMap;
-use super::SaveGame;
+use super::{SaveGame, Profile};
+
+use std::sync::{Arc, Mutex};
 
 #[allow(non_snake_case)]
-pub fn tick(servers: &mut Vec<SaveGame>, ips: &HashMap<User, SocketAddr>) -> Vec<(Packet, SocketAddr)> {
+pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
     let mut outgoing: Vec<(Packet, SocketAddr)> = vec![];
+    let mut glob_access = globals.lock().unwrap();
+    if glob_access.last_autosave.elapsed() > AUTOSAVE_FREQUENCY {
+        glob_access.last_autosave = std::time::Instant::now();
+        info!("Saving worlds and profiles");
+        for world in glob_access.worlds.clone() {
+            save_world(world);
+        }
+        for profile in glob_access.profiles.clone() {
+            save_profile(profile);
+        }
+        info!("Done saving");
+    }
     // For every world...
-    for server in servers {
+    let ips = glob_access.user_to_addr.clone();
+    for server in &mut glob_access.worlds {
         let mut removed = 0;
         // For every object...
         'object: for (object_index, object) in server.data.objects.clone().iter().enumerate() {
@@ -69,4 +83,37 @@ pub fn tick(servers: &mut Vec<SaveGame>, ips: &HashMap<User, SocketAddr>) -> Vec
         }
     }
     outgoing
+}
+
+fn save_world(save: SaveGame) {
+    let enc = bincode::serialize(&save).expect("Unable to serialize a SaveGame.");
+    std::fs::write(save.path, enc).expect("Unable to write a SaveGame to disk.");
+}
+
+pub fn save_folder() -> std::path::PathBuf {
+    let mut dir = std::env::current_dir().expect("Unable to access the current directory.");
+    dir.push("saves");
+    std::fs::create_dir_all(dir.clone()).expect("Unable to create required directories.");
+    dir
+}
+
+/// Returns a `PathBuf` to the folder used for storing profiles.
+pub fn profile_folder() -> std::path::PathBuf {
+    let mut dir = std::env::current_dir().expect("Unable to access the current directory.");
+    dir.push("users");
+    std::fs::create_dir_all(dir.clone()).expect("Unable to create required directories.");
+    dir
+}
+
+/// Saves a `Profile` to the disk.
+fn save_profile(profile: Profile) {
+    // Encode profile
+    let enc = bincode::serialize(&profile).expect("Unable to serialize a Profile.");
+
+    // Get appropriate path and name
+    let mut path = profile_folder();
+    path.push(format!("{}{}.bic", profile.user.username, profile.user.tag));
+
+    // Save to disk
+    std::fs::write(path, enc).expect("Unable to write a profile to the disk.");
 }

@@ -24,24 +24,28 @@ pub const TERRAIN_DEBUG: bool = true;
 /// Show debug lines over player hitboxes?
 pub const PLAYER_DEBUG: bool = true;
 /// Should assets be included in the exe?
+#[cfg(not(target_arch = "wasm32"))]
 pub const EMBED_ASSETS: bool = true;
+/// Embedded assets are never enabled for WASM, as they don't work there.
+#[cfg(target_arch = "wasm32")]
+pub const EMBED_ASSETS: bool = false;
 
 /// The current version tag for netty. If this is different from whoever you're talking to, they're likely
 /// using an incompatible protocol.
 pub const NETTY_VERSION: &str = "closed-alpha-iteration-24";
-/// Port for network connections
-pub const NETTY_PORT: u16 = 11111;
+/// Port for tcp network connections
+pub const TCP_PORT: u16 = 11111;
+/// Port for ws network connections
+pub const WS_PORT: u16 = 11112;
 /// Global game server address
 #[cfg(debug_assertions)]
 pub const GGS: [u8; 4] = [127, 0, 0, 1];
 #[cfg(not(debug_assertions))]
 pub const GGS: [u8; 4] = [69, 180, 176, 49];
 /// Time in seconds before a connection is considered unable to connect
-pub const TIMEOUT_DURATION: u64 = 3;
-/// Time in ms between game ticks on the server
-pub const TICK_TIME: u64 = 25;
-/// Time in minutes between game saves on the server
-pub const SAVE_TIME: u64 = 30;
+pub const TIMEOUT_DURATION: std::time::Duration = std::time::Duration::from_secs(3);
+/// Time between game saves on the server
+pub const AUTOSAVE_FREQUENCY: std::time::Duration = std::time::Duration::from_secs(60 * 5);
 
 /// Size of the player hitbox in pixels
 pub const PLAYER_HITBOX: (f64, f64) = (64.0, 64.0);

@@ -1,3 +1,0 @@
-# Usually nightly, nightly broken with bevy 0.6.1 currently
-[toolchain]
-channel = "stable"

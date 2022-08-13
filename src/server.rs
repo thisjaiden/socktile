@@ -1,125 +1,35 @@
-use std::{
-    net::SocketAddr,
-    path::PathBuf,
-    sync::{
-        Arc,
-        Mutex
-    }
-};
+use std::{net::SocketAddr, path::PathBuf};
 
 use bevy::utils::HashMap;
 use crate::prelude::*;
-use crate::shared::listing::GameListing;
 
+mod handler;
+use handler::handler;
 mod tick;
+use tick::tick;
+
+mod globals;
+pub use globals::Globals;
+
+use self::tick::{profile_folder, save_folder};
+
 pub mod npc;
 mod world;
 
 /// Starts the game server!
 pub fn startup(arguments: Vec<String>) -> ! {
-    // Create our shared packet buffers
-    let recv = Arc::new(Mutex::new(vec![]));
-    let send = Arc::new(Mutex::new(vec![]));
-    // Create a clone of these buffers to move into another thread
-    let recv_clone = recv.clone();
-    let send_clone = send.clone();
-    std::thread::spawn(move || {
-        // Start the actual network watching and communication part of the server
-        initiate_host(recv_clone, send_clone, arguments);
+    let server = netty::server::launch_server::<Packet, Globals>(netty::server::ServerConfig {
+        public_facing: true,
+        tcp_port: TCP_PORT,
+        ws_port: WS_PORT,
+        handler,
+        tick,
+        ..default()
     });
-    let mut timer = std::time::Instant::now();
-    let mut autosave = std::time::Instant::now();
-    let mut saves = saves();
-    let mut profiles = profiles();
-    let mut ip_by_user: HashMap<User, SocketAddr> = HashMap::default();
-    let mut user_by_ip: HashMap<SocketAddr, User> = HashMap::default();
-    let mut server_by_user: HashMap<User, usize> = HashMap::default();
-    let mut sorted = vec![];
-    info!("Found {} profiles and {} saves.", profiles.len(), saves.len());
-    info!("Sorting saves...");
-    for i in 0..saves.len() {
-        for save in saves.clone() {
-            if save.internal_id == i {
-                sorted.push(save);
-            }
-        }
-    }
-    saves = sorted;
-    info!("Saves sorted. Server started!");
-    loop {
-        if timer.elapsed() > std::time::Duration::from_millis(TICK_TIME) {
-            // Save every 30 mins
-            if autosave.elapsed() > std::time::Duration::from_secs(60 * SAVE_TIME) {
-                info!("Saving worlds and profiles");
-                for world in saves.clone() {
-                    save(world);
-                }
-                for profile in profiles.clone() {
-                    save_profile(profile);
-                }
-                info!("Done saving");
-                autosave = std::time::Instant::now();
-            }
-            // logic tick
-            let mut func_send = send.lock().unwrap();
-            func_send.append(&mut tick::tick(&mut saves, &ip_by_user));
-            drop(func_send);
-
-            // packet instant response and incoming handler
-            let mut func_recv = recv.lock().unwrap();
-            let incoming_data = func_recv.clone();
-            func_recv.clear();
-            drop(func_recv);
+    /*
             for (packet, from) in incoming_data {
                 match packet {
-                    Packet::NettyVersion(v) => {
-                        let mut func_send = send.lock().unwrap();
-                        if v == NETTY_VERSION {
-                            func_send.push((Packet::AllSet, from));
-                        }
-                        else {
-                            func_send.push((Packet::WrongVersion(String::from(NETTY_VERSION)), from));
-                        }
-                        drop(func_send);
-                    }
-                    Packet::CreateUser(user) => {
-                        let mut tag = 0;
-                        for profile in profiles.clone() {
-                            if profile.user.username == user.username && profile.user.tag > tag {
-                                tag = profile.user.tag;
-                            }
-                        }
-                        let new_user = User {
-                            username: user.username,
-                            tag: tag + 1
-                        };
-                        if new_user.tag > 9999 {
-                            let mut func_send = send.lock().unwrap();
-                            func_send.push((Packet::OverusedName, from));
-                            drop(func_send);
-                            break;
-                        }
-                        let new_profile = Profile {
-                            user: new_user.clone(),
-                            avalable_games: vec![]
-                        };
-                        profiles.push(new_profile.clone());
-                        save_profile(new_profile.clone());
-                        let mut func_send = send.lock().unwrap();
-                        ip_by_user.insert(new_user.clone(), from);
-                        user_by_ip.insert(from, new_user.clone());
-                        func_send.push((Packet::CreatedUser(new_user), from));
-                        drop(func_send);
-                    }
-                    Packet::UserPresence(user) => {
-                        if user.tag > 0 {
-                            ip_by_user.insert(user.clone(), from);
-                            user_by_ip.insert(from, user);
-                        }
-                        let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::AllSet, from));
-                        drop(func_send);
-                    }
+                    
                     Packet::CreateWorld(name) => {
                         let mut world_id = 0;
                         if let Some(last) = saves.last() {
@@ -457,34 +367,11 @@ pub fn startup(arguments: Vec<String>) -> ! {
                 }
             }
             timer = std::time::Instant::now();
-        }
-        else {
-            std::thread::sleep(std::time::Duration::from_millis(TICK_TIME) - timer.elapsed());
-        }
-    }
+    */
 }
 
 
-/// Returns a `PathBuf` to the folder used for storing profiles.
-pub fn profile_folder() -> PathBuf {
-    let mut dir = std::env::current_dir().expect("Unable to access the current directory.");
-    dir.push("users");
-    std::fs::create_dir_all(dir.clone()).expect("Unable to create required directories.");
-    dir
-}
 
-/// Saves a `Profile` to the disk.
-pub fn save_profile(profile: Profile) {
-    // Encode profile
-    let enc = bincode::serialize(&profile).expect("Unable to serialize a Profile.");
-
-    // Get appropriate path and name
-    let mut path = profile_folder();
-    path.push(format!("{}{}.bic", profile.user.username, profile.user.tag));
-
-    // Save to disk
-    std::fs::write(path, enc).expect("Unable to write a profile to the disk.");
-}
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 /// Represents one user's profile.
@@ -520,17 +407,7 @@ pub fn saves() -> Vec<SaveGame> {
     saved_games
 }
 
-pub fn save(save: SaveGame) {
-    let enc = bincode::serialize(&save).expect("Unable to serialize a SaveGame.");
-    std::fs::write(save.path, enc).expect("Unable to write a SaveGame to disk.");
-}
 
-pub fn save_folder() -> PathBuf {
-    let mut dir = std::env::current_dir().expect("Unable to access the current directory.");
-    dir.push("saves");
-    std::fs::create_dir_all(dir.clone()).expect("Unable to create required directories.");
-    dir
-}
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct SaveGame {
@@ -541,81 +418,4 @@ pub struct SaveGame {
     pub whitelist: Vec<User>,
     pub played_before: Vec<User>,
     pub owner: User,
-}
-
-pub fn initiate_host(recv_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, send_buffer: Arc<Mutex<Vec<(Packet, SocketAddr)>>>, arguments: Vec<String>) -> ! {
-    info!("Preparing network functions");
-    info!("Netty version: {NETTY_VERSION}");
-    let mut net = None;
-    for (index, argument) in arguments.iter().enumerate() {
-        if argument == "port" {
-            if arguments.len() > index + 1 {
-                info!("Using port {} (overridden)", arguments[index + 1]);
-                net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", arguments[index + 1])));
-            }
-            else {
-                error!("Invalid argument for port. (none)");
-            }
-        }
-    }
-    if net.is_none() {
-        info!("Using port {NETTY_PORT} (default)");
-        net = Some(std::net::TcpListener::bind(format!("0.0.0.0:{}", NETTY_PORT)));
-    }
-    
-    if let Some(Ok(network)) = net {
-        for connection in network.incoming() {
-            if let Ok(mut stream) = connection {
-                let recv_clone = recv_buffer.clone();
-                let send_clone = send_buffer.clone();
-                let remote_addr = stream.peer_addr().expect("Unable to get the remote address of a client.");
-                let mut stream_clone = stream.try_clone().unwrap();
-                std::thread::spawn(move || {
-                    let recv = recv_clone;
-                    loop {
-                        let pkt = Packet::from_read(&mut stream);
-                        let mut recv_access = recv.lock().unwrap();
-                        if pkt == Packet::FailedDeserialize {
-                            // TODO: Signal to disconnect from any services
-                            break;
-                        }
-                        recv_access.push((pkt, remote_addr));
-                        drop(recv_access);
-                    }
-                });
-                std::thread::spawn(move || {
-                    let send = send_clone;
-                    loop {
-                        let mut destroy_conenction = false;
-                        let mut send_access = send.lock().unwrap();
-                        let mut removed = 0;
-                        for (index, (packet, address)) in send_access.clone().iter().enumerate() {
-                            if packet == &Packet::FailedDeserialize {
-                                destroy_conenction = true;
-                            }
-                            if address == &remote_addr {
-                                Packet::to_write(&mut stream_clone, packet.clone());
-                                send_access.remove(index - removed);
-                                removed += 1;
-                            }
-                        }
-                        drop(send_access);
-                        if destroy_conenction {
-                            trace!("Dropping connection to {remote_addr:?}");
-                            break;
-                        }
-                        std::thread::sleep(std::time::Duration::from_millis(20));
-                    }
-                });
-            }
-            else {
-                warn!("Error occured connecting a stream");
-            }
-        }
-    }
-    else {
-        error!("Unable to bind to network effectively. Check that nothing else is running on the same port.");
-        panic!("{FATAL_ERROR}");
-    }
-    unreachable!();
 }

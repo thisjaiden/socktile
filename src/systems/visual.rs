@@ -1,4 +1,5 @@
 mod title_screen;
+use iyes_progress::ProgressCounter;
 pub use title_screen::title_screen;
 mod make_user;
 pub use make_user::make_user;
@@ -12,6 +13,15 @@ mod settings;
 pub use settings::*;
 
 use crate::prelude::*;
+
+// TODO: move to seperate file
+pub fn loading_prog(
+    progress: Option<Res<ProgressCounter>>,
+) {
+    if let Some(progress) = progress.map(|counter| counter.progress()) {
+        warn!("Progress: {:?}", progress);
+    }
+}
 
 pub fn clear_old(
     mut commands: Commands,
