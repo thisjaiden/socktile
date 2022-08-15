@@ -17,8 +17,9 @@ pub mod npc;
 mod world;
 
 /// Starts the game server!
-pub fn startup(arguments: Vec<String>) -> ! {
-    let server = netty::server::launch_server::<Packet, Globals>(netty::server::ServerConfig {
+pub fn startup(_arguments: Vec<String>) -> ! {
+    // TODO: add argument functionality back
+    netty::server::launch_server::<Packet, Globals>(netty::server::ServerConfig {
         public_facing: true,
         tcp_port: TCP_PORT,
         ws_port: WS_PORT,
@@ -27,61 +28,6 @@ pub fn startup(arguments: Vec<String>) -> ! {
         ..default()
     });
     /*
-            for (packet, from) in incoming_data {
-                match packet {
-                    
-                    Packet::CreateWorld(name) => {
-                        let mut world_id = 0;
-                        if let Some(last) = saves.last() {
-                            world_id = last.internal_id + 1;
-                        }
-                        let mut path = save_folder();
-
-                        // This replaces invalid characters (ones that would break file paths) with "I".
-                        // On windows these are \ / : * ? " < > |
-                        // I've also included  . and ' just in case
-                        let mut rname = name.clone();
-                        rname = rname
-                            .replace('\\', "I")
-                            .replace('/', "I")
-                            .replace(':', "I")
-                            .replace('*', "I")
-                            .replace('?', "I")
-                            .replace('"', "I")
-                            .replace('<', "I")
-                            .replace('>', "I")
-                            .replace('|', "I")
-                            .replace('.', "I")
-                            .replace('\'', "I");
-                        // Don't allow world names to be longer than 10 characters
-                        if rname.chars().count() > 10 {
-                            // dirty code to grab the first 10 characters
-                            rname = rname.chars().collect::<Vec<char>>().split_at(10).0.iter().collect();
-                        }
-                        
-                        path.push(format!("{}_{}.bic", rname, world_id));
-                        let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::CreateWorld(String)");
-                        for (index, profile) in profiles.clone().into_iter().enumerate() {
-                            if owner == &profile.user {
-                                profiles[index].avalable_games.push(world_id);
-                            }
-                        }
-                        let owner = owner.clone();
-                        saves.push(
-                            SaveGame {
-                                public_name: name,
-                                internal_id: world_id,
-                                data: world::World::new(),
-                                path,
-                                whitelist: vec![owner.clone()],
-                                played_before: vec![],
-                                owner
-                            }
-                        );
-                        let mut func_send = send.lock().unwrap();
-                        func_send.push((Packet::CreatedWorld(saves.last().unwrap().internal_id), from));
-                        drop(func_send);
-                    }
                     Packet::JoinWorld(world_id) => {
                         let owner = user_by_ip.get(&from).expect("No user found for an IP adress used with Packet::JoinWorld(usize)");
                         
@@ -361,12 +307,6 @@ pub fn startup(arguments: Vec<String>) -> ! {
                         let object_index = object_index.expect("No object found with given uuid for Packet::UpdateObject");
                         saves[*server].data.objects[object_index] = obj;
                     }
-                    _ => {
-                        // Ignore this packet, we don't handle it.
-                    }
-                }
-            }
-            timer = std::time::Instant::now();
     */
 }
 

@@ -121,22 +121,24 @@ pub enum Packet {
     ActionAnimation(ItemAction)
 }
 
+use std::io::prelude::*;
+use std::io::BufReader;
+
 impl netty::Packet for Packet {
-    fn from_reader<R: std::io::Read>(_: &mut R) -> Option<Self> {
-        todo!()
+    fn from_reader<R: std::io::Read>(reader: &mut R) -> Self {
+        let pkt = bincode::deserialize_from(reader).unwrap();
+        println!("Got a packet {:?}!", pkt);
+        return pkt;
     }
 
-    fn write<W: std::io::Write + ?Sized>(&self, _: &mut W) -> () {
-        todo!()
+    fn write<W: std::io::Write + ?Sized>(&self, writer: &mut W) -> () {
+        writer.write_all(&bincode::serialize(self).expect("Netty unable to serialize packet")).expect("Netty unable to write serialized packet");
+        writer.flush().expect("Netty unable to flush buffer");
     }
 }
 
 impl Packet {
     pub fn from_read<R: std::io::Read>(read: &mut R) -> Packet {
         bincode::deserialize_from(read).unwrap_or(Packet::FailedDeserialize)
-    }
-    pub fn to_write<W: std::io::Write>(write: &mut W, packet: Packet) {
-        write.write_all(&bincode::serialize(&packet).expect("Netty unable to serialize packet")).expect("Netty unable to write serialized packet");
-        write.flush().expect("Netty unable to flush buffer");
     }
 }
