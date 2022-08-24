@@ -53,20 +53,23 @@ fn main() {
         info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021-2022.");
         info!("Do not share this software without permission from the property owners.");
     }
-    // If starting a server is allowed...
-    if consts::ALLOW_GGS {
-        // Grab CLI arguments
-        let mut args = std::env::args();
-        // Throw away the caller path, we don't need it
-        args.next();
-        // Collect the rest of the arguments
-        let arguments: Vec<String> = args.collect();
-        // If one of the arguments is `server`...
-        if arguments.contains(&String::from("server")) {
-            // Run a server
-            // `server::startup();` returns a never type and should never proceed to launching a normal game.
-            info!("Running as a server. Make sure you know what you're doing!");
-            server::startup(arguments);
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // If starting a server is allowed...
+        if consts::ALLOW_GGS {
+            // Grab CLI arguments
+            let mut args = std::env::args();
+            // Throw away the caller path, we don't need it
+            args.next();
+            // Collect the rest of the arguments
+            let arguments: Vec<String> = args.collect();
+            // If one of the arguments is `server`...
+            if arguments.contains(&String::from("server")) {
+                // Run a server
+                // `server::startup();` returns a never type and should never proceed to launching a normal game.
+                info!("Running as a server. Make sure you know what you're doing!");
+                server::startup(arguments);
+            }
         }
     }
 
@@ -200,7 +203,6 @@ fn main() {
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())
-        .insert_resource(resources::network::init())
         .insert_resource(resources::ui::UIManager::init())
         .insert_resource(resources::Disk::init())
         .insert_resource(resources::Chat::init())

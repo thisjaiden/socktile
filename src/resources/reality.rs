@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::{*, tiles::TileTransitionConfig}, modular_assets::{TransitionType, conjoin_styles}};
 use bevy::{render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
@@ -268,10 +268,20 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         core: Res<CoreAssets>,
-        core_serve: Res<Assets<ModularAssets>>,
+        types_serve: Res<Assets<TileTypeConfig>>,
+        master_transition_serve: Res<Assets<TileTransitionMasterConfig>>,
+        transition_serve: Res<Assets<TileTransitionConfig>>,
         mut atlas_serve: ResMut<Assets<TextureAtlas>>
     ) {
-        let mod_assets = core_serve.get(&core.core).unwrap();
+        let tile_types = types_serve.get(&core.tiles).unwrap();
+        let transition_types = master_transition_serve.get(&core.transitions).unwrap();
+        let mut transition_types_mapped: HashMap<[String; 2], TileTransitionConfig> = default();
+        for transition_type in &transition_types.transitions {
+            let a = transition_serve.get(&transition_type.1.clone());
+            if let Some(b) = a {
+                transition_types_mapped.insert(transition_type.0.clone(), b.clone());
+            }
+        }
         let mut inserts = vec![];
         for (chunk, status) in selfs.chunk_status.iter() {
             if status.waiting_to_render && status.downloaded {
@@ -292,61 +302,86 @@ impl Reality {
                     for index in stuff {
                         let tile_x = index % CHUNK_WIDTH;
                         let tile_y = index / CHUNK_WIDTH;
-                        let pot_rendering = get_tile_rendering(tile_x, tile_y, mod_assets, data, &selfs, chunk, &mut inserts, top);
-                        if let Some(rendering) = pot_rendering {
-                            match rendering.0.0 {
-                                TerrainRendering::Sprite(img) => {
-                                    commands.spawn_bundle(SpriteBundle {
-                                        transform: Transform::from_xyz(
-                                            (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                            (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                            BACKGROUND
-                                        ),
-                                        texture: img,
-                                        ..default()
-                                    })
-                                    .insert(Tile {
-                                        chunk: *chunk,
-                                        position: (tile_x, tile_y),
-                                        transition_type: rendering.0.1,
-                                        harsh: rendering.1
-                                    });
-                                },
-                                TerrainRendering::SpriteSheet(img, width, height, loc) => {
-                                    let sprite = TextureAtlasSprite {
-                                        index: loc,
-                                        ..default()
-                                    };
-                                    let new_atlas = TextureAtlas::from_grid(
-                                        img,
-                                        Vec2::new(64.0, 64.0),
-                                        width, height
-                                    );
-                                    let atlas_handle = atlas_serve.add(new_atlas);
-                                    commands.spawn_bundle(SpriteSheetBundle {
-                                        transform: Transform::from_xyz(
-                                            (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                            (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                            BACKGROUND
-                                        ),
-                                        sprite,
-                                        texture_atlas: atlas_handle,
-                                        ..default()
-                                    })
-                                    .insert(Tile {
-                                        chunk: *chunk,
-                                        position: (tile_x, tile_y),
-                                        transition_type: rendering.0.1,
-                                        harsh: rendering.1
-                                    });
-                                },
-                                TerrainRendering::AnimatedSprite(_imgs, _animation) => {
-                                    todo!()
-                                },
-                                TerrainRendering::AnimatedSpriteSheet(_, _) => {
-                                    todo!()
+                        let pot_layout = get_9fold_layout(
+                            tile_x, tile_y, data, &selfs, chunk, &mut inserts, top
+                        );
+                        if let Some((texturemap, heightmap)) = pot_layout {
+                            if all_equal(&heightmap) {
+                                let pot_transition_type = TransitionType::get_from_environment(texturemap);
+                                if let Some(transition_type) = pot_transition_type {
+                                    let king_tile_type = tile_types.states[transition_type.1].name.clone();
+                                    let subject_tile_type = tile_types.states[transition_type.2].name.clone();
+                                    let pot_interaction = transition_types_mapped.get(&[king_tile_type, subject_tile_type]);
+                                    if let Some(interaction) = pot_interaction {
+                                        let mut variant_styles = vec![];
+                                        for variant in &interaction.variants {
+                                            variant_styles.append(&mut conjoin_styles(variant.clone()));
+                                        }
+                                        let mut this_variants = vec![];
+                                        for (style, data) in variant_styles {
+                                            if style == transition_type.0 {
+                                                this_variants.push(data);
+                                            }
+                                        }
+                                        let picked_variant = rand_from_array(this_variants);
+                                        if picked_variant.len() == 1 {
+                                            commands.spawn_bundle(SpriteBundle {
+                                                transform: Transform::from_xyz(
+                                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                    BACKGROUND
+                                                ),
+                                                texture: interaction.images[picked_variant[0]].force_sprite(),
+                                                ..default()
+                                            })
+                                            .insert(Tile {
+                                                chunk: *chunk,
+                                                position: (tile_x, tile_y),
+                                                transition_type: transition_type.0,
+                                                harsh: false
+                                            });
+                                        }
+                                        else if picked_variant.len() == 2 {
+                                            let (img, width, height) = interaction.images[picked_variant[0]].force_sprite_sheet();
+                                            let sprite = TextureAtlasSprite {
+                                                index: picked_variant[1],
+                                                ..default()
+                                            };
+                                            let new_atlas = TextureAtlas::from_grid(
+                                                img,
+                                                Vec2::new(64.0, 64.0),
+                                                width, height
+                                            );
+                                            let atlas_handle = atlas_serve.add(new_atlas);
+                                            commands.spawn_bundle(SpriteSheetBundle {
+                                                transform: Transform::from_xyz(
+                                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                    BACKGROUND
+                                                ),
+                                                sprite,
+                                                texture_atlas: atlas_handle,
+                                                ..default()
+                                            })
+                                            .insert(Tile {
+                                                chunk: *chunk,
+                                                position: (tile_x, tile_y),
+                                                transition_type: transition_type.0,
+                                                harsh: false
+                                            });
+                                        }
+                                    }
                                 }
                             }
+                            else {
+                                if !all_equal(&texturemap) {
+                                    warn!("Texturemap was not uniform when heightmap was diverse (mapping error)");
+                                }
+                                let pot_transition_type = TransitionType::get_from_environment(heightmap);
+                            }
+                        }
+                        else {
+                            warn!("Missing data for tile selection");
                         }
                     }
                 }
@@ -1112,20 +1147,15 @@ const CHUNK_EDGES: [usize; (CHUNK_WIDTH * 2) + ((CHUNK_HEIGHT - 2) * 2)] = [
     59, 89, 119, 149, 179, 209, 239, 269, 299, 329, 259, 289, 419, 449, 479
 ];
 
-fn all_equal<T: PartialEq>(arr: &[T]) -> bool {
-    arr.windows(2).all(|w| w[0] == w[1])
-}
-
-fn get_tile_rendering(
+fn get_9fold_layout(
     tile_x: usize,
     tile_y: usize,
-    mod_assets: &ModularAssets,
     data: &[(usize, usize)],
     selfs: &ResMut<Reality>,
     chunk: &(isize, isize),
     inserts: &mut Vec<((isize, isize), ChunkStatus)>,
     top: usize,
-) -> Option<((TerrainRendering, TransitionType), bool)> {
+) -> Option<([usize; 9], [usize; 9])> {
     let data_group;
     if tile_x > 0 {
         if tile_x < CHUNK_WIDTH - 1 {
@@ -1376,6 +1406,5 @@ fn get_tile_rendering(
         data_group[3].1, data_group[4].1, data_group[5].1,
         data_group[6].1, data_group[7].1, data_group[8].1
     ];
-    let harsh = !all_equal(&height_array);
-    Some((mod_assets.get_tile(type_array, harsh), harsh))
+    Some((type_array, height_array))
 }

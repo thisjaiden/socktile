@@ -1,9 +1,22 @@
+use bevy::input::keyboard::KeyboardInput;
+
 use crate::prelude::*;
 
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
-    mut char_evr: EventReader<ReceivedCharacter>
+    mut char_evr: EventReader<ReceivedCharacter>,
+    #[cfg(target_arch = "wasm32")]
+    key_events: Res<Input<KeyCode>>
 ) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        if key_events.just_pressed(KeyCode::Back) {
+            tb.eat_buffer();
+        }
+        if key_events.just_pressed(KeyCode::Return) {
+            tb.update_buffer('\n');
+        }
+    }
     for char in char_evr.iter() {
         tb.update_buffer(char.char);
         if char.char == '\r' {
@@ -11,7 +24,7 @@ pub fn text_input(
             tb.update_buffer('\n');
         }
         // If we recieve a backspace character...
-        if char.char == '\x08' {
+        if char.char == '\x08' || char.char == '\x7f' {
             // Remove backspace character
             tb.eat_buffer();
             // Remove one more (the actual backspace action)

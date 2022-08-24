@@ -41,3 +41,7 @@ pub fn get_matrix_nxn<R: Iterator<Item = N> + Clone, N: Integer + Copy>(n: R) ->
 pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
     array.choose(&mut rand::thread_rng()).unwrap().clone()
 }
+
+pub fn all_equal<T: PartialEq>(arr: &[T]) -> bool {
+    arr.windows(2).all(|w| w[0] == w[1])
+}

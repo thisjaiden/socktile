@@ -1,4 +1,5 @@
 mod title_screen;
+use bevy::prelude::shape::RegularPolygon;
 use iyes_progress::ProgressCounter;
 pub use title_screen::title_screen;
 mod make_user;
@@ -17,9 +18,14 @@ use crate::prelude::*;
 // TODO: move to seperate file
 pub fn loading_prog(
     progress: Option<Res<ProgressCounter>>,
+    mut query: Query<(Entity, &mut Transform), With<LoadingScreenProgress>>
 ) {
     if let Some(progress) = progress.map(|counter| counter.progress()) {
-        warn!("Progress: {:?}", progress);
+        let (_e, mut transform) = query.single_mut();
+        let pd = (progress.done as f32) / (progress.total as f32);
+        transform.scale.x = pd * 10.0;
+        
+        //warn!("Progress: {:?}", progress);
     }
 }
 
@@ -39,6 +45,8 @@ pub fn clear_old(
 pub fn logo(
     mut commands: Commands,
     mut state: ResMut<State<GameState>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     server: Res<AssetServer>
 ) {
     commands.spawn_bundle(SpriteBundle {
@@ -73,5 +81,33 @@ pub fn logo(
         },
         ..default()
     }).insert(RemoveOnStateChange {});
+    let square = RegularPolygon::new(50.0, 4);
+    let mesh = meshes.add(Mesh::from(square));
+    let color = materials.add(ColorMaterial::from(Color::BLACK));
+    commands.spawn_bundle(ColorMesh2dBundle {
+        mesh: mesh.clone().into(),
+        material: color.clone(),
+        transform: Transform::from_xyz(-500.0, -300.0, UI_IMG),
+        ..default()
+    }).insert(RemoveOnStateChange {});
+    commands.spawn_bundle(ColorMesh2dBundle {
+        mesh: mesh.clone().into(),
+        material: color.clone(),
+        transform: Transform::from_xyz(500.0, -300.0, UI_IMG),
+        ..default()
+    }).insert(RemoveOnStateChange {});
+    let mut i_transform = Transform::from_xyz(0.0, -300.0, UI_IMG);
+    //i_transform.rotate_z(std::f32::consts::PI/4.0);
+    commands.spawn_bundle(ColorMesh2dBundle {
+        mesh: mesh.into(),
+        material: color,
+        transform: i_transform,
+        ..default()
+    })
+    .insert(LoadingScreenProgress {})
+    .insert(RemoveOnStateChange {});
     state.overwrite_set(GameState::Load).unwrap();
 }
+
+#[derive(Clone, Copy, Component)]
+pub struct LoadingScreenProgress;

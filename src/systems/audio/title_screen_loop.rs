@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use bevy_kira_audio::Audio;
+use bevy_kira_audio::{Audio, AudioControl};
 
 pub fn title_screen_loop(
     audio: Res<Audio>,
@@ -7,5 +7,5 @@ pub fn title_screen_loop(
     audio_serve: Res<Assets<AudioSamples>>
 ) {
     let samples = audio_serve.get(&core.audio).unwrap();
-    audio.play_looped(samples.get("title screen loop"));
+    audio.play(samples.get("title screen loop")).looped();
 }

@@ -497,14 +497,15 @@ dependencies = [
 
 [[package]]
 name = "bevy_kira_audio"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7d902ab6a15bd45af04d47b208a24f95205d8d2fd1fa15dd4e86a570fad813b"
+checksum = "0379febb94c497ac6f6b5c0ef27775f7302f65dc780a33dbcec0c743a474b5f4"
 dependencies = [
  "anyhow",
  "bevy",
  "kira",
  "parking_lot 0.12.1",
+ "thiserror",
 ]
 
 [[package]]
@@ -2345,6 +2346,10 @@ dependencies = [
 name = "netty"
 version = "0.1.0"
 dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-sockets",
+ "web-sys",
  "websocket",
 ]
 
@@ -3812,6 +3817,19 @@ name = "wasm-bindgen-shared"
 version = "0.2.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6598dd0bd3c7d51095ff6531a5b23e02acdc81804e30d8f07afb77b7215a140a"
+
+[[package]]
+name = "wasm-sockets"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8f79197ff5b54945ab40e5fc6337dc8be541e113ff7e13884aa9ffe52c90860"
+dependencies = [
+ "js-sys",
+ "log 0.4.17",
+ "thiserror",
+ "wasm-bindgen",
+ "web-sys",
+]
 
 [[package]]
 name = "web-sys"

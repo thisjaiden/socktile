@@ -1,7 +1,7 @@
 {
     "files": [
         {
-            "location": "heightmaps/water.png",
+            "location": "heightmaps/grass.png",
             "width": 1,
             "height": 1
         }
@@ -9,7 +9,7 @@
     "variants": [
         {
             "harsh": false,
-            "center": [0, 0]
+            "center": [0]
         }
     ]
 }

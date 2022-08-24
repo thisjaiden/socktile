@@ -216,7 +216,7 @@ fn files_dir() -> PathBuf {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct AudioConfig {
-    pub volume: f32
+    pub volume: f64
 }
 
 impl Default for AudioConfig {

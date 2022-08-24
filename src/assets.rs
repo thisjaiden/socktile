@@ -3,15 +3,18 @@ use bevy_asset_loader::prelude::*;
 
 pub mod language;
 pub mod audio;
+pub mod tiles;
 
 #[derive(AssetCollection)]
 pub struct CoreAssets {
-    #[asset(path = "e.nrf")]
-    pub core: Handle<crate::modular_assets::ModularAssets>,
     #[asset(path = "lang/en_us.ljson")]
     pub lang: Handle<LanguageKeys>,
     #[asset(path = "metadata/audio.sjson")]
     pub audio: Handle<AudioSamples>,
+    #[asset(path = "metadata/terrain.tjson")]
+    pub tiles: Handle<TileTypeConfig>,
+    #[asset(path = "metadata/transitions.ujson")]
+    pub transitions: Handle<TileTransitionMasterConfig>,
     #[asset(path = "core/title_screen.png")]
     pub title_screen: Handle<Image>,
     #[asset(path = "core/create_user.png")]

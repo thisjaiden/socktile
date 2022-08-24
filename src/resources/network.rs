@@ -3,7 +3,7 @@ use netty::client::{Client, ClientConfig};
 use crate::prelude::*;
 use super::{Reality, chat::ChatMessage};
 
-pub fn init() -> Client<Packet> {
+fn init() -> Option<Client<Packet>> {
     info!("Netty initalizing");
 
     let client_attempt = Client::launch(ClientConfig {
@@ -16,28 +16,30 @@ pub fn init() -> Client<Packet> {
     if let Some(mut client) = client_attempt {
         info!("Good connection to GGS, Netty constructed");
         client.send(Packet::NettyVersion(String::from(NETTY_VERSION)));
-        client
+        Some(client)
     }
     else {
-        todo!()
+        None
     }
 }
 
 pub fn system_startup_checks(
-    o_netty: Option<ResMut<Client<Packet>>>,
+    mut commands: Commands,
     mut state: ResMut<State<GameState>>,
     disk: Res<Disk>
 ) {
-    if let Some(mut netty) = o_netty {
+    let pot_client = init();
+    if let Some(mut client) = pot_client {
         if disk.user().is_some() {
             info!("Logging in user");
-            netty.send(Packet::UserPresence(disk.user().unwrap()));
+            client.send(Packet::UserPresence(disk.user().unwrap()));
             state.overwrite_set(GameState::TitleScreen).unwrap();
         }
         else {
             info!("Opening user creation screen");
             state.overwrite_set(GameState::MakeUser).unwrap();
         }
+        commands.insert_resource(client);
     }
     else {
         info!("No network connection");

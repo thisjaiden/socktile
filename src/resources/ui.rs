@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use bevy::app::AppExit;
-use bevy_kira_audio::Audio;
+use bevy_kira_audio::{Audio, AudioControl};
 use bevy_prototype_debug_lines::DebugLines;
 
 use super::{Reality, TextBox};
