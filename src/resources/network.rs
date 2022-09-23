@@ -3,7 +3,7 @@ use netty::client::{Client, ClientConfig};
 use crate::prelude::*;
 use super::{Reality, chat::ChatMessage};
 
-fn init() -> Option<Client<Packet>> {
+fn init() -> Option<Client> {
     info!("Netty initalizing");
 
     let client_attempt = Client::launch(ClientConfig {
@@ -48,7 +48,7 @@ pub fn system_startup_checks(
 }
 
 pub fn system_step(
-    netty: Option<ResMut<Client<Packet>>>,
+    netty: Option<ResMut<Client>>,
     mut reality: ResMut<Reality>,
     mut disk: ResMut<Disk>,
 ) {
@@ -142,7 +142,7 @@ pub fn system_step(
 }
 
 pub fn system_server_list(
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Client>,
 ) {
     netty.send(Packet::AvalableServers)
 }

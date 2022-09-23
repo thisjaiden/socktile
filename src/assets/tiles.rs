@@ -83,6 +83,8 @@ impl AssetLoader for TileTransitionMasterConfigLoader {
                     .path()
                     .parent()
                     .unwrap()
+                    .parent()
+                    .unwrap()
                     .join(format!("terrain/{}", transition.meta_location))
                     .into();
                 out_trans.insert([transition.names[0].clone(), transition.names[1].clone()], load_context.get_handle(path.clone()));
@@ -129,7 +131,7 @@ impl AssetLoader for TileTransitionConfigLoader {
                         .path()
                         .parent()
                         .unwrap()
-                        .join(format!("terrain/{}", file.location))
+                        .join(file.location)
                         .into();
                 if file.width == 1 && file.height == 1 {
                     final_out.images.push(ImageDefinition::Sprite(load_context.get_handle(path.clone())));

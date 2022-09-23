@@ -1,7 +1,7 @@
 {
     "files": [
         {
-            "location": "transitions/grass_water.png",
+            "location": "grass_water.png",
             "width": 8,
             "height": 8
         }

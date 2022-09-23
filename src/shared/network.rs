@@ -126,7 +126,7 @@ impl netty::Packet for Packet {
         let maybe_pkt = bincode::deserialize_from(reader);
         match maybe_pkt {
             Ok(pkt) => {
-                println!("Got a packet {:?}!", pkt);
+                //println!("Got a packet {:?}!", pkt);
                 return Some(pkt);
             }
             Err(e) => {
@@ -136,8 +136,13 @@ impl netty::Packet for Packet {
         }
     }
 
-    fn write<W: std::io::Write + ?Sized>(&self, writer: &mut W) -> () {
-        writer.write_all(&bincode::serialize(self).expect("Netty unable to serialize packet")).expect("Netty unable to write serialized packet");
+    fn write<W: std::io::Write + ?Sized>(&self, writer: &mut W) {
+        //println!("Writing a packet {:?}!", self);
+        let write_state = writer.write_all(&bincode::serialize(self).expect("Netty unable to serialize packet"));
+        if write_state.is_err() {
+            warn!("Netty unable to write serialized packet due to error: {:?}", write_state);
+            warn!("Packet data: {:?}", self);
+        }
         writer.flush().expect("Netty unable to flush buffer");
     }
 }

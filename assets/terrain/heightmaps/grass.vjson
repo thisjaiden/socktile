@@ -1,7 +1,7 @@
 {
     "files": [
         {
-            "location": "heightmaps/grass.png",
+            "location": "grass.png",
             "width": 1,
             "height": 1
         }

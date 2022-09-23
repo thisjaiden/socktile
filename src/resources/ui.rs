@@ -206,7 +206,7 @@ pub fn ui_game(
     mut commands: Commands,
     target_materials: Option<Res<AnimatorAssets>>,
     mut state: ResMut<State<GameState>>,
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Client>,
     mut man: ResMut<UIManager>,
     disk: Res<Disk>,
     audio: Res<Audio>,
@@ -424,7 +424,7 @@ pub fn ui_resume_game_settings(
 pub fn ui_disconnect_game(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Client>,
     mut state: ResMut<State<GameState>>,
     mut reality: ResMut<Reality>,
     audio: Res<Audio>,

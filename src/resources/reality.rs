@@ -148,7 +148,7 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         mut animator: ResMut<Animator>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Client>,
         disk: Res<Disk>,
         mut objects: Query<(Entity, &mut Object)>
     ) {
@@ -237,7 +237,7 @@ impl Reality {
     /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client<Packet>>
+        mut netty: ResMut<Client>
     ) {
         for (chunk, status) in selfs.chunk_status.iter_mut() {
             if !status.downloaded {
@@ -623,7 +623,7 @@ impl Reality {
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Client>,
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
@@ -906,7 +906,7 @@ impl Reality {
     }
     pub fn system_pause_invite(
         mut tb: ResMut<crate::resources::TextBox>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Client>,
         mut selfs: ResMut<Reality>,
         mut tbe: Query<&mut Text, With<crate::components::TextBox>>
     ) {

@@ -55,7 +55,7 @@ impl Chat {
     pub fn system_send_chat(
         mut selfs: ResMut<Chat>,
         mut tb: ResMut<TextBox>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Client>,
         mut boxes: Query<(&mut Text, &ChatBox)>,
         disk: Res<Disk>,
         keys: Res<Input<KeyCode>>
