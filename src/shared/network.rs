@@ -122,16 +122,16 @@ pub enum Packet {
 }
 
 impl netty::Packet for Packet {
-    fn from_reader<R: std::io::Read>(reader: &mut R) -> Option<Self> {
+    fn from_reader<R: std::io::Read>(reader: &mut R) -> Self {
         let maybe_pkt = bincode::deserialize_from(reader);
         match maybe_pkt {
             Ok(pkt) => {
                 //println!("Got a packet {:?}!", pkt);
-                return Some(pkt);
+                return pkt;
             }
             Err(e) => {
                 println!("Errored getting packet {:?}!", e);
-                return None;
+                panic!();
             }
         }
     }

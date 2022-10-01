@@ -94,8 +94,7 @@ impl Reality {
     pub fn queue_chat(&mut self, msg: ChatMessage) {
         self.chat_messages.push(msg);
     }
-    /// Sets the player's position. This funciton also loads and unloads
-    /// appropriate chunks around the player's new position.
+    /// Sets the player's position.
     pub fn set_player_position(&mut self, position: GamePosition) {
         // Set the player's position
         self.player_position = position;
@@ -148,7 +147,7 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         mut animator: ResMut<Animator>,
-        mut netty: ResMut<Client>,
+        mut netty: ResMut<Client<Packet>>,
         disk: Res<Disk>,
         mut objects: Query<(Entity, &mut Object)>
     ) {
@@ -237,10 +236,10 @@ impl Reality {
     /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client>
+        mut netty: ResMut<Client<Packet>>
     ) {
         for (chunk, status) in selfs.chunk_status.iter_mut() {
-            if !status.downloaded {
+            if !status.downloaded && status.needs_download_request {
                 netty.send(Packet::RequestChunk(*chunk));
                 status.needs_download_request = false;
             }
@@ -623,7 +622,7 @@ impl Reality {
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client>,
+        mut netty: ResMut<Client<Packet>>,
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
@@ -906,7 +905,7 @@ impl Reality {
     }
     pub fn system_pause_invite(
         mut tb: ResMut<crate::resources::TextBox>,
-        mut netty: ResMut<Client>,
+        mut netty: ResMut<Client<Packet>>,
         mut selfs: ResMut<Reality>,
         mut tbe: Query<&mut Text, With<crate::components::TextBox>>
     ) {
