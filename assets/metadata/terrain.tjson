@@ -4,13 +4,25 @@
     "states": [
         {
             "name": "grass",
-            "approx_color": "#00FF00",
+            "approx_color": "#6EEB65",
+            "walk_sound": "nothing",
+            "run_sound": "nothing"
+        },
+        {
+            "name": "sand",
+            "approx_color": "#EBD065",
+            "walk_sound": "nothing",
+            "run_sound": "nothing"
+        },
+        {
+            "name": "stone",
+            "approx_color": "#828282",
             "walk_sound": "nothing",
             "run_sound": "nothing"
         },
         {
             "name": "water",
-            "approx_color": "#0000FF",
+            "approx_color": "#65B1EB",
             "walk_sound": "nothing",
             "run_sound": "nothing"
         }

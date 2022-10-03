@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, shared::listing::GameListing};
 
 use super::{Profile, tick::save_folder, SaveGame, world};
 
@@ -206,6 +206,182 @@ pub fn handler(
             }
             // save data to server
             globals.worlds[server].data.players[self_index.expect("Owner does not have a datablock in a server.")].1 = pos;
+            drop(globals);
+        }
+        Packet::AvalableServers => {
+            let globals = globals.lock().unwrap();
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP address used with Packet::AvalableServers");
+
+            // find assoc user
+            let mut profile = None;
+            for tprofile in &globals.profiles {
+                if &tprofile.user == owner {
+                    profile = Some(tprofile.clone());
+                }
+            }
+            let profile = profile.expect("No profile found for Packet::AvalableServers");
+            // get servers
+            let mut listings = vec![];
+            for server_id in profile.avalable_games {
+                let this_server = &globals.worlds[server_id];
+                listings.push(
+                    GameListing {
+                        public_name: this_server.public_name.clone(),
+                        description: String::from("TODO"),
+                        internal_id: server_id,
+                        local: false,
+                        address: String::from("NA/TODO"),
+                        password: false,
+                        played: this_server.played_before.contains(owner)
+                    }
+                )
+            }
+            drop(globals);
+            // send list
+            outgoing.push((Packet::ServerList(listings), source_addr));
+        }
+        Packet::WhitelistUser(user) => {
+            let mut globals = globals.lock().unwrap();
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::WhitelistUser");
+
+            let server = *globals.user_to_world.get(owner).expect("User is not in a server for Packet::WhitelistUser");
+            if &globals.worlds[server].owner == owner {
+                let mut loc = None;
+                for (ind, prof) in globals.profiles.iter().enumerate() {
+                    if prof.user == user {
+                        loc = Some(ind);
+                    }
+                }
+                if let Some(indexable) = loc {
+                    globals.profiles[indexable].avalable_games.push(server);
+                    outgoing.push((Packet::Whitelisted, source_addr));
+                }
+                else {
+                    outgoing.push((Packet::UnwhitelistableUser, source_addr));
+                }
+            }
+            else {
+                outgoing.push((Packet::NoWhitelistPermission, source_addr));
+            }
+            drop(globals);
+        }
+        Packet::LeaveWorld => {
+            let mut globals = globals.lock().unwrap();
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::LeaveWorld");
+            
+            let server = *globals.user_to_world.get(owner).expect("Owner is not in a server for Packet::LeaveWorld");
+            
+            let mut self_index = None;
+
+            for (index, player) in globals.worlds[server].data.players.iter().enumerate() {
+                let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested disconnect");
+                // send data
+                if this_ip == &source_addr {
+                    // but not to the disconnector
+                    self_index = Some(index);
+                    continue;
+                }
+                outgoing.push((Packet::PlayerDisconnected(owner.clone()), *this_ip));
+            }
+            // save disconnect to server
+            let p = globals.worlds[server].data.players.swap_remove(self_index.expect("Owner does not have a datablock in a server."));
+            globals.worlds[server].data.offline_players.push(p);
+            drop(globals);
+        }
+        Packet::SendChatMessage(msg) => {
+            let globals = globals.lock().unwrap();
+            // find assoc user
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::RequestMove(GamePosition)");
+            
+            let server = *globals.user_to_world.get(owner).expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
+
+            let mut sendable_message = msg.clone();
+            sendable_message.text.insert_str(0, &format!("[{}] ", owner.username));
+            for player in &globals.worlds[server].data.players {
+                let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested move");
+                // send message
+                outgoing.push((Packet::ChatMessage(sendable_message.clone()), *this_ip));
+            }
+            drop(globals);
+        }
+        Packet::UpdateObject(obj) => {
+            let mut globals = globals.lock().unwrap();
+            // find assoc user
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::UpdateObject");
+            
+            let server = *globals.user_to_world.get(owner).expect("Owner is not in a server for Packet::UpdateObject");
+
+            // for each player
+            for player in &globals.worlds[server].data.players {
+                let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested update");
+                // if this isn't the player who sent originally
+                if this_ip != &source_addr {
+                    // reflect update
+                    outgoing.push((Packet::UpdateObject(obj.clone()), *this_ip));
+                }
+            }
+
+            // update object on the server
+            let mut object_index = None;
+            for (index, object) in globals.worlds[server].data.objects.iter().enumerate() {
+                if object.uuid == obj.uuid {
+                    object_index = Some(index);
+                    break;
+                }
+            }
+            let object_index = object_index.expect("No object found with given uuid for Packet::UpdateObject");
+            globals.worlds[server].data.objects[object_index] = obj;
+            drop(globals);
+        }
+        Packet::RemoveObject(uuid) => {
+            let mut globals = globals.lock().unwrap();
+            // find assoc user
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::RemoveObject");
+            
+            let server = *globals.user_to_world.get(owner).expect("Owner is not in a server for Packet::RemoveObject");
+
+            // for each player
+            for player in &globals.worlds[server].data.players {
+                let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested animation");
+                // if this isn't the player who sent originally
+                if this_ip != &source_addr {
+                    // reflect removal
+                    outgoing.push((Packet::RemoveObject(uuid), *this_ip));
+                }
+            }
+
+            let mut object_index = None;
+            // find given object on server
+            for (index, object) in globals.worlds[server].data.objects.iter().enumerate() {
+                if object.uuid == uuid {
+                    object_index = Some(index);
+                }
+            }
+            if object_index.is_none() {
+                warn!("All objects: {:#?}", globals.worlds[server].data.objects);
+                warn!("Requested UUID: {:?}", uuid);
+                warn!("Unable to remove this object from a given world. Please Investigate!");
+            }
+            // remove object from server
+            globals.worlds[server].data.objects.remove(object_index.expect("No object found with given uuid for Packet::RemoveObject"));
+            drop(globals);
+        }
+        Packet::ActionAnimation(action) => {
+            let globals = globals.lock().unwrap();
+            // find assoc user
+            let owner = globals.addr_to_user.get(&source_addr).expect("No user found for an IP adress used with Packet::ActionAnimation");
+            
+            let server = *globals.user_to_world.get(owner).expect("Owner is not in a server for Packet::ActionAnimation");
+
+            // for each player
+            for player in &globals.worlds[server].data.players {
+                let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested animation");
+                // if this isn't the player who sent originally
+                if this_ip != &source_addr {
+                    // send animation
+                    outgoing.push((Packet::ActionAnimation(action), *this_ip));
+                }
+            }
             drop(globals);
         }
         _ => todo!()

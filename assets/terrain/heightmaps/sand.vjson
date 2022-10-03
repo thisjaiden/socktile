@@ -1,0 +1,15 @@
+{
+    "files": [
+        {
+            "location": "sand.png",
+            "width": 1,
+            "height": 1
+        }
+    ],
+    "variants": [
+        {
+            "harsh": false,
+            "center": [0]
+        }
+    ]
+}

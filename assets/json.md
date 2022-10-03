@@ -11,7 +11,10 @@ Maybe soon, maybe in a long time, maybe never.
 What are the extensions used?
 ---
 
-| Config Type | Extension |
-| ----------- | --------- |
-| Language    | .ljson    |
-| Audio       | .sjson    |
+| Config Type                 | Extension |
+| --------------------------- | --------- |
+| Language                    | .ljson    |
+| Audio                       | .sjson    |
+| Terrain Variations          | .vjson    |
+| Terrain Variation Locations | .ujson    |
+| Terrain Metadata            | .tjson    |

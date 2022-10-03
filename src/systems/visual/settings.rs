@@ -23,8 +23,10 @@ pub fn settings_video(
     disk: Res<Disk>,
     fonts: Res<FontAssets>,
     core: Res<CoreAssets>,
+    lang_serve: Res<Assets<LanguageKeys>>,
 ) {
     if man.settings_page == SettingsPage::Video && !man.on_page {
+        let lang = lang_serve.get(&core.lang).unwrap();
         man.on_page = true;
         man.add_ui(UIClickable {
             action: UIClickAction::IncreaseWindowScaling,
@@ -63,7 +65,7 @@ pub fn settings_video(
         commands.spawn_bundle(Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: String::from("Back"),
+                    value: lang.get("en_us.core.settings.leave"),
                     style: TextStyle {
                         font: fonts.simvoni.clone(),
                         font_size: 36.0,
@@ -86,10 +88,17 @@ pub fn settings_video(
             removed_on_use: false,
             tag: Some(String::from("Settings"))
         });
+        let txtout;
+        if disk.window_config().fullscreen {
+            txtout = lang.get("en_us.core.settings.fullscreen.on");
+        }
+        else {
+            txtout = lang.get("en_us.core.settings.fullscreen.off");
+        }
         commands.spawn_bundle(Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: format!("Fullscreen: {}", disk.window_config().fullscreen),
+                    value: txtout,
                     style: TextStyle {
                         font: fonts.simvoni.clone(),
                         font_size: 36.0,

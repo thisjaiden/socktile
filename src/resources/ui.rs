@@ -364,11 +364,21 @@ pub fn ui_toggle_fullscreen(
 
 pub fn ui_settings_text_updater(
     mut query: Query<(&mut Text, &SettingsPageComp)>,
-    disk: Res<Disk>
+    disk: Res<Disk>,
+    core: Res<CoreAssets>,
+    lang_serve: Res<Assets<LanguageKeys>>,
 ) {
+    let lang = lang_serve.get(&core.lang).unwrap();
     query.for_each_mut(|(mut text, component)| {
         if component.type_ == 1 {
-            text.sections[0].value = format!("Fullscreen: {}", disk.window_config().fullscreen);
+            let txtout;
+            if disk.window_config().fullscreen {
+                txtout = lang.get("en_us.core.settings.fullscreen.on");
+            }
+            else {
+                txtout = lang.get("en_us.core.settings.fullscreen.off");
+            }
+            text.sections[0].value = txtout;
         }
     });
 }

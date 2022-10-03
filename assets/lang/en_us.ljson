@@ -16,6 +16,13 @@
                 "Hatsune Miku"
             ]
         },
+        "settings": {
+            "leave": "Back",
+            "fullscreen": {
+                "on": "Fullscreen: Enabled",
+                "off": "Fullscreen: Disabled"
+            }
+        },
         "create_user": {
             "no_hashtags": "\nUsernames can't contain hashtags.",
             "no_slashes": "\nUsernames can't contain slashes.",

@@ -164,6 +164,7 @@ fn main() {
                 .with_system(resources::ui::ui_settings_tab)
                 .with_system(resources::ui::ui_toggle_fullscreen)
                 .with_system(resources::ui::ui_return_titlescreen)
+                .with_system(resources::ui::ui_settings_text_updater)
         )
         .add_system_set(
             SystemSet::on_enter(GameState::MakeGame)
@@ -199,7 +200,6 @@ fn main() {
         .add_system(resources::ui::ui_invite_menu)
         .add_system(resources::ui::ui_close_settings)
         .add_system(resources::ui::ui_debug_lines)
-        .add_system(resources::ui::ui_settings_text_updater)
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())

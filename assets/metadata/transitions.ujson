@@ -4,8 +4,16 @@
         "meta_location": "transitions/grass_water.vjson"
     },
     {
+        "names": ["sand", "grass"],
+        "meta_location": "transitions/sand_grass.vjson"
+    },
+    {
         "names": ["grass", "grass"],
         "meta_location": "heightmaps/grass.vjson"
+    },
+    {
+        "names": ["sand", "sand"],
+        "meta_location": "heightmaps/sand.vjson"
     },
     {
         "names": ["water", "water"],
