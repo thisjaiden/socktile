@@ -96,7 +96,7 @@ pub fn logo(
         transform: Transform::from_xyz(500.0, -300.0, UI_IMG),
         ..default()
     }).insert(RemoveOnStateChange {});
-    let mut i_transform = Transform::from_xyz(0.0, -300.0, UI_IMG);
+    let i_transform = Transform::from_xyz(0.0, -300.0, UI_IMG);
     //i_transform.rotate_z(std::f32::consts::PI/4.0);
     commands.spawn_bundle(ColorMesh2dBundle {
         mesh: mesh.into(),

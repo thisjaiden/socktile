@@ -1,5 +1,3 @@
-use bevy::input::keyboard::KeyboardInput;
-
 use crate::prelude::*;
 
 pub fn text_input(

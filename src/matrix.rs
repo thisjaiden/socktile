@@ -42,6 +42,16 @@ pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
     array.choose(&mut rand::thread_rng()).unwrap().clone()
 }
 
+pub fn safe_rand_from_array<T: Any + Clone>(array: Vec<T>) -> Option<T> {
+    let a = array.choose(&mut rand::thread_rng());
+    if let Some(a) = a {
+        return Some(a.clone());
+    }
+    else {
+        return None;
+    }
+}
+
 pub fn all_equal<T: PartialEq>(arr: &[T]) -> bool {
     arr.windows(2).all(|w| w[0] == w[1])
 }

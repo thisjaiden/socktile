@@ -374,13 +374,81 @@ impl Reality {
                             }
                             else {
                                 if !all_equal(&texturemap) {
-                                    warn!("Texturemap was not uniform when heightmap was diverse (mapping error)");
+                                    warn!("Texturemap was not uniform when heightmap was diverse [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
                                 }
                                 let pot_transition_type = TransitionType::get_from_environment(heightmap);
+                                if let Some(transition_type) = pot_transition_type {
+                                    let type_string = tile_types.states[transition_type.1].name.clone();
+                                    let pot_interaction = transition_types_mapped.get(&[type_string.clone(), type_string.clone()]);
+                                    if let Some(interaction) = pot_interaction {
+                                        let mut variant_styles = vec![];
+                                        for variant in &interaction.variants {
+                                            variant_styles.append(&mut conjoin_styles(variant.clone()));
+                                        }
+                                        let mut this_variants = vec![];
+                                        for (style, data) in variant_styles {
+                                            if style == transition_type.0 {
+                                                this_variants.push(data);
+                                            }
+                                        }
+                                        let pot_picked_variant = safe_rand_from_array(this_variants);
+                                        if let Some(picked_variant) = pot_picked_variant {
+                                            if picked_variant.len() == 1 {
+                                                commands.spawn_bundle(SpriteBundle {
+                                                    transform: Transform::from_xyz(
+                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                        BACKGROUND
+                                                    ),
+                                                    texture: interaction.images[picked_variant[0]].force_sprite(),
+                                                    ..default()
+                                                })
+                                                .insert(Tile {
+                                                    chunk: *chunk,
+                                                    position: (tile_x, tile_y),
+                                                    transition_type: transition_type.0,
+                                                    harsh: false
+                                                });
+                                            }
+                                            else if picked_variant.len() == 2 {
+                                                let (img, width, height) = interaction.images[picked_variant[0]].force_sprite_sheet();
+                                                let sprite = TextureAtlasSprite {
+                                                    index: picked_variant[1],
+                                                    ..default()
+                                                };
+                                                let new_atlas = TextureAtlas::from_grid(
+                                                    img,
+                                                    Vec2::new(64.0, 64.0),
+                                                    width, height
+                                                );
+                                                let atlas_handle = atlas_serve.add(new_atlas);
+                                                commands.spawn_bundle(SpriteSheetBundle {
+                                                    transform: Transform::from_xyz(
+                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                        BACKGROUND
+                                                    ),
+                                                    sprite,
+                                                    texture_atlas: atlas_handle,
+                                                    ..default()
+                                                })
+                                                .insert(Tile {
+                                                    chunk: *chunk,
+                                                    position: (tile_x, tile_y),
+                                                    transition_type: transition_type.0,
+                                                    harsh: false
+                                                });
+                                            }
+                                        }
+                                        else {
+                                            warn!("No variants for harsh tile [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
+                                        }
+                                    }
+                                }
                             }
                         }
                         else {
-                            warn!("Missing data for tile selection");
+                            warn!("Missing data for tile selection [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
                         }
                     }
                 }
