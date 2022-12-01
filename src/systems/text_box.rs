@@ -40,7 +40,7 @@ pub fn user_creation(
     mut commands: Commands,
     mut tb: ResMut<crate::resources::TextBox>,
     mut tb_q: Query<&mut Text, With<TextBox>>,
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<RemoveOnStateChange>>,
@@ -94,7 +94,7 @@ pub fn user_creation(
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
-            netty.send(Packet::CreateUser(User {
+            netty.n.send(Packet::CreateUser(User {
                 username: mode.clone(),
                 tag: 0
             }));
@@ -116,7 +116,7 @@ pub fn game_creation(
     mut tb: ResMut<crate::resources::TextBox>,
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
     uiman: Res<UIManager>,
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Netty>,
     mut state: ResMut<State<GameState>>,
     disk: Res<Disk>,
     materials: Res<AnimatorAssets>,
@@ -132,7 +132,7 @@ pub fn game_creation(
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
-            netty.send(Packet::CreateWorld(mode));
+            netty.n.send(Packet::CreateWorld(mode));
             tb.clear_buffer();
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();

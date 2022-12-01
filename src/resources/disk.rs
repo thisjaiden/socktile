@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use std::path::PathBuf;
 
+#[derive(Resource)]
 pub struct Disk {
     window_config: WindowConfig,
     control_config: ControlConfig,

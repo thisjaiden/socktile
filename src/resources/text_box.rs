@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, Eq, PartialEq)]
+use crate::prelude::*;
+
+#[derive(Clone, Debug, Eq, PartialEq, Resource)]
 pub struct TextBox {
     buffer: String
 }

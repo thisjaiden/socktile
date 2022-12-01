@@ -3,6 +3,7 @@ use bevy::utils::HashMap;
 
 use crate::{assets::AnimatorAssets, shared::{player::ItemAction, saves::User}};
 
+#[derive(Resource)]
 pub struct Animator {
     player_prev_pos: HashMap<User, Transform>,
     last_dir_left: HashMap<User, bool>,

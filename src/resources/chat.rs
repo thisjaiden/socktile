@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use super::{Reality, reality::MenuState, TextBox};
 
+#[derive(Resource)]
 pub struct Chat {
     pub history: Vec<ChatMessage>,
     pub is_chat_open: MenuState
@@ -55,7 +56,7 @@ impl Chat {
     pub fn system_send_chat(
         mut selfs: ResMut<Chat>,
         mut tb: ResMut<TextBox>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Netty>,
         mut boxes: Query<(&mut Text, &ChatBox)>,
         disk: Res<Disk>,
         keys: Res<Input<KeyCode>>
@@ -64,7 +65,7 @@ impl Chat {
             boxes.for_each_mut(|(mut text, box_)| {
                 if box_.location == 0 {
                     text.sections[0].value = String::new();
-                    netty.send(Packet::SendChatMessage(ChatMessage {
+                    netty.n.send(Packet::SendChatMessage(ChatMessage {
                         text: tb.grab_buffer().trim_end_matches('\n').trim_end_matches('\r').to_string(),
                         color: Color::BLACK,
                         sent_at: std::time::Instant::now()

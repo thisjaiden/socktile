@@ -5,7 +5,7 @@ pub mod language;
 pub mod audio;
 pub mod tiles;
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
     #[asset(path = "lang/en_us.ljson")]
     pub lang: Handle<LanguageKeys>,
@@ -29,7 +29,7 @@ pub struct CoreAssets {
     pub offline_no_support: Handle<Image>,
 }
 
-#[derive(AssetCollection, Clone)]
+#[derive(AssetCollection, Resource, Clone)]
 pub struct FontAssets {
     #[asset(path = "font/apple_tea.ttf")]
     pub apple_tea: Handle<Font>,
@@ -46,7 +46,7 @@ pub struct FontAssets {
     pub kreative_square: Handle<Font>
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct AnimatorAssets {
     /// Represents a player that has not yet moved or had any animation occur.
     #[asset(path = "player/default.png")]
@@ -57,7 +57,7 @@ pub struct AnimatorAssets {
     pub idle1: Handle<Image>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct NPCAssets {
     #[asset(path = "npc/thomas_kontos/idle/0.png")]
     pub not_animated: Handle<Image>,
@@ -65,7 +65,7 @@ pub struct NPCAssets {
     pub idle0: Handle<Image>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct UIAssets {
     #[asset(path = "ui/slot.png")]
     pub slot: Handle<Image>,
@@ -73,7 +73,7 @@ pub struct UIAssets {
     pub selected: Handle<Image>
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct ItemAssets {
     #[asset(path = "nothing.png")]
     pub none: Handle<Image>,
@@ -96,7 +96,7 @@ impl ItemAssets {
     }
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct ObjectAssets {
     #[asset(path = "object/tree_ly.png")]
     pub tree: Handle<Image>

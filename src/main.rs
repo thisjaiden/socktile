@@ -77,17 +77,21 @@ fn main() {
     let mut app = App::new();
 
     // Enable embedded assets through `bevy_embedded_assets`
-    app.add_plugins_with(DefaultPlugins, |group| {
-        if EMBED_ASSETS {
-            group
+    if EMBED_ASSETS {
+        app.add_plugins(
+            DefaultPlugins
+                .build()
                 .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
                 .disable::<bevy::log::LogPlugin>()
-            }
-        else {
-            group
+        );
+    }
+    else {
+        app.add_plugins(
+            DefaultPlugins
+                .build()
                 .disable::<bevy::log::LogPlugin>()
-        }
-    });
+        );
+    }
     
     // Add assets, plugins and systems to our app, then run it
     app

@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::shared::{listing::GameListing, player::Inventory};
 use super::{chat::ChatMessage, Chat, Animator};
 
+#[derive(Resource)]
 pub struct Reality {
     /// Player's current position
     player_position: GamePosition,
@@ -147,7 +148,7 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         mut animator: ResMut<Animator>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Netty>,
         disk: Res<Disk>,
         mut objects: Query<(Entity, &mut Object)>
     ) {
@@ -159,7 +160,7 @@ impl Reality {
                 // mark action for animation
                 animator.mark_action(disk.user().unwrap(), action);
                 // send animation to others
-                netty.send(Packet::ActionAnimation(action));
+                netty.n.send(Packet::ActionAnimation(action));
                 // check for tree in range
                 objects.for_each_mut(|(e, mut obj)| {
                     if let ObjectType::Tree(strength) = obj.rep {
@@ -169,12 +170,12 @@ impl Reality {
                                 // damage tree
                                 obj.rep = ObjectType::Tree(strength - power);
                                 // update entity on server
-                                netty.send(Packet::UpdateObject(obj.clone()));
+                                netty.n.send(Packet::UpdateObject(obj.clone()));
                             }
                             else {
                                 // destroy tree
                                 // remove entity on server
-                                netty.send(Packet::RemoveObject(obj.uuid));
+                                netty.n.send(Packet::RemoveObject(obj.uuid));
                                 // despawn entity locally
                                 commands.entity(e).despawn();
                             }
@@ -236,11 +237,11 @@ impl Reality {
     /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
     pub fn system_chunk_requester(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client<Packet>>
+        mut netty: ResMut<Netty>
     ) {
         for (chunk, status) in selfs.chunk_status.iter_mut() {
             if !status.downloaded && status.needs_download_request {
-                netty.send(Packet::RequestChunk(*chunk));
+                netty.n.send(Packet::RequestChunk(*chunk));
                 status.needs_download_request = false;
             }
         }
@@ -349,25 +350,28 @@ impl Reality {
                                             let new_atlas = TextureAtlas::from_grid(
                                                 img,
                                                 Vec2::new(64.0, 64.0),
-                                                width, height
+                                                width, height,
+                                                None, None
                                             );
                                             let atlas_handle = atlas_serve.add(new_atlas);
-                                            commands.spawn_bundle(SpriteSheetBundle {
-                                                transform: Transform::from_xyz(
-                                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                                    BACKGROUND
-                                                ),
-                                                sprite,
-                                                texture_atlas: atlas_handle,
-                                                ..default()
-                                            })
-                                            .insert(Tile {
-                                                chunk: *chunk,
-                                                position: (tile_x, tile_y),
-                                                transition_type: transition_type.0,
-                                                harsh: false
-                                            });
+                                            commands.spawn((
+                                                SpriteSheetBundle {
+                                                    transform: Transform::from_xyz(
+                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
+                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                        BACKGROUND
+                                                    ),
+                                                    sprite,
+                                                    texture_atlas: atlas_handle,
+                                                    ..default()
+                                                },
+                                                Tile {
+                                                    chunk: *chunk,
+                                                    position: (tile_x, tile_y),
+                                                    transition_type: transition_type.0,
+                                                    harsh: false
+                                                }
+                                            ));
                                         }
                                     }
                                 }
@@ -419,7 +423,8 @@ impl Reality {
                                                 let new_atlas = TextureAtlas::from_grid(
                                                     img,
                                                     Vec2::new(64.0, 64.0),
-                                                    width, height
+                                                    width, height,
+                                                    None, None
                                                 );
                                                 let atlas_handle = atlas_serve.add(new_atlas);
                                                 commands.spawn_bundle(SpriteSheetBundle {
@@ -690,7 +695,7 @@ impl Reality {
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Netty>,
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
@@ -859,7 +864,7 @@ impl Reality {
             // send to server
             if had_movement {
                 selfs.set_player_position(new_pos);
-                netty.send(Packet::RequestMove(selfs.player_position));
+                netty.n.send(Packet::RequestMove(selfs.player_position));
             }
         }
     }
@@ -973,7 +978,7 @@ impl Reality {
     }
     pub fn system_pause_invite(
         mut tb: ResMut<crate::resources::TextBox>,
-        mut netty: ResMut<Client<Packet>>,
+        mut netty: ResMut<Netty>,
         mut selfs: ResMut<Reality>,
         mut tbe: Query<&mut Text, With<crate::components::TextBox>>
     ) {
@@ -996,7 +1001,7 @@ impl Reality {
             strs = String::from(strs.trim_end_matches('\n'));
             let tag = strs.split('#').nth(1).unwrap().parse::<u16>();
             if let Ok(val) = tag {
-                netty.send(Packet::WhitelistUser(User {
+                netty.n.send(Packet::WhitelistUser(User {
                     username: tb.grab_buffer().split('#').next().unwrap().to_string(),
                     tag: val
                 }));

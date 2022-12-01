@@ -3,7 +3,12 @@ use netty::client::{Client, ClientConfig};
 use crate::prelude::*;
 use super::{Reality, chat::ChatMessage};
 
-fn init() -> Option<Client<Packet>> {
+#[derive(Resource)]
+pub struct Netty {
+    pub n: Client<Packet>
+}
+
+fn init() -> Option<Netty> {
     info!("Netty initalizing");
 
     let client_attempt = Client::launch(ClientConfig {
@@ -16,7 +21,7 @@ fn init() -> Option<Client<Packet>> {
     if let Some(mut client) = client_attempt {
         info!("Good connection to GGS, Netty constructed");
         client.send(Packet::NettyVersion(String::from(NETTY_VERSION)));
-        Some(client)
+        Some(Netty { n: client })
     }
     else {
         None
@@ -32,7 +37,7 @@ pub fn system_startup_checks(
     if let Some(mut client) = pot_client {
         if disk.user().is_some() {
             info!("Logging in user");
-            client.send(Packet::UserPresence(disk.user().unwrap()));
+            client.n.send(Packet::UserPresence(disk.user().unwrap()));
             state.overwrite_set(GameState::TitleScreen).unwrap();
         }
         else {
@@ -48,12 +53,12 @@ pub fn system_startup_checks(
 }
 
 pub fn system_step(
-    netty: Option<ResMut<Client<Packet>>>,
+    netty: Option<ResMut<Netty>>,
     mut reality: ResMut<Reality>,
     mut disk: ResMut<Disk>,
 ) {
     if let Some(mut netty) = netty {
-        let pkts = netty.get_packets();
+        let pkts = netty.n.get_packets();
         for packet in pkts {
             match packet {
                 Packet::CreatedUser(user) => {
@@ -64,7 +69,7 @@ pub fn system_step(
                     // do nothing
                 }
                 Packet::CreatedWorld(id) => {
-                    netty.send(Packet::JoinWorld(id));
+                    netty.n.send(Packet::JoinWorld(id));
                 }
                 Packet::JoinedGame(mypos, ownership) => {
                     reality.set_player_position(mypos);
@@ -142,7 +147,7 @@ pub fn system_step(
 }
 
 pub fn system_server_list(
-    mut netty: ResMut<Client<Packet>>,
+    mut netty: ResMut<Netty>,
 ) {
-    netty.send(Packet::AvalableServers)
+    netty.n.send(Packet::AvalableServers)
 }

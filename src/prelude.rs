@@ -25,4 +25,5 @@ pub use crate::language::LanguageKeys;
 pub use crate::audio::AudioSamples;
 pub use crate::tiles::TileTransitionMasterConfig;
 pub use crate::tiles::TileTypeConfig;
-pub use netty::client::Client;
+//pub use netty::client::Client;
+pub use crate::resources::network::Netty;
