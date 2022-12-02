@@ -8,7 +8,7 @@ use super::{chat::ChatMessage, Chat, Animator};
 #[derive(Resource)]
 pub struct Reality {
     /// Player's current position
-    player_position: GamePosition,
+    player_position: Transform,
     /// Once the player is connected this is set to true
     in_valid_world: bool,
     /// Player's data
@@ -19,7 +19,7 @@ pub struct Reality {
     avalable_servers: Vec<GameListing>,
     push_servers: bool,
     /// Players to spawn in and load
-    players_to_spawn: Vec<(User, GamePosition)>,
+    players_to_spawn: Vec<(User, Transform)>,
     /// Players to unload
     players_to_despawn: Vec<User>,
     /// Is this server owned by the active player?
@@ -27,7 +27,7 @@ pub struct Reality {
     /// The state of the pause menu
     pause_menu: MenuState,
     /// A list of players that have location changes and their new locations
-    players_to_move: HashMap<User, GamePosition>,
+    players_to_move: HashMap<User, Transform>,
     /// Objects that need to be spawned into the bevy world before usage
     queued_objects: Vec<Object>,
     /// Objects that need to be changed in some way
@@ -44,7 +44,7 @@ pub struct Reality {
 impl Reality {
     pub fn init() -> Reality {
         Reality {
-            player_position: GamePosition::zero(),
+            player_position: Transform::from_xyz(0.0, 0.0, 0.0),
             in_valid_world: false,
             player: PlayerData::new(),
             chat_messages: vec![],
@@ -81,7 +81,7 @@ impl Reality {
     pub fn pause_closed(&mut self) {
         self.pause_menu = MenuState::Closed;
     }
-    pub fn queue_player_move(&mut self, p: User, l: GamePosition) {
+    pub fn queue_player_move(&mut self, p: User, l: Transform) {
         self.players_to_move.insert(p, l);
     }
     pub fn set_inventory(&mut self, inventory: Inventory) {
@@ -96,7 +96,7 @@ impl Reality {
         self.chat_messages.push(msg);
     }
     /// Sets the player's position.
-    pub fn set_player_position(&mut self, position: GamePosition) {
+    pub fn set_player_position(&mut self, position: Transform) {
         // Set the player's position
         self.player_position = position;
     }
@@ -112,7 +112,7 @@ impl Reality {
         let status = self.chunk_status.get_mut(&chunk_position).unwrap();
         status.downloaded = true;
     }
-    pub fn add_online_players(&mut self, players: Vec<(User, GamePosition)>) {
+    pub fn add_online_players(&mut self, players: Vec<(User, Transform)>) {
         for (euser, pos) in players {
             self.players_to_spawn.push((euser, pos));
         }
@@ -164,8 +164,7 @@ impl Reality {
                 // check for tree in range
                 objects.for_each_mut(|(e, mut obj)| {
                     if let ObjectType::Tree(strength) = obj.rep {
-                        let distance = obj.pos.distance(selfs.player_position);
-                        if distance < TREE_CHOP_DISTANCE {
+                        if distance(obj.pos, selfs.player_position) < TREE_CHOP_DISTANCE {
                             if strength > power {
                                 // damage tree
                                 obj.rep = ObjectType::Tree(strength - power);
@@ -194,11 +193,11 @@ impl Reality {
     ) {
         if selfs.is_changed() && selfs.in_valid_world {
             // Chunk sizes in coordinate space
-            const ENV_WIDTH: f64 = 1920.0;
-            const ENV_HEIGHT: f64 = 1088.0;
+            const ENV_WIDTH: f32 = 1920.0;
+            const ENV_HEIGHT: f32 = 1088.0;
             // Get the player's chunk
-            let chunk_x = (selfs.player_position.x / ENV_WIDTH).round() as isize;
-            let chunk_y = (selfs.player_position.y / ENV_HEIGHT).round() as isize;
+            let chunk_x = (selfs.player_position.translation.x / ENV_WIDTH).round() as isize;
+            let chunk_y = (selfs.player_position.translation.y / ENV_HEIGHT).round() as isize;
 
             // Add chunks that should be loaded (5x5 around player) for download if they aren't
             // already avalable
@@ -273,39 +272,47 @@ impl Reality {
         transition_serve: Res<Assets<TileTransitionConfig>>,
         mut atlas_serve: ResMut<Assets<TextureAtlas>>
     ) {
+        // I don't know how this works, I need to know how this works, I won't know how this works.
+        // Send help.
+        
+        // Pretty names for all tile types
         let tile_types = types_serve.get(&core.tiles).unwrap();
+        // Transition handles (don't use! These are handles!)
         let transition_types = master_transition_serve.get(&core.transitions).unwrap();
+        // Hashmap of every valid combination of tile types and the possible states for those combinations
         let mut transition_types_mapped: HashMap<[String; 2], TileTransitionConfig> = default();
+        // Generating the above hashmap using the handles in `transition_types`
         for transition_type in &transition_types.transitions {
             let a = transition_serve.get(&transition_type.1.clone());
             if let Some(b) = a {
                 transition_types_mapped.insert(transition_type.0.clone(), b.clone());
             }
         }
-        let mut inserts = vec![];
-        for (chunk, status) in selfs.chunk_status.iter() {
-            if status.waiting_to_render && status.downloaded {
-                let mut status = *status;
-                status.waiting_to_render = false;
-                status.rendered = true;
+
+        for (chunk_location, mut chunk_status) in selfs.chunk_status.iter_mut() {
+            if chunk_status.waiting_to_render && chunk_status.downloaded {
+                // We should render the main part of this chunk, it's downloaded!
+                // Flag chunk as rendered
+                chunk_status.waiting_to_render = false;
+                chunk_status.rendered = true;
+                // Figure out what tiles we need to render (main or edges?)
                 let stuff: Vec<usize>;
-                if !status.edges_rendered {
-                    status.edges_rendered = true;
+                if !chunk_status.edges_rendered {
+                    chunk_status.edges_rendered = true;
                     stuff = CHUNK_EDGES.to_vec();
                 }
                 else {
                     stuff = (0..CHUNK_SIZE).collect();
                 }
-                inserts.push((*chunk, status));
-                let top = inserts.len() - 1;
-                if let Some(data) = selfs.chunk_data.get(chunk) {
-                    for index in stuff {
-                        let tile_x = index % CHUNK_WIDTH;
-                        let tile_y = index / CHUNK_WIDTH;
-                        let pot_layout = get_9fold_layout(
-                            tile_x, tile_y, data, &selfs, chunk, &mut inserts, top
-                        );
-                        if let Some((texturemap, heightmap)) = pot_layout {
+                if let Some(chunk_data) = selfs.chunk_data.get(chunk_location) {
+                    for tile_index in stuff {
+                        let tile_x = tile_index % CHUNK_WIDTH;
+                        let tile_y = tile_index / CHUNK_WIDTH;
+                        // Vide wuz here
+                        if let Some((tilemap, heightmap)) = get_9fold_layout(
+                            tile_x, tile_y,
+                            chunk_data, &selfs, chunk_location
+                        ) {
                             if all_equal(&heightmap) {
                                 let pot_transition_type = TransitionType::get_from_environment(texturemap);
                                 if let Some(transition_type) = pot_transition_type {
@@ -374,6 +381,9 @@ impl Reality {
                                             ));
                                         }
                                     }
+                                }
+                                else {
+                                    // TODO: fallback terrain for this tile!
                                 }
                             }
                             else {
@@ -458,12 +468,9 @@ impl Reality {
                     }
                 }
                 else {
-                    warn!("Unable to find data for a chunk queued for rendering");
+                    error!("Unable to find data for a chunk queued for rendering! (Rendering skipped/disabled for this chunk)");
                 }
             }
-        }
-        for (loc, dta) in inserts {
-            selfs.chunk_status.insert(loc, dta);
         }
     }
     pub fn system_rerender_edges(
@@ -656,11 +663,14 @@ impl Reality {
     ) {
         for (user, location) in selfs.players_to_spawn.clone() {
             if user != disk.user().unwrap() {
-                commands.spawn_bundle(SpriteBundle {
-                    transform: Transform::from_xyz(location.x as f32, location.y as f32, PLAYER_CHARACTERS),
-                    texture: assets.not_animated.clone(),
-                    ..Default::default()
-                }).insert(user);
+                commands.spawn((
+                    SpriteBundle {
+                        transform: Transform::from_xyz(location.translation.x, location.translation.y, PLAYER_CHARACTERS),
+                        texture: assets.not_animated.clone(),
+                        ..Default::default()
+                    },
+                    user
+                )).insert(user);
             }
         }
         selfs.players_to_spawn.clear();
@@ -715,12 +725,12 @@ impl Reality {
         }
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
             let centered_chunk = (
-                ((selfs.player_position.x + (1920.0 / 2.0)) / 1920.0).floor() as isize,
-                ((selfs.player_position.y + (1088.0 / 2.0)) / 1088.0).floor() as isize
+                ((selfs.player_position.translation.x + (1920.0 / 2.0)) / 1920.0).floor() as isize,
+                ((selfs.player_position.translation.y + (1088.0 / 2.0)) / 1088.0).floor() as isize
             );
             let centered_tile = (
-                ((selfs.player_position.x - (1920 * centered_chunk.0) as f64 + (1920.0 / 2.0)) / 64.0) as isize,
-                ((selfs.player_position.y - (1088 * centered_chunk.1) as f64 + (1088.0 / 2.0)) / 64.0) as isize + 1
+                ((selfs.player_position.translation.x - (1920 * centered_chunk.0) as f32 + (1920.0 / 2.0)) / 64.0) as isize,
+                ((selfs.player_position.translation.y - (1088 * centered_chunk.1) as f32 + (1088.0 / 2.0)) / 64.0) as isize + 1
             );
             // get a 3x3 matrix
             let mut needed_tiles: Vec<(isize, isize)> = get_matrix_nxn(-1..=1);
@@ -821,43 +831,43 @@ impl Reality {
             let mut new_pos = selfs.player_position;
             // move
             if keyboard.pressed(ctrls.move_up) {
-                new_pos.y += 4.0;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
+                new_pos.translation.y += 4.0;
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.y -= 4.0;
+                    new_pos.translation.y -= 4.0;
                 }
             }
             if keyboard.pressed(ctrls.move_down) {
-                new_pos.y -= 4.0;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)){
+                new_pos.translation.y -= 4.0;
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)){
                     had_movement = true;
                 }
                 else {
-                    new_pos.y += 4.0;
+                    new_pos.translation.y += 4.0;
                 }
             }
             if keyboard.pressed(ctrls.move_left) {
-                new_pos.x -= 4.0;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
+                new_pos.translation.x -= 4.0;
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.x += 4.0;
+                    new_pos.translation.x += 4.0;
                 }
             }
             if keyboard.pressed(ctrls.move_right) {
-                new_pos.x += 4.0;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.x, new_pos.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.x, new_pos.y)) {
+                new_pos.translation.x += 4.0;
+                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
+                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.x -= 4.0;
+                    new_pos.translation.x -= 4.0;
                 }
             }
             
@@ -890,42 +900,46 @@ impl Reality {
                 else {
                     Color::GRAY
                 };
-                commands.spawn_bundle(Text2dBundle {
-                    text: Text {
-                        sections: vec![
-                            TextSection {
-                                value: String::from("Resume\n"),
-                                style: TextStyle {
-                                    font: fonts.simvoni.clone(),
-                                    font_size: 55.0,
-                                    color: Color::BLACK
+                commands.spawn((
+                    Text2dBundle {
+                        text: Text {
+                            sections: vec![
+                                TextSection {
+                                    value: String::from("Resume\n"),
+                                    style: TextStyle {
+                                        font: fonts.simvoni.clone(),
+                                        font_size: 55.0,
+                                        color: Color::BLACK
+                                    }
+                                },
+                                TextSection {
+                                    value: String::from("Invite\n"),
+                                    style: TextStyle {
+                                        font: fonts.simvoni.clone(),
+                                        font_size: 55.0,
+                                        color: m_color
+                                    }
+                                },
+                                TextSection {
+                                    value: String::from("Settings\nExit"),
+                                    style: TextStyle {
+                                        font: fonts.simvoni.clone(),
+                                        font_size: 55.0,
+                                        color: Color::BLACK
+                                    }
                                 }
-                            },
-                            TextSection {
-                                value: String::from("Invite\n"),
-                                style: TextStyle {
-                                    font: fonts.simvoni.clone(),
-                                    font_size: 55.0,
-                                    color: m_color
-                                }
-                            },
-                            TextSection {
-                                value: String::from("Settings\nExit"),
-                                style: TextStyle {
-                                    font: fonts.simvoni.clone(),
-                                    font_size: 55.0,
-                                    color: Color::BLACK
-                                }
+                            ],
+                            alignment: TextAlignment {
+                                vertical: VerticalAlign::Center,
+                                horizontal: HorizontalAlign::Center
                             }
-                        ],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Center
-                        }
+                        },
+                        transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                        ..Default::default()
                     },
-                    transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-                    ..Default::default()
-                }).insert(PauseMenuMarker { type_: 1 }).insert(UILocked {});
+                    PauseMenuMarker { type_: 1 },
+                    UILocked {}
+                ));
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::ClosePauseMenu,
                     location: (-150.0, 110.0),
@@ -1021,16 +1035,16 @@ impl Reality {
         )>
     ) {
         queries.p0().for_each_mut(|mut campos| {
-            campos.translation.x = selfs.player_position.x as f32;
-            campos.translation.y = selfs.player_position.y as f32;
+            campos.translation.x = selfs.player_position.translation.x as f32;
+            campos.translation.y = selfs.player_position.translation.y as f32;
             if selfs.chunk_status.is_empty() {
                 campos.translation.x = 0.0;
                 campos.translation.y = 0.0;
             }
         });
         queries.p1().for_each_mut(|mut transform| {
-            transform.translation.x += selfs.player_position.x as f32;
-            transform.translation.y += selfs.player_position.y as f32;
+            transform.translation.x += selfs.player_position.translation.x as f32;
+            transform.translation.y += selfs.player_position.translation.y as f32;
         });
     }
     pub fn system_player_debug_lines(
@@ -1040,13 +1054,13 @@ impl Reality {
         if PLAYER_DEBUG {
             lines.line_colored(
                 Vec3::new(
-                    (selfs.player_position.x - (PLAYER_HITBOX.0 / 2.0)) as f32,
-                    (selfs.player_position.y - (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    (selfs.player_position.translation.x - (PLAYER_HITBOX.0 / 2.0)) as f32,
+                    (selfs.player_position.translation.y - (PLAYER_HITBOX.1 / 2.0)) as f32,
                     DEBUG
                 ),
                 Vec3::new(
-                    (selfs.player_position.x + (PLAYER_HITBOX.0 / 2.0)) as f32,
-                    (selfs.player_position.y + (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    (selfs.player_position.translation.x + (PLAYER_HITBOX.0 / 2.0)) as f32,
+                    (selfs.player_position.translation.y + (PLAYER_HITBOX.1 / 2.0)) as f32,
                     DEBUG
                 ),
                 0.0,
@@ -1063,8 +1077,8 @@ impl Reality {
                 if tile.harsh {
                     let dta = tile.transition_type.collider_dimensions();
                     for collider in dta {
-                        let true_x = collider.0 + (tile.position.0 as f64 * 64.0) + (tile.chunk.0 as f64 * 1920.0) - (1920.0 / 2.0);
-                        let true_y = collider.1 + (tile.position.1 as f64 * 64.0) + (tile.chunk.1 as f64 * 1088.0) - (1088.0 / 2.0) - 66.0;
+                        let true_x = collider.0 + (tile.position.0 as f32 * 64.0) + (tile.chunk.0 as f32 * 1920.0) - (1920.0 / 2.0);
+                        let true_y = collider.1 + (tile.position.1 as f32 * 64.0) + (tile.chunk.1 as f32 * 1088.0) - (1088.0 / 2.0) - 66.0;
                         lines.line_colored(
                             Vec3::new(true_x as f32, true_y as f32, DEBUG),
                             Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
@@ -1101,13 +1115,13 @@ impl Reality {
     ) {
         player.for_each_mut(|(mut l, m)| {
             if m == &disk.user().unwrap() {
-                l.translation.x = selfs.player_position.x as f32;
-                l.translation.y = selfs.player_position.y as f32;
+                l.translation.x = selfs.player_position.translation.x as f32;
+                l.translation.y = selfs.player_position.translation.y as f32;
             }
             if selfs.players_to_move.contains_key(&m) {
                 let which = selfs.players_to_move.get(&m).unwrap();
-                l.translation.x = which.x as f32;
-                l.translation.y = which.y as f32;
+                l.translation.x = which.translation.x as f32;
+                l.translation.y = which.translation.y as f32;
             }
         });
         selfs.players_to_move.clear();
@@ -1120,26 +1134,29 @@ impl Reality {
     ) {
         if let Some(servers) = selfs.display_servers() {
             for (index, server) in servers.iter().enumerate() {
-                commands.spawn_bundle(Text2dBundle {
-                    text: Text {
-                        sections: vec![
-                            TextSection {
-                                value: server.public_name.clone(),
-                                style: TextStyle {
-                                    font: font_handles.simvoni.clone(),
-                                    font_size: 35.0,
-                                    color: Color::BLACK
+                commands.spawn((
+                    Text2dBundle {
+                        text: Text {
+                            sections: vec![
+                                TextSection {
+                                    value: server.public_name.clone(),
+                                    style: TextStyle {
+                                        font: font_handles.simvoni.clone(),
+                                        font_size: 35.0,
+                                        color: Color::BLACK
+                                    }
                                 }
+                            ],
+                            alignment: TextAlignment {
+                                vertical: VerticalAlign::Center,
+                                horizontal: HorizontalAlign::Left
                             }
-                        ],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Left
-                        }
+                        },
+                        transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),
+                        ..Default::default()
                     },
-                    transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),
-                    ..Default::default()
-                }).insert(RemoveOnStateChange {});
+                    RemoveOnStateChange {}
+                ));
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::JoinWorld(server.internal_id),
                     location: (-200.0, ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0),
@@ -1160,11 +1177,11 @@ pub enum MenuState {
 }
 
 /// true if collided, false otherwise
-fn calc_player_against_tiles(tiles: &[Tile], player: (f64, f64)) -> bool {
+fn calc_player_against_tiles(tiles: &[Tile], player: (f32, f32)) -> bool {
     for tile in tiles {
         if tile.harsh {
-            let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f64 * 1920.0) + ((tile.position.0 as f64) * 64.0);
-            let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f64 * 1088.0) + ((tile.position.1 as f64 - 1.0) * 64.0);
+            let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f32 * 1920.0) + ((tile.position.0 as f32) * 64.0);
+            let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f32 * 1088.0) + ((tile.position.1 as f32 - 1.0) * 64.0);
             if tile.transition_type.collides(player, offset_x, offset_y) {
                 return true;
             }
@@ -1183,12 +1200,12 @@ pub struct ChunkStatus {
     edges_rendered: bool
 }
 
-fn calc_player_against_objects(objects: &[Object], player: (f64, f64)) -> bool {
+fn calc_player_against_objects(objects: &[Object], player: (f32, f32)) -> bool {
     for object in objects {
         if let Some(obj_size) = object.rep.collider() {
-            let obj_left = object.pos.x - (obj_size.0 / 2.0);
+            let obj_left = object.pos.translation.x - (obj_size.0 / 2.0);
             let obj_right = obj_left + obj_size.0;
-            let obj_bottom = object.pos.y - (obj_size.1 / 2.0);
+            let obj_bottom = object.pos.translation.y - (obj_size.1 / 2.0);
             let obj_top = obj_bottom + obj_size.1;
             let player_left = player.0 - 32.0;
             let player_right = player.0 + 32.0;
@@ -1225,8 +1242,6 @@ fn get_9fold_layout(
     data: &[(usize, usize)],
     selfs: &ResMut<Reality>,
     chunk: &(isize, isize),
-    inserts: &mut Vec<((isize, isize), ChunkStatus)>,
-    top: usize,
 ) -> Option<([usize; 9], [usize; 9])> {
     let data_group;
     if tile_x > 0 {
@@ -1268,7 +1283,6 @@ fn get_9fold_layout(
                     }
                     else {
                         // we don't have that chunk in memory, so don't render this tile.
-                        inserts[top].1.edges_rendered = false;
                         return None;
                     }
                 }
@@ -1293,7 +1307,6 @@ fn get_9fold_layout(
                 }
                 else {
                     // we don't have that chunk in memory, so don't render this tile.
-                    inserts[top].1.edges_rendered = false;
                     return None;
                 }
             }
@@ -1319,7 +1332,6 @@ fn get_9fold_layout(
                 }
                 else {
                     // we don't have one of the chunks we need, so don't render this tile.
-                    inserts[top].1.edges_rendered = false;
                     return None;
                 }
             }
@@ -1332,7 +1344,6 @@ fn get_9fold_layout(
                 let pot_data_up_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1 + 1));
                 if pot_data_right.is_none() || pot_data_up.is_none() || pot_data_up_right.is_none() {
                     // we don't have one of the chunks we need, so don't render this tile.
-                    inserts[top].1.edges_rendered = false;
                     return None;
                 }
                 let data_right = pot_data_right.unwrap();
@@ -1362,7 +1373,6 @@ fn get_9fold_layout(
             let pot_data_down_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1 - 1));
             if pot_data_right.is_none() || pot_data_down.is_none() || pot_data_down_right.is_none() {
                 // we don't have one of the chunks we need, so don't render this tile.
-                inserts[top].1.edges_rendered = false;
                 return None;
             }
             let data_right = pot_data_right.unwrap();
@@ -1404,7 +1414,6 @@ fn get_9fold_layout(
             }
             else {
                 // we don't have one of the chunks we need, so don't render this tile.
-                inserts[top].1.edges_rendered = false;
                 return None;
             }
         }
@@ -1417,7 +1426,6 @@ fn get_9fold_layout(
             let pot_data_up_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1 + 1));
             if pot_data_left.is_none() || pot_data_up.is_none() || pot_data_up_left.is_none() {
                 // we don't have one of the chunks we need, so don't render this tile.
-                inserts[top].1.edges_rendered = false;
                 return None;
             }
             let data_left = pot_data_left.unwrap();
@@ -1447,7 +1455,6 @@ fn get_9fold_layout(
         let pot_data_down_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1 - 1));
         if pot_data_left.is_none() || pot_data_down.is_none() || pot_data_down_left.is_none() {
             // we don't have one of the chunks we need, so don't render this tile.
-            inserts[top].1.edges_rendered = false;
             return None;
         }
         let data_left = pot_data_left.unwrap();

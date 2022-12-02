@@ -285,34 +285,39 @@ pub fn ui_invite_menu(
             transform: Transform::from_xyz(0.0, 100.0, UI_TEXT),
             ..Default::default()
         }).insert(PauseMenuMarker { type_: 2 }).insert(UILocked {});
-        commands.spawn_bundle(Text2dBundle {
-            text: Text {
-                sections: vec![
-                    TextSection {
-                        value: String::new(),
-                        style: TextStyle {
-                            font: fonts.as_ref().unwrap().simvoni.clone(),
-                            font_size: 55.0,
-                            color: Color::BLACK
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![
+                        TextSection {
+                            value: String::new(),
+                            style: TextStyle {
+                                font: fonts.as_ref().unwrap().simvoni.clone(),
+                                font_size: 55.0,
+                                color: Color::BLACK
+                            }
+                        },
+                        TextSection {
+                            value: String::new(),
+                            style: TextStyle {
+                                font: fonts.as_ref().unwrap().simvoni.clone(),
+                                font_size: 55.0,
+                                color: Color::GRAY
+                            }
                         }
-                    },
-                    TextSection {
-                        value: String::new(),
-                        style: TextStyle {
-                            font: fonts.as_ref().unwrap().simvoni.clone(),
-                            font_size: 55.0,
-                            color: Color::GRAY
-                        }
+                    ],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center
                     }
-                ],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center
-                }
+                },
+                transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                ..Default::default()
             },
-            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-            ..Default::default()
-        }).insert(crate::components::TextBox {}).insert(PauseMenuMarker { type_: 1 }).insert(UILocked {});
+            crate::components::TextBox {},
+            PauseMenuMarker { type_: 1 },
+            UILocked {}
+        ));
         tb.clear_buffer();
     }
 }
@@ -461,7 +466,7 @@ pub fn ui_disconnect_game(
             commands.entity(e).despawn();
         });
         // We do this so UI doesn't get misaligned
-        reality.set_player_position(GamePosition::zero());
+        reality.set_player_position(Transform::from_xyz(0.0, 0.0, 0.0));
         // Fully reset because making things not conflict is hard :P
         reality.reset();
         // Switch to titlescreen

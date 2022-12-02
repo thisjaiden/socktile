@@ -32,7 +32,7 @@ pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
                 // For every player...
                 for (index, (_user, pos, data)) in server_players.iter().enumerate() {
                     // If they are in pickup distance...
-                    if object.pos.distance(*pos) < ITEM_PICKUP_DISTANCE.into() {
+                    if distance(object.pos, *pos) < ITEM_PICKUP_DISTANCE.into() {
                         // And have avalable hotbar space...
                         if let Some(slot) = data.inventory.hotbar_empty_space() {
                             // Remove entity from every player
@@ -56,17 +56,17 @@ pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
                 // If not picked up, for every player...
                 for (_user, pos, data) in server_players.iter() {
                     // If they are in magnet distance...
-                    if object.pos.distance(*pos) < ITEM_MAGNET_DISTANCE.into() {
+                    if distance(object.pos, *pos) < ITEM_MAGNET_DISTANCE.into() {
                         // And have avalable hotbar space...
                         if let Some(_slot) = data.inventory.hotbar_empty_space() {
                             // dtotal=√((x_2-x_1)²+(y_2-y_1)²)
-                            let dx = pos.x - object.pos.x;
-                            let dy = pos.y - object.pos.y;
+                            let dx = pos.translation.x - object.pos.translation.x;
+                            let dy = pos.translation.y - object.pos.translation.y;
                             let dtotal = ((dx.powi(2))+(dy.powi(2))).sqrt();
                             let Δ = 64.0 / (((dtotal.powi(2)) + 100.0).sqrt());
                             let Δx = Δ*(dx/dtotal);
                             let Δy = Δ*(dy/dtotal);
-                            let new_pos = GamePosition { x: object.pos.x + Δx, y: object.pos.y + Δy };
+                            let new_pos = Transform::from_xyz(object.pos.translation.x + Δx, object.pos.translation.y + Δy, 0.0);
                             let mut new_object = object.clone();
                             new_object.pos = new_pos;
                             // Update entity for every player

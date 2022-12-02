@@ -126,7 +126,7 @@ pub fn handler(
                 }
             }
             if player_info == None {
-                player_info = Some((packet_user.clone(), GamePosition { x: 0.0, y: 0.0 }, PlayerData::new()));
+                player_info = Some((packet_user.clone(), Transform::from_xyz(0.0, 0.0, 0.0), PlayerData::new()));
             }
             let player_info = player_info.unwrap();
             let mut other_players = vec![];
@@ -143,8 +143,8 @@ pub fn handler(
             let owner = packet_user.clone();
             globals.user_to_world.insert(packet_user.clone(), world_index);
             let spawn_centre_chnks_lack = (
-                (player_info.1.x / 32.0).round() as isize,
-                (player_info.1.y / 32.0).round() as isize
+                (player_info.1.translation.x / 32.0).round() as isize,
+                (player_info.1.translation.y / 32.0).round() as isize
             );
             let mut constructable_players = vec![];
             for (us, gp, _) in &globals.worlds[world_id].data.players {

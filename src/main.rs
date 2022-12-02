@@ -17,6 +17,7 @@ mod window_setup;
 mod modular_assets;
 mod assets;
 mod matrix;
+mod utils;
 mod prelude;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.

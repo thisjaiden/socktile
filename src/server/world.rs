@@ -3,8 +3,8 @@ use bevy::utils::HashMap;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct World {
-    pub players: Vec<(User, GamePosition, PlayerData)>,
-    pub offline_players: Vec<(User, GamePosition, PlayerData)>,
+    pub players: Vec<(User, Transform, PlayerData)>,
+    pub offline_players: Vec<(User, Transform, PlayerData)>,
     /// All of the generated terrain in the world.
     /// (chunk coords, terrain data array)
     pub terrain: HashMap<(isize, isize), Vec<(usize, usize)>>,
@@ -155,10 +155,11 @@ impl World {
                     match entity.identifier.as_str() {
                         "Tree" => {
                             self.objects.push(Object {
-                                pos: GamePosition {
-                                    x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                    y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                },
+                                pos: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                    (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                    0.0
+                                ),
                                 rep: ObjectType::Tree(3),
                                 uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                             });
@@ -172,10 +173,11 @@ impl World {
                                         .as_str().expect("FATAL: LDtk entity had a non-string ItemName")
                                     );
                                     self.objects.push(Object {
-                                        pos: GamePosition {
-                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                        },
+                                        pos: Transform::from_xyz(
+                                            (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                            (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                            0.0
+                                        ),
                                         rep: ObjectType::GroundItem(item),
                                         uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                                     });
@@ -191,10 +193,11 @@ impl World {
                                         .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
                                     );
                                     self.objects.push(Object {
-                                        pos: GamePosition {
-                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                        },
+                                        pos: Transform::from_xyz(
+                                            (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                            (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                            0.0
+                                        ),
                                         rep: ObjectType::Npc(npc),
                                         uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                                     });
