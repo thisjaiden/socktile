@@ -219,15 +219,18 @@ pub fn ui_game(
             let samples = audio_serve.get(&core.audio).unwrap();
             audio.play(samples.get("click"));
             state.replace(GameState::Play).unwrap();
-            commands.spawn_bundle(SpriteBundle {
-                texture: materials.not_animated.clone(),
-                transform: Transform::from_xyz(
-                    0.0,
-                    0.0,
-                    PLAYER_CHARACTERS
-                ),
-                ..Default::default()
-            }).insert(disk.user().unwrap());
+            commands.spawn((
+                SpriteBundle {
+                    texture: materials.not_animated.clone(),
+                    transform: Transform::from_xyz(
+                        0.0,
+                        0.0,
+                        PLAYER_CHARACTERS
+                    ),
+                    ..Default::default()
+                },
+                disk.user().unwrap()
+            ));
             netty.n.send(Packet::JoinWorld(game_id));
             man.reset_ui();
         }
@@ -265,26 +268,30 @@ pub fn ui_invite_menu(
         desps.for_each(|e| {
             commands.entity(e).despawn();
         });
-        commands.spawn_bundle(Text2dBundle {
-            text: Text {
-                sections: vec![
-                    TextSection {
-                        value: String::from("What player? (ex PlayerName#1234)\n"),
-                        style: TextStyle {
-                            font: fonts.as_ref().unwrap().simvoni.clone(),
-                            font_size: 55.0,
-                            color: Color::BLACK
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![
+                        TextSection {
+                            value: String::from("What player? (ex PlayerName#1234)\n"),
+                            style: TextStyle {
+                                font: fonts.as_ref().unwrap().simvoni.clone(),
+                                font_size: 55.0,
+                                color: Color::BLACK
+                            }
                         }
+                    ],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center
                     }
-                ],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center
-                }
+                },
+                transform: Transform::from_xyz(0.0, 100.0, UI_TEXT),
+                ..Default::default()
             },
-            transform: Transform::from_xyz(0.0, 100.0, UI_TEXT),
-            ..Default::default()
-        }).insert(PauseMenuMarker { type_: 2 }).insert(UILocked {});
+            PauseMenuMarker { type_: 2 },
+            UILocked {}
+        ));
         commands.spawn((
             Text2dBundle {
                 text: Text {

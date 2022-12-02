@@ -1,3 +1,5 @@
+use std::borrow::{Borrow, BorrowMut};
+
 use crate::{prelude::{*, tiles::TileTransitionConfig}, modular_assets::{TransitionType, conjoin_styles}};
 use bevy::{render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use bevy_prototype_debug_lines::DebugLines;
@@ -289,7 +291,9 @@ impl Reality {
             }
         }
 
-        for (chunk_location, mut chunk_status) in selfs.chunk_status.iter_mut() {
+        let chunk_data = selfs.chunk_data.clone();
+        let chunk_status = &mut selfs.chunk_status;
+        for (chunk_location, mut chunk_status) in chunk_status.iter_mut() {
             if chunk_status.waiting_to_render && chunk_status.downloaded {
                 // We should render the main part of this chunk, it's downloaded!
                 // Flag chunk as rendered
@@ -304,7 +308,8 @@ impl Reality {
                 else {
                     stuff = (0..CHUNK_SIZE).collect();
                 }
-                if let Some(chunk_data) = selfs.chunk_data.get(chunk_location) {
+                if let Some(chunk_data) = chunk_data.get(chunk_location) {
+                    /* TODO: This is disabled right now while some stuff is worked out.
                     for tile_index in stuff {
                         let tile_x = tile_index % CHUNK_WIDTH;
                         let tile_y = tile_index / CHUNK_WIDTH;
@@ -466,6 +471,7 @@ impl Reality {
                             warn!("Missing data for tile selection [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
                         }
                     }
+                    */
                 }
                 else {
                     error!("Unable to find data for a chunk queued for rendering! (Rendering skipped/disabled for this chunk)");
@@ -518,8 +524,8 @@ impl Reality {
             objects.for_each_mut(|(mut transform, mut object)| {
                 if object.uuid == updateable.uuid {
                     object.update(updateable.clone());
-                    transform.translation.x = object.pos.x as f32;
-                    transform.translation.y = object.pos.y as f32;
+                    transform.translation.x = object.pos.translation.x;
+                    transform.translation.y = object.pos.translation.y;
                 }
             });
         }
@@ -535,33 +541,42 @@ impl Reality {
         for object in &selfs.queued_objects {
             match &object.rep {
                 ObjectType::Tree(_str) => {
-                    commands.spawn_bundle(SpriteBundle {
-                        texture: obj_assets.tree.clone(),
-                        transform: Transform {
-                            translation: Vec3::new(
-                                object.pos.x as f32,
-                                object.pos.y as f32,
-                                FRONT_OBJECTS
-                            ),
-                            rotation: Quat::default(),
-                            scale: Vec3::new(0.1, 0.1, 1.0)
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: obj_assets.tree.clone(),
+                            transform: Transform {
+                                translation: Vec3::new(
+                                    object.pos.translation.x,
+                                    object.pos.translation.y,
+                                    FRONT_OBJECTS
+                                ),
+                                rotation: Quat::default(),
+                                scale: Vec3::new(0.1, 0.1, 1.0)
+                            },
+                            ..default()
                         },
-                        ..default()
-                    }).insert(object.clone());
+                        object.clone()
+                    ));
                 }
                 ObjectType::GroundItem(item) => {
-                    commands.spawn_bundle(SpriteBundle {
-                        texture: item_assets.pick_from_item(*item),
-                        transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, FRONT_OBJECTS),
-                        ..default()
-                    }).insert(object.clone());
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: item_assets.pick_from_item(*item),
+                            transform: Transform::from_xyz(object.pos.translation.x, object.pos.translation.y, FRONT_OBJECTS),
+                            ..default()
+                        },
+                        object.clone()
+                    ));
                 }
                 ObjectType::Npc(_who) => {
-                    commands.spawn_bundle(SpriteBundle {
-                        texture: npc_assets.not_animated.clone(),
-                        transform: Transform::from_xyz(object.pos.x as f32, object.pos.y as f32, PLAYER_CHARACTERS),
-                        ..default()
-                    }).insert(object.clone());
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: npc_assets.not_animated.clone(),
+                            transform: Transform::from_xyz(object.pos.translation.x, object.pos.translation.y, PLAYER_CHARACTERS),
+                            ..default()
+                        },
+                        object.clone()
+                    ));
                 }
             }
         }
@@ -574,26 +589,38 @@ impl Reality {
         selfs: Res<Reality>
     ) {
         for i in 0..10 {
-            commands.spawn_bundle(SpriteBundle {
-                texture: textures.slot.clone(),
-                transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG),
-                ..Default::default()
-            }).insert(HotbarMarker { location: i, type_: 1 }).insert(UILocked {});
-            commands.spawn_bundle(SpriteBundle {
-                texture: items.none.clone(),
-                transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG + 0.01),
-                ..Default::default()
-            }).insert(HotbarMarker { location: i, type_: 3 }).insert(UILocked {});
+            commands.spawn((
+                SpriteBundle {
+                    texture: textures.slot.clone(),
+                    transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG),
+                    ..Default::default()
+                },
+                HotbarMarker { location: i, type_: 1 },
+                UILocked {}
+            ));
+            commands.spawn((
+                SpriteBundle {
+                    texture: items.none.clone(),
+                    transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG + 0.01),
+                    ..Default::default()
+                },
+                HotbarMarker { location: i, type_: 3 },
+                UILocked {}
+            ));
         }
-        commands.spawn_bundle(SpriteBundle {
-            texture: textures.selected.clone(),
-            transform: Transform::from_xyz(
-                    selfs.player.inventory.selected_slot as f32 * 64.0 - (64.0 * 5.0),
-                    -(1080.0 / 2.0) + 32.0,
-                    UI_IMG + 0.02
-                ),
-                ..Default::default()
-        }).insert(HotbarMarker { location: selfs.player.inventory.selected_slot, type_: 2 }).insert(UILocked {});
+        commands.spawn((
+            SpriteBundle {
+                texture: textures.selected.clone(),
+                transform: Transform::from_xyz(
+                        selfs.player.inventory.selected_slot as f32 * 64.0 - (64.0 * 5.0),
+                        -(1080.0 / 2.0) + 32.0,
+                        UI_IMG + 0.02
+                    ),
+                    ..Default::default()
+            },
+            HotbarMarker { location: selfs.player.inventory.selected_slot, type_: 2 },
+            UILocked {}
+        ));
     }
     pub fn system_update_hotbar(
         selfs: Res<Reality>,
@@ -670,7 +697,7 @@ impl Reality {
                         ..Default::default()
                     },
                     user
-                )).insert(user);
+                ));
             }
         }
         selfs.players_to_spawn.clear();

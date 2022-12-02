@@ -10,70 +10,72 @@ pub fn title_screen(
     mut ui: ResMut<UIManager>
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
-    commands.spawn_bundle(SpriteBundle {
-        texture: core.title_screen.clone(),
-        transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
-        ..default()
-    })
-    .insert(RemoveOnStateChange {});
+    commands.spawn((
+        SpriteBundle {
+            texture: core.title_screen.clone(),
+            transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
+            ..default()
+        },
+        RemoveOnStateChange {}
+    ));
     // New game text
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: lang.get("en_us.core.title_screen.new_game"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 64.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: lang.get("en_us.core.title_screen.new_game"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 64.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            ..default()
         },
-        ..default()
-    })
-    .insert(RemoveOnStateChange {})
-    .insert(
+        RemoveOnStateChange {},
         Transform::from_xyz(0.0, -3000.0, UI_TEXT)
-        .ease_to(
-            Transform::from_xyz(512.0, 256.0, UI_TEXT),
-            EaseFunction::QuadraticInOut,
-            bevy_easings::EasingType::Once { duration: Duration::from_millis(1500) }
-        )
-    );
+            .ease_to(
+                Transform::from_xyz(512.0, 256.0, UI_TEXT),
+                EaseFunction::QuadraticInOut,
+                bevy_easings::EasingType::Once { duration: Duration::from_millis(1500) }
+            )
+    ));
     // Join game text
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: lang.get("en_us.core.title_screen.join_game"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 64.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: lang.get("en_us.core.title_screen.join_game"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 64.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            ..default()
         },
-        ..default()
-    })
-    .insert(RemoveOnStateChange {})
-    .insert(
+        RemoveOnStateChange {},
         Transform::from_xyz(0.0, -3000.0, UI_TEXT)
-        .ease_to(
-            Transform::from_xyz(-512.0, 256.0, UI_TEXT),
-            EaseFunction::QuadraticInOut,
-            bevy_easings::EasingType::Once { duration: Duration::from_millis(2000) }
-        )
-    );
+            .ease_to(
+                Transform::from_xyz(-512.0, 256.0, UI_TEXT),
+                EaseFunction::QuadraticInOut,
+                bevy_easings::EasingType::Once { duration: Duration::from_millis(2000) }
+            )
+    ));
     // Quit game text
     commands.spawn_bundle(Text2dBundle {
         text: Text {
