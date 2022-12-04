@@ -290,9 +290,10 @@ impl Reality {
                 transition_types_mapped.insert(transition_type.0.clone(), b.clone());
             }
         }
-
+        // we do this for "ownership over `selfs`" reasons.
         let chunk_data = selfs.chunk_data.clone();
         let chunk_status = &mut selfs.chunk_status;
+        
         for (chunk_location, mut chunk_status) in chunk_status.iter_mut() {
             if chunk_status.waiting_to_render && chunk_status.downloaded {
                 // We should render the main part of this chunk, it's downloaded!

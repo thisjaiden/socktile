@@ -77,127 +77,129 @@ pub fn title_screen(
             )
     ));
     // Quit game text
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: lang.get("en_us.core.title_screen.quit"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 64.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: lang.get("en_us.core.title_screen.quit"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 64.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            ..default()
         },
-        ..default()
-    })
-    .insert(RemoveOnStateChange {})
-    .insert(
+        RemoveOnStateChange {},
         Transform::from_xyz(0.0, -3000.0, UI_TEXT)
-        .ease_to(
-            Transform::from_xyz(-512.0, -256.0, UI_TEXT),
-            EaseFunction::QuadraticInOut,
-            bevy_easings::EasingType::Once { duration: Duration::from_millis(1000) }
-        )
-    );
+            .ease_to(
+                Transform::from_xyz(-512.0, -256.0, UI_TEXT),
+                EaseFunction::QuadraticInOut,
+                bevy_easings::EasingType::Once { duration: Duration::from_millis(1000) }
+            )
+    ));
     // Settings text
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: lang.get("en_us.core.title_screen.settings"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 64.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: lang.get("en_us.core.title_screen.settings"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 64.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            ..default()
         },
-        ..default()
-    })
-    .insert(RemoveOnStateChange {})
-    .insert(
+        RemoveOnStateChange {},
         Transform::from_xyz(0.0, -3000.0, UI_TEXT)
-        .ease_to(
-            Transform::from_xyz(512.0, -256.0, UI_TEXT),
-            EaseFunction::QuadraticInOut,
-            bevy_easings::EasingType::Once { duration: Duration::from_millis(500) }
-        )
-    );
+            .ease_to(
+                Transform::from_xyz(512.0, -256.0, UI_TEXT),
+                EaseFunction::QuadraticInOut,
+                bevy_easings::EasingType::Once { duration: Duration::from_millis(500) }
+            )
+    ));
     // Splash text
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: lang.get("en_us.core.title_screen.splash"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 40.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: lang.get("en_us.core.title_screen.splash"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 40.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            transform: Transform::from_xyz(
+                0.0,
+                128.0,
+                UI_TEXT
+            ),
+            ..default()
         },
-        transform: Transform::from_xyz(
-            0.0,
-            128.0,
-            UI_TEXT
-        ),
-        ..default()
-    })
-    .insert(RemoveOnStateChange {})
-    .insert(
+        RemoveOnStateChange {},
         Transform::from_xyz(0.0, 128.0, UI_TEXT)
-        .ease_to(
-            Transform::from_xyz(0.0, 128.0, UI_TEXT).with_scale(Vec3::new(1.05, 1.05, 1.05)),
-            EaseFunction::SineInOut,
-            bevy_easings::EasingType::PingPong {
-                duration: Duration::from_millis(800),
-                pause: None
-            }
-        )
-    );
-    // player username in bottom left
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: String::new(),
-                    style: TextStyle {
-                        font: font_assets.simvoni_bold.clone(),
-                        font_size: 44.0,
-                        color: Color::BLACK
-                    }
+            .ease_to(
+                Transform::from_xyz(0.0, 128.0, UI_TEXT).with_scale(Vec3::new(1.05, 1.05, 1.05)),
+                EaseFunction::SineInOut,
+                bevy_easings::EasingType::PingPong {
+                    duration: Duration::from_millis(800),
+                    pause: None
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Left
-            }
+            )
+    ));
+    // player username in bottom left
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: font_assets.simvoni_bold.clone(),
+                            font_size: 44.0,
+                            color: Color::BLACK
+                        }
+                    }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Left
+                }
+            },
+            transform: Transform::from_xyz(
+                -(1920.0 / 2.0) + 8.0,
+                -(1080.0 / 2.0) + 32.0,
+                UI_TEXT
+            ),
+            ..default()
         },
-        transform: Transform::from_xyz(
-            -(1920.0 / 2.0) + 8.0,
-            -(1080.0 / 2.0) + 32.0,
-            UI_TEXT
-        ),
-        ..default()
-    })
-    .insert(TitleScreenUser {})
-    .insert(RemoveOnStateChange {});
+        TitleScreenUser {},
+        RemoveOnStateChange {}
+    ));
     ui.add_ui(UIClickable {
         action: UIClickAction::CloseProgram,
         location: (-710.0, -210.0),

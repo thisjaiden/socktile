@@ -1,0 +1,15 @@
+{
+    "files": [
+        {
+            "location": "grass_water_new.png",
+            "width": 8,
+            "height": 6
+        }
+    ],
+    "variants": [
+        {
+            "harsh": true,
+            "?": [0, 5]
+        }
+    ]
+}

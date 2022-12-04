@@ -24,19 +24,52 @@ impl Plugin for ModularAssetsPlugin {
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum TransitionType {
-    Center,
-    Up,
-    Down,
-    Left,
-    Right,
-    UpLeft,
-    UpRight,
-    DownLeft,
-    DownRight,
-    InvertedUpLeft,
-    InvertedUpRight,
-    InvertedDownLeft,
-    InvertedDownRight
+    TopLeft,
+    TopRight,
+    FTop,
+    FRight,
+    FBottom,
+    BottomLeft,
+    BottomRight,
+    FLeft,
+    Nothing,
+    TopLeftBottomLeft,
+    TopLeftBottomRight,
+    TopRightBottomLeft,
+    TopLeftTopRight,
+    FTopBottomLeft,
+    FTopBottomRight,
+    FLeftBottomRight,
+    FTopFLeft,
+    FTopFRight,
+    FLeftFBottom,
+    FTopFBottom,
+    FLeftFRight,
+    FBottomFRight,
+    FBottomTopLeft,
+    FBottomTopRight,
+    FLeftTopRight,
+    FRightTopLeft,
+    BottomLeftBottomRight,
+    TopRightBottomRight,
+    FTopBottomLeftBottomRight,
+    FBottomTopLeftTopRight,
+    FTopFLeftBottomRight,
+    FTopFLeftFRight,
+    FTopFLeftFBottom,
+    FTopFRightBottomLeft,
+    FLeftFBottomTopRight,
+    FLeftFBottomFRight,
+    FTopFBottomFRight,
+    FBottomFRightTopLeft,
+    TopLeftBottomLeftBottomRight,
+    TopRightBottomLeftBottomRight,
+    FLeftTopRightBottomRight,
+    FRightTopLeftBottomLeft,
+    TopLeftTopRightBottomLeft,
+    TopLeftTopRightBottomRight,
+    FTopFLeftFBottomFRight,
+    TopLeftTopRightBottomLeftBottomRight
 }
 
 impl TransitionType {
@@ -63,19 +96,8 @@ impl TransitionType {
     }
     pub fn collider_dimensions(&self) -> &[(f32, f32, f32, f32)] {
         match self {
-            Self::Center => &[],
-            Self::UpLeft => &[(26.0, 0.0, 6.0, 32.0), (32.0, 32.0, 32.0, 6.0)],
-            Self::Up => &[(0.0, 32.0, 64.0, 6.0)],
-            Self::UpRight => &[(0.0, 32.0, 32.0, 6.0), (32.0, 0.0, 6.0, 32.0)],
-            Self::Left => &[(26.0, 0.0, 6.0, 64.0)],
-            Self::Right => &[(32.0, 0.0, 6.0, 64.0)],
-            Self::DownLeft => &[(26.0, 32.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::Down => &[(0.0, 26.0, 64.0, 6.0)],
-            Self::DownRight => &[(0.0, 26.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::InvertedUpLeft => &[(32.0, 0.0, 6.0, 32.0), (32.0, 26.0, 32.0, 6.0)],
-            Self::InvertedUpRight => &[(0.0, 26.0, 32.0, 6.0), (26.0, 0.0, 6.0, 32.0)],
-            Self::InvertedDownLeft => &[(32.0, 32.0, 32.0, 6.0), (32.0, 32.0, 6.0, 32.0)],
-            Self::InvertedDownRight => &[(0.0, 32.0, 32.0, 6.0), (26.0, 32.0, 6.0, 32.0)]
+            Self::Nothing => &[],
+            _ => todo!()
         }
     }
     fn cube_colliders(a: (f32, f32, f32, f32), b: (f32, f32, f32, f32)) -> bool {
@@ -84,6 +106,9 @@ impl TransitionType {
         (a.1 + a.3) > b.1 &&
         a.1 < (b.1 + b.3)
     }
+    fn get_from_environment(environment: [usize; 9]) -> Option<TransitionType> {
+        todo!()
+    }
     
 }
 
@@ -91,45 +116,16 @@ impl TransitionType {
 // But I don't know how I would do it and I don't care enough. It's *fine*.
 pub fn conjoin_styles(styles: Variant) -> Vec<(TransitionType, Vec<usize>)> {
     let mut output = vec![];
-    if let Some(value) = styles.center {
-        output.push((TransitionType::Center, value));
+    if let Some(value) = styles.bl {
+        output.push((TransitionType::BottomLeft, value));
     }
-    if let Some(value) = styles.down {
-        output.push((TransitionType::Down, value));
+    if let Some(value) = styles.blbr {
+        output.push((TransitionType::BottomLeftBottomRight, value));
     }
-    if let Some(value) = styles.left {
-        output.push((TransitionType::Left, value));
+    if let Some(value) = styles.br {
+        output.push((TransitionType::BottomRight, value));
     }
-    if let Some(value) = styles.right {
-        output.push((TransitionType::Right, value));
-    }
-    if let Some(value) = styles.up {
-        output.push((TransitionType::Up, value));
-    }
-    if let Some(value) = styles.up_left {
-        output.push((TransitionType::UpLeft, value));
-    }
-    if let Some(value) = styles.up_right {
-        output.push((TransitionType::UpRight, value));
-    }
-    if let Some(value) = styles.down_left {
-        output.push((TransitionType::DownLeft, value));
-    }
-    if let Some(value) = styles.down_right {
-        output.push((TransitionType::DownRight, value));
-    }
-    if let Some(value) = styles.inverted_up_left {
-        output.push((TransitionType::InvertedUpLeft, value));
-    }
-    if let Some(value) = styles.inverted_up_right {
-        output.push((TransitionType::InvertedUpRight, value));
-    }
-    if let Some(value) = styles.inverted_down_left {
-        output.push((TransitionType::InvertedDownLeft, value));
-    }
-    if let Some(value) = styles.inverted_down_right {
-        output.push((TransitionType::InvertedDownRight, value));
-    }
+    // TODO: Rest of variants
     output
 }
 
