@@ -326,16 +326,19 @@ impl Reality {
                                     pot_transition_type = Some(TransitionType::Nothing);
                                 }
                                 else if values.len() > 2 {
-                                    panic!();
+                                    error!("More than 3 tiles at once!");
+                                    continue;
+                                    //panic!();
                                 }
                                 else {
                                     if transition_types_mapped.contains_key(&[tile_types.states[values[0]].name.clone(), tile_types.states[values[1]].name.clone()]) {
                                         dominated_tilemap = dominate(&tilemap, values[0]);
+                                        pot_transition_type = TransitionType::get_from_environment(dominated_tilemap);
                                     }
                                     else {
-                                        dominated_tilemap = dominate(&tilemap, values[1]);
+                                        pot_transition_type = Some(TransitionType::Nothing);
                                     }
-                                    pot_transition_type = TransitionType::get_from_environment(dominated_tilemap);
+                                    
                                 }
                                 
                                 if let Some(transition_type) = pot_transition_type {
@@ -360,11 +363,18 @@ impl Reality {
                                         for variant in &interaction.variants {
                                             variant_styles.append(&mut conjoin_styles(variant.clone()));
                                         }
+                                        if variant_styles.is_empty() {
+                                            panic!("No variant styles to pick from!");
+                                        }
                                         let mut this_variants = vec![];
                                         for (style, data) in variant_styles {
                                             if style == transition_type {
                                                 this_variants.push(data);
                                             }
+                                        }
+                                        if this_variants.is_empty() {
+                                            error!("No variants for a tile!\n{:?}\n\n{}, {}", tilemap, king_tile_type, subject_tile_type);
+                                            continue;
                                         }
                                         let picked_variant = rand_from_array(this_variants);
                                         if picked_variant.len() == 1 {

@@ -156,7 +156,7 @@ impl TransitionType {
                     return Some(TransitionType::FTopFBottom);
                 }
                 // all states with at only an FTop and unknown corners
-                if environment[6] {
+                else if environment[6] {
                     if environment[8] {
                         return Some(TransitionType::FTopBottomLeftBottomRight);
                     }
@@ -166,6 +166,9 @@ impl TransitionType {
                 }
                 else if environment[8] {
                     return Some(TransitionType::FTopBottomRight);
+                }
+                else {
+                    return Some(TransitionType::FTop);
                 }
             }
             else if environment[3] {
@@ -196,6 +199,9 @@ impl TransitionType {
                 else if environment[8] {
                     return Some(TransitionType::FLeftBottomRight);
                 }
+                else {
+                    return Some(TransitionType::FLeft);
+                }
             }
             else if environment[5] {
                 if environment[7] {
@@ -206,7 +212,7 @@ impl TransitionType {
                         return Some(TransitionType::FBottomFRight);
                     }
                 }
-                if environment[0] {
+                else if environment[0] {
                     if environment[6] {
                         return Some(TransitionType::FRightTopLeftBottomLeft);
                     }
@@ -216,6 +222,9 @@ impl TransitionType {
                 }
                 else if environment[6] {
                     return Some(TransitionType::FRightBottomLeft);
+                }
+                else {
+                    return Some(TransitionType::FRight);
                 }
             }
             else if environment[7] {
@@ -267,13 +276,31 @@ impl TransitionType {
                 }
             }
             else if environment[2] {
-                // ...
+                if environment[6] {
+                    if environment[8] {
+                        return Some(TransitionType::TopRightBottomLeftBottomRight);
+                    }
+                    else {
+                        return Some(TransitionType::TopRightBottomLeft);
+                    }
+                }
+                else if environment[8] {
+                    return Some(TransitionType::TopRightBottomRight);
+                }
+                else {
+                    return Some(TransitionType::TopRight);
+                }
             }
             else if environment[6] {
-                // ...
+                if environment[8] {
+                    return Some(TransitionType::BottomLeftBottomRight);
+                }
+                else {
+                    return Some(TransitionType::BottomLeft);
+                }
             }
             else if environment[8] {
-                // ...
+                return Some(TransitionType::BottomRight);
             }
         }
         else {
@@ -435,5 +462,3 @@ pub fn conjoin_styles(styles: Variant) -> Vec<(TransitionType, Vec<usize>)> {
     }
     output
 }
-
-

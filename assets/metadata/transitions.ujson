@@ -8,7 +8,7 @@
         "meta_location": "transitions/grass_water.vjson"
     },
     {
-        "names": ["sand", "grass", "temporary_bullshit"],
+        "names": ["grass", "sand", "temporary_bullshit"],
         "meta_location": "transitions/grass_water.vjson"
     },
     {
