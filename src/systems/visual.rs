@@ -23,7 +23,7 @@ pub fn loading_prog(
     if let Some(progress) = progress.map(|counter| counter.progress()) {
         let (_e, mut transform) = query.single_mut();
         let pd = (progress.done as f32) / (progress.total as f32);
-        transform.scale.x = pd * 10.0;
+        transform.scale.x = pd * 9.5;
         
         //warn!("Progress: {:?}", progress);
     }

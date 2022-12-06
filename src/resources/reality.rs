@@ -1,5 +1,3 @@
-use std::borrow::{Borrow, BorrowMut};
-
 use crate::{prelude::{*, tiles::TileTransitionConfig}, modular_assets::{TransitionType, conjoin_styles}};
 use bevy::{render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
 use bevy_prototype_debug_lines::DebugLines;
@@ -309,50 +307,84 @@ impl Reality {
                 else {
                     stuff = (0..CHUNK_SIZE).collect();
                 }
-                if let Some(chunk_data) = chunk_data.get(chunk_location) {
-                    /* TODO: This is disabled right now while some stuff is worked out.
+                if let Some(this_chunk_data) = chunk_data.get(chunk_location) {
+                    //* TODO: This is disabled right now while some stuff is worked out.
                     for tile_index in stuff {
                         let tile_x = tile_index % CHUNK_WIDTH;
                         let tile_y = tile_index / CHUNK_WIDTH;
                         // Vide wuz here
                         if let Some((tilemap, heightmap)) = get_9fold_layout(
                             tile_x, tile_y,
-                            chunk_data, &selfs, chunk_location
+                            this_chunk_data, &chunk_data, chunk_location
                         ) {
                             if all_equal(&heightmap) {
-                                let pot_transition_type = TransitionType::get_from_environment(texturemap);
+                                let values = unique_values(&tilemap);
+                                let dominated_tilemap;
+                                let pot_transition_type;
+                                if values.len() == 1 {
+                                    // solid
+                                    pot_transition_type = Some(TransitionType::Nothing);
+                                }
+                                else if values.len() > 2 {
+                                    panic!();
+                                }
+                                else {
+                                    if transition_types_mapped.contains_key(&[tile_types.states[values[0]].name.clone(), tile_types.states[values[1]].name.clone()]) {
+                                        dominated_tilemap = dominate(&tilemap, values[0]);
+                                    }
+                                    else {
+                                        dominated_tilemap = dominate(&tilemap, values[1]);
+                                    }
+                                    pot_transition_type = TransitionType::get_from_environment(dominated_tilemap);
+                                }
+                                
                                 if let Some(transition_type) = pot_transition_type {
-                                    let king_tile_type = tile_types.states[transition_type.1].name.clone();
-                                    let subject_tile_type = tile_types.states[transition_type.2].name.clone();
-                                    let pot_interaction = transition_types_mapped.get(&[king_tile_type, subject_tile_type]);
-                                    if let Some(interaction) = pot_interaction {
+                                    let king_tile_type = tile_types.states[values[0]].name.clone();
+                                    let subject_tile_type;
+                                    if values.len() == 1 {
+                                        subject_tile_type = king_tile_type.clone();
+                                    }
+                                    else {
+                                        subject_tile_type = tile_types.states[values[1]].name.clone()
+                                    }
+                                    let pot_interaction = transition_types_mapped.get(&[king_tile_type.clone(), subject_tile_type.clone()]);
+                                    let interaction;
+                                    if let Some(interaction_b) = pot_interaction {
+                                        interaction = interaction_b;
+                                    }
+                                    else {
+                                        interaction = transition_types_mapped.get(&[king_tile_type.clone(), king_tile_type.clone()]).unwrap();
+                                    }
+                                    {
                                         let mut variant_styles = vec![];
                                         for variant in &interaction.variants {
                                             variant_styles.append(&mut conjoin_styles(variant.clone()));
                                         }
                                         let mut this_variants = vec![];
                                         for (style, data) in variant_styles {
-                                            if style == transition_type.0 {
+                                            if style == transition_type {
                                                 this_variants.push(data);
                                             }
                                         }
                                         let picked_variant = rand_from_array(this_variants);
                                         if picked_variant.len() == 1 {
-                                            commands.spawn_bundle(SpriteBundle {
-                                                transform: Transform::from_xyz(
-                                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                                    BACKGROUND
-                                                ),
-                                                texture: interaction.images[picked_variant[0]].force_sprite(),
-                                                ..default()
-                                            })
-                                            .insert(Tile {
-                                                chunk: *chunk,
-                                                position: (tile_x, tile_y),
-                                                transition_type: transition_type.0,
-                                                harsh: false
-                                            });
+                                            commands.spawn((
+                                                SpriteBundle {
+                                                    transform: Transform::from_xyz(
+                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
+                                                        BACKGROUND
+                                                    ),
+                                                    texture: interaction.images[picked_variant[0]].force_sprite(),
+                                                    ..default()
+                                                },
+                                                Tile {
+                                                    chunk: *chunk_location,
+                                                    position: (tile_x, tile_y),
+                                                    transition_type: transition_type,
+                                                    harsh: false
+                                                }
+                                            ));
                                         }
                                         else if picked_variant.len() == 2 {
                                             let (img, width, height) = interaction.images[picked_variant[0]].force_sprite_sheet();
@@ -370,8 +402,8 @@ impl Reality {
                                             commands.spawn((
                                                 SpriteSheetBundle {
                                                     transform: Transform::from_xyz(
-                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
+                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
                                                         BACKGROUND
                                                     ),
                                                     sprite,
@@ -379,9 +411,9 @@ impl Reality {
                                                     ..default()
                                                 },
                                                 Tile {
-                                                    chunk: *chunk,
+                                                    chunk: *chunk_location,
                                                     position: (tile_x, tile_y),
-                                                    transition_type: transition_type.0,
+                                                    transition_type: transition_type,
                                                     harsh: false
                                                 }
                                             ));
@@ -393,86 +425,14 @@ impl Reality {
                                 }
                             }
                             else {
-                                if !all_equal(&texturemap) {
-                                    warn!("Texturemap was not uniform when heightmap was diverse [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
-                                }
-                                let pot_transition_type = TransitionType::get_from_environment(heightmap);
-                                if let Some(transition_type) = pot_transition_type {
-                                    let type_string = tile_types.states[transition_type.1].name.clone();
-                                    let pot_interaction = transition_types_mapped.get(&[type_string.clone(), type_string.clone()]);
-                                    if let Some(interaction) = pot_interaction {
-                                        let mut variant_styles = vec![];
-                                        for variant in &interaction.variants {
-                                            variant_styles.append(&mut conjoin_styles(variant.clone()));
-                                        }
-                                        let mut this_variants = vec![];
-                                        for (style, data) in variant_styles {
-                                            if style == transition_type.0 {
-                                                this_variants.push(data);
-                                            }
-                                        }
-                                        let pot_picked_variant = safe_rand_from_array(this_variants);
-                                        if let Some(picked_variant) = pot_picked_variant {
-                                            if picked_variant.len() == 1 {
-                                                commands.spawn_bundle(SpriteBundle {
-                                                    transform: Transform::from_xyz(
-                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                                        BACKGROUND
-                                                    ),
-                                                    texture: interaction.images[picked_variant[0]].force_sprite(),
-                                                    ..default()
-                                                })
-                                                .insert(Tile {
-                                                    chunk: *chunk,
-                                                    position: (tile_x, tile_y),
-                                                    transition_type: transition_type.0,
-                                                    harsh: false
-                                                });
-                                            }
-                                            else if picked_variant.len() == 2 {
-                                                let (img, width, height) = interaction.images[picked_variant[0]].force_sprite_sheet();
-                                                let sprite = TextureAtlasSprite {
-                                                    index: picked_variant[1],
-                                                    ..default()
-                                                };
-                                                let new_atlas = TextureAtlas::from_grid(
-                                                    img,
-                                                    Vec2::new(64.0, 64.0),
-                                                    width, height,
-                                                    None, None
-                                                );
-                                                let atlas_handle = atlas_serve.add(new_atlas);
-                                                commands.spawn_bundle(SpriteSheetBundle {
-                                                    transform: Transform::from_xyz(
-                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk.0 as f32),
-                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk.1 as f32),
-                                                        BACKGROUND
-                                                    ),
-                                                    sprite,
-                                                    texture_atlas: atlas_handle,
-                                                    ..default()
-                                                })
-                                                .insert(Tile {
-                                                    chunk: *chunk,
-                                                    position: (tile_x, tile_y),
-                                                    transition_type: transition_type.0,
-                                                    harsh: false
-                                                });
-                                            }
-                                        }
-                                        else {
-                                            warn!("No variants for harsh tile [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
-                                        }
-                                    }
-                                }
+                                todo!()
                             }
                         }
                         else {
-                            warn!("Missing data for tile selection [<{}, {}>, ({}, {})]", chunk.0, chunk.1, tile_x, tile_y);
+                            warn!("Missing data for tile selection [<{}, {}>, ({}, {})]", chunk_location.0, chunk_location.1, tile_x, tile_y);
                         }
                     }
-                    */
+                    // */
                 }
                 else {
                     error!("Unable to find data for a chunk queued for rendering! (Rendering skipped/disabled for this chunk)");
@@ -1268,7 +1228,7 @@ fn get_9fold_layout(
     tile_x: usize,
     tile_y: usize,
     data: &[(usize, usize)],
-    selfs: &ResMut<Reality>,
+    all_chunks: &HashMap<(isize, isize), Vec<(usize, usize)>>,
     chunk: &(isize, isize),
 ) -> Option<([usize; 9], [usize; 9])> {
     let data_group;
@@ -1293,7 +1253,7 @@ fn get_9fold_layout(
                 }
                 else {
                     // some y tiles are one chunk above
-                    let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
+                    let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
                     if let Some(data_up) = pot_data_up {
                         data_group = [
                             data_up[tile_x - 1],
@@ -1317,7 +1277,7 @@ fn get_9fold_layout(
             }
             else {
                 // some y tiles are one chunk below
-                let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
+                let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
                 if let Some(data_down) = pot_data_down {
                     data_group = [
                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1342,7 +1302,7 @@ fn get_9fold_layout(
         else if tile_y > 0 {
             if tile_y < CHUNK_HEIGHT - 1 {
                 // some x tiles are one chunk right
-                let pot_data_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1));
+                let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
                 if let Some(data_right) = pot_data_right {
                     data_group = [
                         data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1367,9 +1327,9 @@ fn get_9fold_layout(
                 // some x tiles are one chunk right AND
                 // some y tiles are one chunk above AND
                 // one tile is one chunk above and right
-                let pot_data_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1));
-                let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
-                let pot_data_up_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1 + 1));
+                let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
+                let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
+                let pot_data_up_right = all_chunks.get(&(chunk.0 + 1, chunk.1 + 1));
                 if pot_data_right.is_none() || pot_data_up.is_none() || pot_data_up_right.is_none() {
                     // we don't have one of the chunks we need, so don't render this tile.
                     return None;
@@ -1396,9 +1356,9 @@ fn get_9fold_layout(
             // some x tiles are one chunk right AND
             // some y tiles are one chunk below AND
             // one tile is below and right
-            let pot_data_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1));
-            let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
-            let pot_data_down_right = selfs.chunk_data.get(&(chunk.0 + 1, chunk.1 - 1));
+            let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
+            let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
+            let pot_data_down_right = all_chunks.get(&(chunk.0 + 1, chunk.1 - 1));
             if pot_data_right.is_none() || pot_data_down.is_none() || pot_data_down_right.is_none() {
                 // we don't have one of the chunks we need, so don't render this tile.
                 return None;
@@ -1424,7 +1384,7 @@ fn get_9fold_layout(
     else if tile_y > 0 {
         if tile_y < CHUNK_HEIGHT - 1 {
             // some x tiles are one chunk left
-            let pot_data_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1));
+            let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
             if let Some(data_left) = pot_data_left {
                 data_group = [
                     data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
@@ -1449,9 +1409,9 @@ fn get_9fold_layout(
             // some x tiles are one chunk left AND
             // some y tiles are one chunk above AND
             // one tile is above and left
-            let pot_data_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1));
-            let pot_data_up = selfs.chunk_data.get(&(chunk.0, chunk.1 + 1));
-            let pot_data_up_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1 + 1));
+            let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
+            let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
+            let pot_data_up_left = all_chunks.get(&(chunk.0 - 1, chunk.1 + 1));
             if pot_data_left.is_none() || pot_data_up.is_none() || pot_data_up_left.is_none() {
                 // we don't have one of the chunks we need, so don't render this tile.
                 return None;
@@ -1478,9 +1438,9 @@ fn get_9fold_layout(
         // some x tiles are one chunk left AND
         // some y tiles are one chunk below
         // one tile is below and left
-        let pot_data_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1));
-        let pot_data_down = selfs.chunk_data.get(&(chunk.0, chunk.1 - 1));
-        let pot_data_down_left = selfs.chunk_data.get(&(chunk.0 - 1, chunk.1 - 1));
+        let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
+        let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
+        let pot_data_down_left = all_chunks.get(&(chunk.0 - 1, chunk.1 - 1));
         if pot_data_left.is_none() || pot_data_down.is_none() || pot_data_down_left.is_none() {
             // we don't have one of the chunks we need, so don't render this tile.
             return None;

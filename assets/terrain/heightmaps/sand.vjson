@@ -8,8 +8,7 @@
     ],
     "variants": [
         {
-            "harsh": false,
-            "center": [0]
+            "nz": [0]
         }
     ]
 }
