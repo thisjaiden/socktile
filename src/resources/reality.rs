@@ -287,7 +287,9 @@ impl Reality {
                     );
                     if layout.is_none() {
                         warn!("Chunks missing!");
-                        continue;
+                        chunk_status.rendered = false;
+                        chunk_status.waiting_to_render = true;
+                        break;
                     }
                     let layout = layout.unwrap();
                     let tile = representations[layout[4]].name.clone();
