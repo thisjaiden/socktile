@@ -37,7 +37,7 @@ pub struct Reality {
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
     /// Data for all chunks
-    chunk_data: HashMap<(isize, isize), Vec<(usize, usize)>>,
+    chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
 }
 
@@ -106,7 +106,7 @@ impl Reality {
         self.in_valid_world = true;
     }
     /// Add brand new chunk data for a not seen before chunk
-    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<(usize, usize)>) {
+    pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
         self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
         // we should never be sent a chunk we haven't requested and therefore don't have metadata for
         let status = self.chunk_status.get_mut(&chunk_position).unwrap();
@@ -189,7 +189,8 @@ impl Reality {
     /// Marks chunks to be rendered, downloaded, and unrendered. This system is essential to
     /// the world loading and collision loading
     pub fn system_mark_chunks(
-        mut selfs: ResMut<Reality>
+        mut selfs: ResMut<Reality>,
+        mut netty: ResMut<Netty>
     ) {
         if selfs.is_changed() && selfs.in_valid_world {
             // Chunk sizes in coordinate space
@@ -208,18 +209,17 @@ impl Reality {
                         ChunkStatus {
                             rendered: false,
                             downloaded: false,
-                            needs_download_request: true,
-                            waiting_to_render: false, // TODO this is error
+                            waiting_to_render: false,
                             stop_rendering: false,
-                            edges_rendered: true
                         }
                     );
+                    netty.n.send(Packet::RequestChunk((chunk_x + x, chunk_y + y)));
                 }
             });
-
+            let copy_of_chunk_statuses = selfs.chunk_status.clone();
             for (chunk, status) in selfs.chunk_status.iter_mut() {
                 // mark all chunks that aren't around the player to stop rendering
-                if !get_matrix_nxn(-1..=1).contains(&((chunk.0 - chunk_x) as i8, (chunk.1 - chunk_y) as i8)) {
+                if !get_matrix_nxn(-1..=1).contains(&(chunk.0 - chunk_x, chunk.1 - chunk_y)) {
                     if status.rendered {
                         status.stop_rendering = true;
                     }
@@ -228,20 +228,18 @@ impl Reality {
                     // mark all chunks that are around the player to start rendering
                     if !status.rendered && status.downloaded {
                         status.waiting_to_render = true;
+                        run_matrix_nxn(-1..1, |x, y| {
+                            if let Some(near_chunk_data) = copy_of_chunk_statuses.get(&(chunk.0 + x, chunk.1 + y)) {
+                                if !near_chunk_data.downloaded {
+                                    status.waiting_to_render = false;
+                                }
+                            }
+                            else {
+                                status.waiting_to_render = false;
+                            }
+                        });
                     }
                 }
-            }
-        }
-    }
-    /// Finds every chunk we have metadata for but no actual data, and requests a copy of it.
-    pub fn system_chunk_requester(
-        mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Netty>
-    ) {
-        for (chunk, status) in selfs.chunk_status.iter_mut() {
-            if !status.downloaded && status.needs_download_request {
-                netty.n.send(Packet::RequestChunk(*chunk));
-                status.needs_download_request = false;
             }
         }
     }
@@ -272,205 +270,95 @@ impl Reality {
         transition_serve: Res<Assets<TileTransitionConfig>>,
         mut atlas_serve: ResMut<Assets<TextureAtlas>>
     ) {
-        // I don't know how this works, I need to know how this works, I won't know how this works.
-        // Send help.
-        
-        // Pretty names for all tile types
-        let tile_types = types_serve.get(&core.tiles).unwrap();
-        // Transition handles (don't use! These are handles!)
-        let transition_types = master_transition_serve.get(&core.transitions).unwrap();
-        // Hashmap of every valid combination of tile types and the possible states for those combinations
-        let mut transition_types_mapped: HashMap<[String; 2], TileTransitionConfig> = default();
-        // Generating the above hashmap using the handles in `transition_types`
-        for transition_type in &transition_types.transitions {
-            let a = transition_serve.get(&transition_type.1.clone());
-            if let Some(b) = a {
-                transition_types_mapped.insert(transition_type.0.clone(), b.clone());
-            }
-        }
-        // we do this for "ownership over `selfs`" reasons.
-        let chunk_data = selfs.chunk_data.clone();
-        let chunk_status = &mut selfs.chunk_status;
-        
-        for (chunk_location, mut chunk_status) in chunk_status.iter_mut() {
-            if chunk_status.waiting_to_render && chunk_status.downloaded {
-                // We should render the main part of this chunk, it's downloaded!
-                // Flag chunk as rendered
-                chunk_status.waiting_to_render = false;
+        let representations = &types_serve.get(&core.tiles).unwrap().states;
+        let handle_transitions = &master_transition_serve.get(&core.transitions).unwrap().transitions;
+        let chunk_data_copy = selfs.chunk_data.clone();
+        for (chunk_location, chunk_status) in selfs.chunk_status.iter_mut() {
+            if chunk_status.waiting_to_render {
                 chunk_status.rendered = true;
-                // Figure out what tiles we need to render (main or edges?)
-                let stuff: Vec<usize>;
-                if !chunk_status.edges_rendered {
-                    chunk_status.edges_rendered = true;
-                    stuff = CHUNK_EDGES.to_vec();
-                }
-                else {
-                    stuff = (0..CHUNK_SIZE).collect();
-                }
-                if let Some(this_chunk_data) = chunk_data.get(chunk_location) {
-                    //* TODO: This is disabled right now while some stuff is worked out.
-                    for tile_index in stuff {
-                        let tile_x = tile_index % CHUNK_WIDTH;
-                        let tile_y = tile_index / CHUNK_WIDTH;
-                        // Vide wuz here
-                        if let Some((tilemap, heightmap)) = get_9fold_layout(
-                            tile_x, tile_y,
-                            this_chunk_data, &chunk_data, chunk_location
-                        ) {
-                            if all_equal(&heightmap) {
-                                let values = unique_values(&tilemap);
-                                let dominated_tilemap;
-                                let pot_transition_type;
-                                if values.len() == 1 {
-                                    // solid
-                                    pot_transition_type = Some(TransitionType::Nothing);
-                                }
-                                else if values.len() > 2 {
-                                    error!("More than 3 tiles at once!");
-                                    continue;
-                                    //panic!();
-                                }
-                                else {
-                                    if transition_types_mapped.contains_key(&[tile_types.states[values[0]].name.clone(), tile_types.states[values[1]].name.clone()]) {
-                                        dominated_tilemap = dominate(&tilemap, values[0]);
-                                        pot_transition_type = TransitionType::get_from_environment(dominated_tilemap);
-                                    }
-                                    else {
-                                        pot_transition_type = Some(TransitionType::Nothing);
-                                    }
-                                    
-                                }
-                                
-                                if let Some(transition_type) = pot_transition_type {
-                                    let king_tile_type = tile_types.states[values[0]].name.clone();
-                                    let subject_tile_type;
-                                    if values.len() == 1 {
-                                        subject_tile_type = king_tile_type.clone();
-                                    }
-                                    else {
-                                        subject_tile_type = tile_types.states[values[1]].name.clone()
-                                    }
-                                    let pot_interaction = transition_types_mapped.get(&[king_tile_type.clone(), subject_tile_type.clone()]);
-                                    let interaction;
-                                    if let Some(interaction_b) = pot_interaction {
-                                        interaction = interaction_b;
-                                    }
-                                    else {
-                                        interaction = transition_types_mapped.get(&[king_tile_type.clone(), king_tile_type.clone()]).unwrap();
-                                    }
-                                    {
-                                        let mut variant_styles = vec![];
-                                        for variant in &interaction.variants {
-                                            variant_styles.append(&mut conjoin_styles(variant.clone()));
-                                        }
-                                        if variant_styles.is_empty() {
-                                            panic!("No variant styles to pick from!");
-                                        }
-                                        let mut this_variants = vec![];
-                                        for (style, data) in variant_styles {
-                                            if style == transition_type {
-                                                this_variants.push(data);
-                                            }
-                                        }
-                                        if this_variants.is_empty() {
-                                            error!("No variants for a tile!\n{:?}\n\n{}, {}", tilemap, king_tile_type, subject_tile_type);
-                                            continue;
-                                        }
-                                        let picked_variant = rand_from_array(this_variants);
-                                        if picked_variant.len() == 1 {
-                                            commands.spawn((
-                                                SpriteBundle {
-                                                    transform: Transform::from_xyz(
-                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
-                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
-                                                        BACKGROUND
-                                                    ),
-                                                    texture: interaction.images[picked_variant[0]].force_sprite(),
-                                                    ..default()
-                                                },
-                                                Tile {
-                                                    chunk: *chunk_location,
-                                                    position: (tile_x, tile_y),
-                                                    transition_type: transition_type,
-                                                    harsh: false
-                                                }
-                                            ));
-                                        }
-                                        else if picked_variant.len() == 2 {
-                                            let (img, width, height) = interaction.images[picked_variant[0]].force_sprite_sheet();
-                                            let sprite = TextureAtlasSprite {
-                                                index: picked_variant[1],
-                                                ..default()
-                                            };
-                                            let new_atlas = TextureAtlas::from_grid(
-                                                img,
-                                                Vec2::new(64.0, 64.0),
-                                                width, height,
-                                                None, None
-                                            );
-                                            let atlas_handle = atlas_serve.add(new_atlas);
-                                            commands.spawn((
-                                                SpriteSheetBundle {
-                                                    transform: Transform::from_xyz(
-                                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
-                                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
-                                                        BACKGROUND
-                                                    ),
-                                                    sprite,
-                                                    texture_atlas: atlas_handle,
-                                                    ..default()
-                                                },
-                                                Tile {
-                                                    chunk: *chunk_location,
-                                                    position: (tile_x, tile_y),
-                                                    transition_type: transition_type,
-                                                    harsh: false
-                                                }
-                                            ));
-                                        }
-                                    }
-                                }
-                                else {
-                                    // TODO: fallback terrain for this tile!
-                                }
-                            }
-                            else {
-                                todo!()
+                chunk_status.waiting_to_render = false;
+                for i in 0..CHUNK_SIZE {
+                    let tile_x = i % CHUNK_WIDTH;
+                    let tile_y = i / CHUNK_WIDTH;
+                    let layout = get_9fold_layout(
+                        tile_x, tile_y,
+                        &chunk_data_copy,
+                        chunk_location
+                    );
+                    if layout.is_none() {
+                        warn!("Chunks missing!");
+                        continue;
+                    }
+                    let layout = layout.unwrap();
+                    let tile = representations[layout[4]].name.clone();
+                    let handle = handle_transitions.get(&[tile.clone(), tile]).unwrap();
+                    let transition = transition_serve.get(&handle).unwrap();
+                    let mut appropriate_variants = vec![];
+                    for variant in &transition.variants {
+                        let m_variants = conjoin_styles(variant.clone());
+                        for transition in m_variants {
+                            if transition.0 == TransitionType::Nothing {
+                                appropriate_variants.push(transition.1);
                             }
                         }
-                        else {
-                            warn!("Missing data for tile selection [<{}, {}>, ({}, {})]", chunk_location.0, chunk_location.1, tile_x, tile_y);
-                        }
                     }
-                    // */
-                }
-                else {
-                    error!("Unable to find data for a chunk queued for rendering! (Rendering skipped/disabled for this chunk)");
+                    let selected_options = rand_from_array(appropriate_variants);
+                    if selected_options.len() == 1 {
+                        commands.spawn((
+                            SpriteBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
+                                    BACKGROUND
+                                ),
+                                texture: transition.images[selected_options[0]].force_sprite(),
+                                ..default()
+                            },
+                            Tile {
+                                chunk: *chunk_location,
+                                position: (tile_x, tile_y),
+                                transition_type: TransitionType::Nothing,
+                                harsh: false
+                            }
+                        ));
+                    }
+                    else if selected_options.len() == 2 {
+                        let (img, width, height) = transition.images[selected_options[0]].force_sprite_sheet();
+                        let sprite = TextureAtlasSprite {
+                            index: selected_options[1],
+                            ..default()
+                        };
+                        let new_atlas = TextureAtlas::from_grid(
+                            img,
+                            Vec2::new(64.0, 64.0),
+                            width, height,
+                            None, None
+                        );
+                        let atlas_handle = atlas_serve.add(new_atlas);
+                        commands.spawn((
+                            SpriteSheetBundle {
+                                transform: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
+                                    BACKGROUND
+                                ),
+                                sprite,
+                                texture_atlas: atlas_handle,
+                                ..default()
+                            },
+                            Tile {
+                                chunk: *chunk_location,
+                                position: (tile_x, tile_y),
+                                transition_type: TransitionType::Nothing,
+                                harsh: false
+                            }
+                        ));
+                    }
+                    else {
+                        todo!()
+                    }
                 }
             }
-        }
-    }
-    pub fn system_rerender_edges(
-        mut selfs: ResMut<Reality>
-    ) {
-        let mut chunks_to_rerender = vec![];
-        for (chunk, status) in selfs.chunk_status.iter() {
-            if !status.edges_rendered && status.rendered {
-                let mut should_rerender = true;
-                run_matrix_nxn(-1..=1, |x, y| {
-                    if !selfs.chunk_data.contains_key(&(chunk.0 + x, chunk.1 + y)) {
-                        should_rerender = false;
-                    }
-                });
-                if should_rerender {
-                    chunks_to_rerender.push(*chunk);
-                }
-            }
-        }
-        for chunk in chunks_to_rerender {
-            info!("Marking chunk {:?} for rerendering", chunk);
-            let data = selfs.chunk_status.get_mut(&chunk).unwrap();
-            data.waiting_to_render = true;
         }
     }
     pub fn system_remove_objects(
@@ -1191,11 +1079,9 @@ fn calc_player_against_tiles(tiles: &[Tile], player: (f32, f32)) -> bool {
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub struct ChunkStatus {
     rendered: bool,
-    needs_download_request: bool,
     downloaded: bool,
     waiting_to_render: bool,
     stop_rendering: bool,
-    edges_rendered: bool
 }
 
 fn calc_player_against_objects(objects: &[Object], player: (f32, f32)) -> bool {
@@ -1221,267 +1107,186 @@ fn calc_player_against_objects(objects: &[Object], player: (f32, f32)) -> bool {
     false
 }
 
-const CHUNK_EDGES: [usize; (CHUNK_WIDTH * 2) + ((CHUNK_HEIGHT - 2) * 2)] = [
-    // bottom edge
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29,
-    // top edge
-    480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494,
-    495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509,
-    // left edge
-    30, 60, 90, 120, 150, 180, 210, 240, 280, 300, 330, 360, 390, 420, 450,
-    // right edge
-    59, 89, 119, 149, 179, 209, 239, 269, 299, 329, 259, 289, 419, 449, 479
-];
-
 fn get_9fold_layout(
     tile_x: usize,
     tile_y: usize,
-    data: &[(usize, usize)],
-    all_chunks: &HashMap<(isize, isize), Vec<(usize, usize)>>,
+    all_chunks: &HashMap<(isize, isize), Vec<usize>>,
     chunk: &(isize, isize),
-) -> Option<([usize; 9], [usize; 9])> {
-    let data_group;
+) -> Option<[usize; 9]> {
+    let chunk_up_left = all_chunks.get(&(chunk.0 - 1, chunk.1 + 1))?;
+    let chunk_up = all_chunks.get(&(chunk.0, chunk.1 + 1))?;
+    let chunk_up_right = all_chunks.get(&(chunk.0 + 1, chunk.1 + 1))?;
+    let chunk_left = all_chunks.get(&(chunk.0 - 1, chunk.1))?;
+    let this_chunk = all_chunks.get(&(chunk.0, chunk.1))?;
+    let chunk_right = all_chunks.get(&(chunk.0 + 1, chunk.1))?;
+    let chunk_down_left = all_chunks.get(&(chunk.0 - 1, chunk.1 - 1))?;
+    let chunk_down = all_chunks.get(&(chunk.0, chunk.1 - 1))?;
+    let chunk_down_right = all_chunks.get(&(chunk.0 + 1, chunk.1 - 1))?;
     if tile_x > 0 {
         if tile_x < CHUNK_WIDTH - 1 {
             if tile_y > 0 {
                 if tile_y < CHUNK_HEIGHT - 1 {
                     // all tiles are within this chunk
-                    data_group = [
-                        data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                    return Some([
+                        this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
 
-                        data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                        data[tile_x + (tile_y * CHUNK_WIDTH)],
-                        data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-                        data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                        data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                        data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                    ];
+                        this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                    ]);
                 }
                 else {
                     // some y tiles are one chunk above
-                    let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
-                    if let Some(data_up) = pot_data_up {
-                        data_group = [
-                            data_up[tile_x - 1],
-                            data_up[tile_x],
-                            data_up[tile_x + 1],
+                    return Some([
+                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x - 1],
+                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x],
+                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x + 1],
 
-                            data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                            data[tile_x + (tile_y * CHUNK_WIDTH)],
-                            data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-                            data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                            data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                            data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                        ];
-                    }
-                    else {
-                        // we don't have that chunk in memory, so don't render this tile.
-                        return None;
-                    }
+                        this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                        this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                    ]);
                 }
             }
             else {
                 // some y tiles are one chunk below
-                let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
-                if let Some(data_down) = pot_data_down {
-                    data_group = [
-                        data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                return Some([
+                    this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                    this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                    this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
 
-                        data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                        data[tile_x + (tile_y * CHUNK_WIDTH)],
-                        data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-                        data_down[tile_x - 1],
-                        data_down[tile_x],
-                        data_down[tile_x + 1]
-                    ];
-                }
-                else {
-                    // we don't have that chunk in memory, so don't render this tile.
-                    return None;
-                }
+                    chunk_down[tile_x - 1],
+                    chunk_down[tile_x],
+                    chunk_down[tile_x + 1]
+                ]);
             }
         }
         else if tile_y > 0 {
             if tile_y < CHUNK_HEIGHT - 1 {
                 // some x tiles are one chunk right
-                let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
-                if let Some(data_right) = pot_data_right {
-                    data_group = [
-                        data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                        data_right[((tile_y + 1) * CHUNK_WIDTH)],
+                return Some([
+                    this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                    this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                    chunk_right[((tile_y + 1) * CHUNK_WIDTH)],
 
-                        data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                        data[tile_x + (tile_y * CHUNK_WIDTH)],
-                        data_right[(tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                    chunk_right[(tile_y * CHUNK_WIDTH)],
 
-                        data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                        data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                        data_right[((tile_y - 1) * CHUNK_WIDTH)]
-                    ];
-                }
-                else {
-                    // we don't have one of the chunks we need, so don't render this tile.
-                    return None;
-                }
+                    this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                    this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                    chunk_right[((tile_y - 1) * CHUNK_WIDTH)]
+                ]);
             }
             else {
                 // some x tiles are one chunk right AND
                 // some y tiles are one chunk above AND
                 // one tile is one chunk above and right
-                let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
-                let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
-                let pot_data_up_right = all_chunks.get(&(chunk.0 + 1, chunk.1 + 1));
-                if pot_data_right.is_none() || pot_data_up.is_none() || pot_data_up_right.is_none() {
-                    // we don't have one of the chunks we need, so don't render this tile.
-                    return None;
-                }
-                let data_right = pot_data_right.unwrap();
-                let data_up = pot_data_up.unwrap();
-                let data_up_right = pot_data_up_right.unwrap();
-                data_group = [
-                    data_up[tile_x - 1],
-                    data_up[tile_x],
-                    data_up_right[0],
+                // TODO: Numbers WRONG
+                return Some([
+                    chunk_up[tile_x - 1],
+                    chunk_up[tile_x],
+                    chunk_up_right[0],
                     
-                    data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                    data[tile_x + (tile_y * CHUNK_WIDTH)],
-                    data_right[(tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                    chunk_right[(tile_y * CHUNK_WIDTH)],
                     
-                    data[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                    data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                    data_right[((tile_y - 1) * CHUNK_WIDTH)]
-                ];
+                    this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                    this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                    chunk_right[((tile_y - 1) * CHUNK_WIDTH)]
+                ]);
             }
         }
         else {
             // some x tiles are one chunk right AND
             // some y tiles are one chunk below AND
             // one tile is below and right
-            let pot_data_right = all_chunks.get(&(chunk.0 + 1, chunk.1));
-            let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
-            let pot_data_down_right = all_chunks.get(&(chunk.0 + 1, chunk.1 - 1));
-            if pot_data_right.is_none() || pot_data_down.is_none() || pot_data_down_right.is_none() {
-                // we don't have one of the chunks we need, so don't render this tile.
-                return None;
-            }
-            let data_right = pot_data_right.unwrap();
-            let data_down = pot_data_down.unwrap();
-            let data_down_right = pot_data_down_right.unwrap();
-            data_group = [
-                data[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                data_right[(tile_y * CHUNK_WIDTH)],
+            // TODO: Numbers WRONG
+            return Some([
+                this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                chunk_right[(tile_y * CHUNK_WIDTH)],
 
-                data[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                data[tile_x + (tile_y * CHUNK_WIDTH)],
-                data_right[(tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                chunk_right[(tile_y * CHUNK_WIDTH)],
 
-                data_down[tile_x - 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-                data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-                data_down_right[CHUNK_WIDTH * (CHUNK_HEIGHT - 1)]
-            ];
+                chunk_down[tile_x - 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+                chunk_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+                chunk_down_right[CHUNK_WIDTH * (CHUNK_HEIGHT - 1)]
+            ]);
         }
     }
     else if tile_y > 0 {
         if tile_y < CHUNK_HEIGHT - 1 {
             // some x tiles are one chunk left
-            let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
-            if let Some(data_left) = pot_data_left {
-                data_group = [
-                    data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                    data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                    data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+            // TODO: Numbers WRONG
+            return Some([
+                chunk_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
 
-                    data_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-                    data[tile_x + (tile_y * CHUNK_WIDTH)],
-                    data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-                    data_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                    data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                    data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-                ];
-            }
-            else {
-                // we don't have one of the chunks we need, so don't render this tile.
-                return None;
-            }
+                chunk_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+            ]);
         }
         else {
             // some x tiles are one chunk left AND
             // some y tiles are one chunk above AND
             // one tile is above and left
-            let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
-            let pot_data_up = all_chunks.get(&(chunk.0, chunk.1 + 1));
-            let pot_data_up_left = all_chunks.get(&(chunk.0 - 1, chunk.1 + 1));
-            if pot_data_left.is_none() || pot_data_up.is_none() || pot_data_up_left.is_none() {
-                // we don't have one of the chunks we need, so don't render this tile.
-                return None;
-            }
-            let data_left = pot_data_left.unwrap();
-            let data_up = pot_data_up.unwrap();
-            let data_up_left = pot_data_up_left.unwrap();
-            data_group = [
-                data_up_left[CHUNK_WIDTH - 1],
-                data_up[tile_x],
-                data_up[tile_x + 1],
+            // TODO: Numbers WRONG
+            return Some([
+                chunk_up_left[CHUNK_WIDTH - 1],
+                chunk_up[tile_x],
+                chunk_up[tile_x + 1],
 
-                data_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-                data[tile_x + (tile_y * CHUNK_WIDTH)],
-                data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+                this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-                data_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                data[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                data[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-            ];
+                chunk_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
+                this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+            ]);
         }
     }
     else {
         // some x tiles are one chunk left AND
         // some y tiles are one chunk below
         // one tile is below and left
-        let pot_data_left = all_chunks.get(&(chunk.0 - 1, chunk.1));
-        let pot_data_down = all_chunks.get(&(chunk.0, chunk.1 - 1));
-        let pot_data_down_left = all_chunks.get(&(chunk.0 - 1, chunk.1 - 1));
-        if pot_data_left.is_none() || pot_data_down.is_none() || pot_data_down_left.is_none() {
-            // we don't have one of the chunks we need, so don't render this tile.
-            return None;
-        }
-        let data_left = pot_data_left.unwrap();
-        let data_down = pot_data_down.unwrap();
-        let data_down_left = pot_data_down_left.unwrap();
-        data_group = [
-            data_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-            data[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-            data[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+        // TODO: Numbers WRONG
+        return Some([
+            chunk_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+            this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
+            this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
 
-            data_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-            data[tile_x + (tile_y * CHUNK_WIDTH)],
-            data[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+            chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
+            this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
+            this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
 
-            data_down_left[CHUNK_SIZE - 1],
-            data_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-            data_down[tile_x + 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))]
-        ];
+            chunk_down_left[CHUNK_SIZE - 1],
+            chunk_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
+            chunk_down[tile_x + 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))]
+        ]);
     }
-
-    let type_array = [
-        data_group[0].0, data_group[1].0, data_group[2].0,
-        data_group[3].0, data_group[4].0, data_group[5].0,
-        data_group[6].0, data_group[7].0, data_group[8].0
-    ];
-    let height_array = [
-        data_group[0].1, data_group[1].1, data_group[2].1,
-        data_group[3].1, data_group[4].1, data_group[5].1,
-        data_group[6].1, data_group[7].1, data_group[8].1
-    ];
-    Some((type_array, height_array))
 }

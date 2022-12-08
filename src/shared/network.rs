@@ -70,7 +70,7 @@ pub enum Packet {
     RequestChunk((isize, isize)),
     /// The server sends over a chunk of terrain
     /// (Chunk Location, [(Tile ID, Height)])
-    ChunkData((isize, isize), Vec<(usize, usize)>),
+    ChunkData((isize, isize), Vec<usize>),
     /// An update has occurred to a single tile.
     /// (Chunk Location, Tile Location, New State, New Height)
     TileUpdate((isize, isize), (usize, usize), usize, usize),

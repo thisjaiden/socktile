@@ -243,7 +243,7 @@ impl TransitionType {
                     return Some(TransitionType::FBottom);
                 }
             }
-            if environment[0] {
+            else if environment[0] {
                 if environment[2] {
                     if environment[6] {
                         if environment[8] {
@@ -305,7 +305,7 @@ impl TransitionType {
         }
         else {
             // Inverted full
-            return Some(TransitionType::Everything);
+            return Some(TransitionType::Nothing);
         }
         panic!();
     }
