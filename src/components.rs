@@ -54,5 +54,4 @@ pub struct Tile {
     pub chunk: (isize, isize),
     pub position: (usize, usize),
     pub transition_type: TransitionType,
-    pub harsh: bool
 }

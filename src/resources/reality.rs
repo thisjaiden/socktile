@@ -389,8 +389,7 @@ impl Reality {
                                 Tile {
                                     chunk: *chunk_location,
                                     position: (tile_x, tile_y),
-                                    transition_type: tt,
-                                    harsh: false
+                                    transition_type: tt
                                 }
                             ));
                         }
@@ -421,8 +420,7 @@ impl Reality {
                                 Tile {
                                     chunk: *chunk_location,
                                     position: (tile_x, tile_y),
-                                    transition_type: tt,
-                                    harsh: false
+                                    transition_type: tt
                                 }
                             ));
                         }
@@ -1036,36 +1034,34 @@ impl Reality {
     ) {
         if TERRAIN_DEBUG {
             tiles.for_each(|tile| {
-                if tile.harsh {
-                    let dta = tile.transition_type.collider_dimensions();
-                    for collider in dta {
-                        let true_x = collider.0 + (tile.position.0 as f32 * 64.0) + (tile.chunk.0 as f32 * 1920.0) - (1920.0 / 2.0);
-                        let true_y = collider.1 + (tile.position.1 as f32 * 64.0) + (tile.chunk.1 as f32 * 1088.0) - (1088.0 / 2.0) - 66.0;
-                        lines.line_colored(
-                            Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                            Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
-                            0.0,
-                            Color::RED
-                        );
-                        lines.line_colored(
-                            Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                            Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
-                            0.0,
-                            Color::RED
-                        );
-                        lines.line_colored(
-                            Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
-                            Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
-                            0.0,
-                            Color::RED
-                        );
-                        lines.line_colored(
-                            Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
-                            Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
-                            0.0,
-                            Color::RED
-                        );
-                    }
+                let dta = tile.transition_type.collider_dimensions();
+                for collider in dta {
+                    let true_x = collider.0 + (tile.position.0 as f32 * 64.0) + (tile.chunk.0 as f32 * 1920.0) - (1920.0 / 2.0);
+                    let true_y = collider.1 + (tile.position.1 as f32 * 64.0) + (tile.chunk.1 as f32 * 1088.0) - (1088.0 / 2.0) - 66.0;
+                    lines.line_colored(
+                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
+                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                        0.0,
+                        Color::RED
+                    );
+                    lines.line_colored(
+                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
+                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                        0.0,
+                        Color::RED
+                    );
+                    lines.line_colored(
+                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                        0.0,
+                        Color::RED
+                    );
+                    lines.line_colored(
+                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                        0.0,
+                        Color::RED
+                    );
                 }
             });
         }
@@ -1141,12 +1137,10 @@ pub enum MenuState {
 /// true if collided, false otherwise
 fn calc_player_against_tiles(tiles: &[Tile], player: (f32, f32)) -> bool {
     for tile in tiles {
-        if tile.harsh {
-            let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f32 * 1920.0) + ((tile.position.0 as f32) * 64.0);
-            let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f32 * 1088.0) + ((tile.position.1 as f32 - 1.0) * 64.0);
-            if tile.transition_type.collides(player, offset_x, offset_y) {
-                return true;
-            }
+        let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f32 * 1920.0) + ((tile.position.0 as f32) * 64.0);
+        let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f32 * 1088.0) + ((tile.position.1 as f32 - 1.0) * 64.0);
+        if tile.transition_type.collides(player, offset_x, offset_y) {
+            return true;
         }
     }
     false

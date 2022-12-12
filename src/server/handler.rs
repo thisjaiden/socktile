@@ -362,6 +362,31 @@ pub fn handler(
                 warn!("Requested UUID: {:?}", uuid);
                 warn!("Unable to remove this object from a given world. Please Investigate!");
             }
+            let object_position = globals.worlds[server].data.objects[object_index.unwrap()].pos.clone();
+            let object_representation = globals.worlds[server].data.objects[object_index.unwrap()].rep.clone();
+            match object_representation {
+                ObjectType::Tree(_) => {
+                    // spawn 2-3 wood
+                    let amount = random(2, 3);
+                    for _ in 0..amount {
+                        let x_offset = random(0, 64) as f32;
+                        let y_offset = random(0, 64) as f32;
+                        let uuid = uuid::Uuid::from_u128(rand::random());
+                        let n_object = Object {
+                            pos: Transform::from_xyz(object_position.translation.x + x_offset - 32.0, object_position.translation.y + y_offset - 32.0, 0.0),
+                            rep: ObjectType::GroundItem(Item::Wood),
+                            uuid
+                        };
+                        for player in &globals.worlds[server].data.players {
+                            let this_ip = globals.user_to_addr.get(&player.0).expect("Online player has no IP for a requested animation");
+                            // send new object packet
+                            outgoing.push((Packet::CreateObject(n_object.clone()), *this_ip));
+                        }
+                        globals.worlds[server].data.objects.push(n_object);
+                    }
+                }
+                _ => {}
+            }
             // remove object from server
             globals.worlds[server].data.objects.remove(object_index.expect("No object found with given uuid for Packet::RemoveObject"));
             drop(globals);

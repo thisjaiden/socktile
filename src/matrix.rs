@@ -52,11 +52,11 @@ pub fn safe_rand_from_array<T: Any + Clone>(array: Vec<T>) -> Option<T> {
     }
 }
 
-pub fn all_equal<T: PartialEq>(arr: &[T]) -> bool {
+pub fn _all_equal<T: PartialEq>(arr: &[T]) -> bool {
     arr.windows(2).all(|w| w[0] == w[1])
 }
 
-pub fn unique_values<T: PartialEq + Copy>(arr: &[T]) -> Vec<T> {
+pub fn _unique_values<T: PartialEq + Copy>(arr: &[T]) -> Vec<T> {
     let mut uniques = vec![];
     for val in arr {
         if !uniques.contains(val) {
@@ -64,12 +64,4 @@ pub fn unique_values<T: PartialEq + Copy>(arr: &[T]) -> Vec<T> {
         }
     }
     return uniques;
-}
-
-pub fn dominate<T: PartialEq>(arr: &[T], dominant: T) -> Vec<bool> {
-    let mut out = vec![];
-    for val in arr {
-        out.push(&dominant == val);
-    }
-    return out;
 }

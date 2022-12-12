@@ -33,7 +33,6 @@ pub enum TransitionType {
     BottomRight,
     FLeft,
     Nothing,
-    Everything,
     TopLeftBottomLeft,
     TopLeftBottomRight,
     TopRightBottomLeft,
@@ -99,7 +98,9 @@ impl TransitionType {
     pub fn collider_dimensions(&self) -> &[(f32, f32, f32, f32)] {
         match self {
             Self::Nothing => &[],
-            _ => todo!()
+            //Self::FTop => &[(0.0, 47.0, 64.0, 2.0)],
+            //Self::FBottom => &[(0.0, 15.0, 64.0, 2.0)],
+            _ => &[] // todo!()
         }
     }
     fn cube_colliders(a: (f32, f32, f32, f32), b: (f32, f32, f32, f32)) -> bool {
