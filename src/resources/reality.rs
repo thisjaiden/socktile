@@ -292,72 +292,146 @@ impl Reality {
                         break;
                     }
                     let layout = layout.unwrap();
-                    let tile = representations[layout[4]].name.clone();
-                    let handle = handle_transitions.get(&[tile.clone(), tile]).unwrap();
+                    let mut unique_tiles = vec![];
+                    for tile in layout {
+                        if !unique_tiles.contains(&representations[tile].name) {
+                            unique_tiles.push(representations[tile].name.clone());
+                        }
+                    }
+                    let mut main;
+                    let mut sub = String::new();
+                    let mut tt;
+                    if unique_tiles.len() > 2 {
+                        error!("Invalid terrain map! (>2 TPTSF)");
+                        error!("Chunk ({}, {}), Tile ({}, {})", chunk_location.0, chunk_location.1, tile_x, tile_y);
+                        continue;
+                        //panic!();
+                    }
+                    else if unique_tiles.len() == 1 {
+                        main = unique_tiles[0].clone();
+                        sub = unique_tiles[0].clone();
+                        tt = TransitionType::Nothing;
+                    }
+                    else {
+                        main = representations[layout[4]].name.clone();
+                        for a in unique_tiles {
+                            if a != main {
+                                sub = a;
+                            }
+                        }
+                        let mut mainarr = vec![];
+                        for tile in layout {
+                            if representations[tile].name == main {
+                                mainarr.push(true);
+                            }
+                            else {
+                                mainarr.push(false);
+                            }
+                        }
+                        // TODO: FLip!
+                        if handle_transitions.get(&[main.clone(), sub.clone()]).is_none() {
+                            // Flip everything!
+                            let mut mainarr2 = vec![];
+                            for elem in mainarr {
+                                mainarr2.push(!elem);
+                            }
+                            mainarr = mainarr2;
+                            let stor = main;
+                            main = sub;
+                            sub = stor;
+                        }
+                        tt = TransitionType::get_from_environment(mainarr);
+                    }
+                    if tt == TransitionType::Nothing {
+                        sub = main.clone();
+                    }
+                    let handle = handle_transitions.get(&[main.clone(), sub.clone()]);
+                    if handle.is_none() {
+                        error!("Transition for {}, {} does not exist! (chunk {:?}, tile ({}, {}))", main, sub, chunk_location, tile_x, tile_y);
+                    }
+                    let handle = handle.unwrap();
                     let transition = transition_serve.get(&handle).unwrap();
                     let mut appropriate_variants = vec![];
                     for variant in &transition.variants {
                         let m_variants = conjoin_styles(variant.clone());
                         for transition in m_variants {
-                            if transition.0 == TransitionType::Nothing {
+                            if transition.0 == tt {
                                 appropriate_variants.push(transition.1);
                             }
                         }
                     }
-                    let selected_options = rand_from_array(appropriate_variants);
-                    if selected_options.len() == 1 {
-                        commands.spawn((
-                            SpriteBundle {
-                                transform: Transform::from_xyz(
-                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
-                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
-                                    BACKGROUND
-                                ),
-                                texture: transition.images[selected_options[0]].force_sprite(),
-                                ..default()
-                            },
-                            Tile {
-                                chunk: *chunk_location,
-                                position: (tile_x, tile_y),
-                                transition_type: TransitionType::Nothing,
-                                harsh: false
+                    if appropriate_variants.is_empty() {
+                        warn!("No appropriate variants for {:?}... (tiles {} and {})", tt, main, sub);
+                        tt = TransitionType::Nothing;
+                        for variant in &transition.variants {
+                            let m_variants = conjoin_styles(variant.clone());
+                            for transition in m_variants {
+                                if transition.0 == tt {
+                                    appropriate_variants.push(transition.1);
+                                }
                             }
-                        ));
+                        }
                     }
-                    else if selected_options.len() == 2 {
-                        let (img, width, height) = transition.images[selected_options[0]].force_sprite_sheet();
-                        let sprite = TextureAtlasSprite {
-                            index: selected_options[1],
-                            ..default()
-                        };
-                        let new_atlas = TextureAtlas::from_grid(
-                            img,
-                            Vec2::new(64.0, 64.0),
-                            width, height,
-                            None, None
-                        );
-                        let atlas_handle = atlas_serve.add(new_atlas);
-                        commands.spawn((
-                            SpriteSheetBundle {
-                                transform: Transform::from_xyz(
-                                    (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
-                                    (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
-                                    BACKGROUND
-                                ),
-                                sprite,
-                                texture_atlas: atlas_handle,
+                    // ERROR! (TODO: Switch to safe mode)
+                    let selected_options_option = safe_rand_from_array(appropriate_variants);
+                    if let Some(selected_options) = selected_options_option {
+                        if selected_options.len() == 1 {
+                            commands.spawn((
+                                SpriteBundle {
+                                    transform: Transform::from_xyz(
+                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
+                                        BACKGROUND
+                                    ),
+                                    texture: transition.images[selected_options[0]].force_sprite(),
+                                    ..default()
+                                },
+                                Tile {
+                                    chunk: *chunk_location,
+                                    position: (tile_x, tile_y),
+                                    transition_type: tt,
+                                    harsh: false
+                                }
+                            ));
+                        }
+                        else if selected_options.len() == 2 {
+                            let (img, width, height) = transition.images[selected_options[0]].force_sprite_sheet();
+                            let sprite = TextureAtlasSprite {
+                                index: selected_options[1],
                                 ..default()
-                            },
-                            Tile {
-                                chunk: *chunk_location,
-                                position: (tile_x, tile_y),
-                                transition_type: TransitionType::Nothing,
-                                harsh: false
-                            }
-                        ));
+                            };
+                            let new_atlas = TextureAtlas::from_grid(
+                                img,
+                                Vec2::new(64.0, 64.0),
+                                width, height,
+                                None, None
+                            );
+                            let atlas_handle = atlas_serve.add(new_atlas);
+                            commands.spawn((
+                                SpriteSheetBundle {
+                                    transform: Transform::from_xyz(
+                                        (-1920.0 / 2.0) + (tile_x as f32 * 64.0) + 32.0 + (1920.0 * chunk_location.0 as f32),
+                                        (-1080.0 / 2.0) + (tile_y as f32 * 64.0) - 32.0 + (1088.0 * chunk_location.1 as f32),
+                                        BACKGROUND
+                                    ),
+                                    sprite,
+                                    texture_atlas: atlas_handle,
+                                    ..default()
+                                },
+                                Tile {
+                                    chunk: *chunk_location,
+                                    position: (tile_x, tile_y),
+                                    transition_type: tt,
+                                    harsh: false
+                                }
+                            ));
+                        }
+                        else {
+                            todo!()
+                        }
                     }
                     else {
-                        todo!()
+                        error!("No tiles selected! Unable to render...");
                     }
                 }
             }
@@ -1130,165 +1204,160 @@ fn get_9fold_layout(
                 if tile_y < CHUNK_HEIGHT - 1 {
                     // all tiles are within this chunk
                     return Some([
-                        this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                        this_chunk[crdcv(tile_x - 1, tile_y + 1)],
+                        this_chunk[crdcv(tile_x, tile_y + 1)],
+                        this_chunk[crdcv(tile_x + 1, tile_y + 1)],
 
-                        this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                        this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                        this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[crdcv(tile_x - 1, tile_y)],
+                        this_chunk[crdcv(tile_x, tile_y)],
+                        this_chunk[crdcv(tile_x + 1, tile_y)],
 
-                        this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
+                        this_chunk[crdcv(tile_x, tile_y - 1)],
+                        this_chunk[crdcv(tile_x + 1, tile_y - 1)]
                     ]);
                 }
                 else {
-                    // some y tiles are one chunk above
+                    // some tiles are up
                     return Some([
-                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x - 1],
-                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x],
-                        chunk_up[CHUNK_SIZE - CHUNK_WIDTH + tile_x + 1],
+                        chunk_up[crdcv(tile_x - 1, 0)],
+                        chunk_up[crdcv(tile_x, 0)],
+                        chunk_up[crdcv(tile_x + 1, 0)],
 
-                        this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                        this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                        this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                        this_chunk[crdcv(tile_x - 1, tile_y)],
+                        this_chunk[crdcv(tile_x, tile_y)],
+                        this_chunk[crdcv(tile_x + 1, tile_y)],
 
-                        this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                        this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
+                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
+                        this_chunk[crdcv(tile_x, tile_y - 1)],
+                        this_chunk[crdcv(tile_x + 1, tile_y - 1)]
                     ]);
                 }
             }
             else {
-                // some y tiles are one chunk below
+                // some tiles are down
                 return Some([
-                    this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                    this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                    this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+                    this_chunk[crdcv(tile_x - 1, tile_y + 1)],
+                    this_chunk[crdcv(tile_x, tile_y + 1)],
+                    this_chunk[crdcv(tile_x + 1, tile_y + 1)],
 
-                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                    this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                    this_chunk[crdcv(tile_x - 1, tile_y)],
+                    this_chunk[crdcv(tile_x, tile_y)],
+                    this_chunk[crdcv(tile_x + 1, tile_y)],
 
-                    chunk_down[tile_x - 1],
-                    chunk_down[tile_x],
-                    chunk_down[tile_x + 1]
+                    chunk_down[crdcv(tile_x - 1, CHUNK_HEIGHT - 1)],
+                    chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
+                    chunk_down[crdcv(tile_x + 1, CHUNK_HEIGHT - 1)]
                 ]);
             }
         }
-        else if tile_y > 0 {
-            if tile_y < CHUNK_HEIGHT - 1 {
-                // some x tiles are one chunk right
-                return Some([
-                    this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                    this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                    chunk_right[((tile_y + 1) * CHUNK_WIDTH)],
+        else {
+            if tile_y > 0 {
+                if tile_y < CHUNK_HEIGHT - 1 {
+                    // some tiles are right
+                    return Some([
+                        this_chunk[crdcv(tile_x - 1, tile_y + 1)],
+                        this_chunk[crdcv(tile_x, tile_y + 1)],
+                        chunk_right[crdcv(0, tile_y + 1)],
 
-                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                    chunk_right[(tile_y * CHUNK_WIDTH)],
+                        this_chunk[crdcv(tile_x - 1, tile_y)],
+                        this_chunk[crdcv(tile_x, tile_y)],
+                        chunk_right[crdcv(0, tile_y)],
 
-                    this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                    this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                    chunk_right[((tile_y - 1) * CHUNK_WIDTH)]
-                ]);
+                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
+                        this_chunk[crdcv(tile_x, tile_y - 1)],
+                        chunk_right[crdcv(0, tile_y - 1)]
+                    ]);
+                }
+                else {
+                    // some tiles are up and right
+                    return Some([
+                        chunk_up[crdcv(tile_x - 1, 0)],
+                        chunk_up[crdcv(tile_x, 0)],
+                        chunk_up_right[crdcv(0, 0)],
+
+                        this_chunk[crdcv(tile_x - 1, tile_y)],
+                        this_chunk[crdcv(tile_x, tile_y)],
+                        chunk_right[crdcv(0, tile_y)],
+
+                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
+                        this_chunk[crdcv(tile_x, tile_y - 1)],
+                        chunk_right[crdcv(0, tile_y - 1)]
+                    ]);
+                }
             }
             else {
-                // some x tiles are one chunk right AND
-                // some y tiles are one chunk above AND
-                // one tile is one chunk above and right
-                // TODO: Numbers WRONG
+                // some tiles are down and right
                 return Some([
-                    chunk_up[tile_x - 1],
-                    chunk_up[tile_x],
-                    chunk_up_right[0],
-                    
-                    this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                    this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                    chunk_right[(tile_y * CHUNK_WIDTH)],
-                    
-                    this_chunk[tile_x - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                    this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                    chunk_right[((tile_y - 1) * CHUNK_WIDTH)]
+                    this_chunk[crdcv(tile_x - 1, tile_y + 1)],
+                    this_chunk[crdcv(tile_x, tile_y + 1)],
+                    chunk_right[crdcv(0, tile_y + 1)],
+
+                    this_chunk[crdcv(tile_x - 1, tile_y)],
+                    this_chunk[crdcv(tile_x, tile_y)],
+                    chunk_right[crdcv(0, tile_y)],
+
+                    chunk_down[crdcv(tile_x - 1, CHUNK_HEIGHT - 1)],
+                    chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
+                    chunk_down_right[crdcv(0, CHUNK_HEIGHT - 1)]
                 ]);
             }
-        }
-        else {
-            // some x tiles are one chunk right AND
-            // some y tiles are one chunk below AND
-            // one tile is below and right
-            // TODO: Numbers WRONG
-            return Some([
-                this_chunk[tile_x - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                chunk_right[(tile_y * CHUNK_WIDTH)],
-
-                this_chunk[tile_x - 1 + (tile_y * CHUNK_WIDTH)],
-                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                chunk_right[(tile_y * CHUNK_WIDTH)],
-
-                chunk_down[tile_x - 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-                chunk_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-                chunk_down_right[CHUNK_WIDTH * (CHUNK_HEIGHT - 1)]
-            ]);
-        }
-    }
-    else if tile_y > 0 {
-        if tile_y < CHUNK_HEIGHT - 1 {
-            // some x tiles are one chunk left
-            // TODO: Numbers WRONG
-            return Some([
-                chunk_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-
-                chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
-
-                chunk_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-            ]);
-        }
-        else {
-            // some x tiles are one chunk left AND
-            // some y tiles are one chunk above AND
-            // one tile is above and left
-            // TODO: Numbers WRONG
-            return Some([
-                chunk_up_left[CHUNK_WIDTH - 1],
-                chunk_up[tile_x],
-                chunk_up[tile_x + 1],
-
-                chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-                this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-                this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
-
-                chunk_left[CHUNK_WIDTH - 1 + ((tile_y - 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + ((tile_y - 1) * CHUNK_WIDTH)],
-                this_chunk[tile_x + 1 + ((tile_y - 1) * CHUNK_WIDTH)]
-            ]);
         }
     }
     else {
-        // some x tiles are one chunk left AND
-        // some y tiles are one chunk below
-        // one tile is below and left
-        // TODO: Numbers WRONG
-        return Some([
-            chunk_left[CHUNK_WIDTH - 1 + ((tile_y + 1) * CHUNK_WIDTH)],
-            this_chunk[tile_x + ((tile_y + 1) * CHUNK_WIDTH)],
-            this_chunk[tile_x + 1 + ((tile_y + 1) * CHUNK_WIDTH)],
+        if tile_y > 0 {
+            if tile_y < CHUNK_HEIGHT - 1 {
+                // some tiles are left
+                return Some([
+                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y + 1)],
+                    this_chunk[crdcv(tile_x, tile_y + 1)],
+                    this_chunk[crdcv(tile_x + 1, tile_y + 1)],
 
-            chunk_left[CHUNK_WIDTH - 1 + (tile_y * CHUNK_WIDTH)],
-            this_chunk[tile_x + (tile_y * CHUNK_WIDTH)],
-            this_chunk[tile_x + 1 + (tile_y * CHUNK_WIDTH)],
+                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
+                    this_chunk[crdcv(tile_x, tile_y)],
+                    this_chunk[crdcv(tile_x + 1, tile_y)],
 
-            chunk_down_left[CHUNK_SIZE - 1],
-            chunk_down[tile_x + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))],
-            chunk_down[tile_x + 1 + (CHUNK_WIDTH * (CHUNK_HEIGHT - 1))]
-        ]);
+                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y - 1)],
+                    this_chunk[crdcv(tile_x, tile_y - 1)],
+                    this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                ]);
+            }
+            else {
+                // some tiles are up and left
+                return Some([
+                    chunk_up_left[crdcv(CHUNK_WIDTH - 1, 0)],
+                    chunk_up[crdcv(tile_x, 0)],
+                    chunk_up[crdcv(tile_x + 1, 0)],
+
+                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
+                    this_chunk[crdcv(tile_x, tile_y)],
+                    this_chunk[crdcv(tile_x + 1, tile_y)],
+
+                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y - 1)],
+                    this_chunk[crdcv(tile_x, tile_y - 1)],
+                    this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                ]);
+            }
+        }
+        else {
+            // some tiles are down and left
+            return Some([
+                chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y + 1)],
+                this_chunk[crdcv(tile_x, tile_y + 1)],
+                this_chunk[crdcv(tile_x + 1, tile_y + 1)],
+
+                chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
+                this_chunk[crdcv(tile_x, tile_y)],
+                this_chunk[crdcv(tile_x + 1, tile_y)],
+
+                chunk_down_left[crdcv(CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1)],
+                chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
+                chunk_down[crdcv(tile_x + 1, CHUNK_HEIGHT - 1)]
+            ]);
+        }
     }
+}
+
+fn crdcv(crdx: usize, crdy: usize) -> usize {
+    crdx + crdy * CHUNK_WIDTH
 }

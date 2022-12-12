@@ -1,15 +1,15 @@
 [
     {
-        "names": ["grass", "water"],
-        "meta_location": "transitions/grass_water.vjson"
+        "names": ["water", "sand"],
+        "meta_location": "transitions/water_sand.vjson"
     },
     {
-        "names": ["sand", "water", "temporary_bullshit"],
-        "meta_location": "transitions/grass_water.vjson"
+        "names": ["sand", "grass"],
+        "meta_location": "transitions/sand_grass.vjson"
     },
     {
-        "names": ["grass", "sand", "temporary_bullshit"],
-        "meta_location": "transitions/grass_water.vjson"
+        "names": ["grass", "stone"],
+        "meta_location": "transitions/grass_stone.vjson"
     },
     {
         "names": ["grass", "grass"],

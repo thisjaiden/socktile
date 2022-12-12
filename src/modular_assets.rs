@@ -110,12 +110,12 @@ impl TransitionType {
     }
     // bool = is dominant (true = yes, false = no)
     // Credit for this being only half the abomination it used to be: Evelyn! <3
-    pub fn get_from_environment(environment: Vec<bool>) -> Option<TransitionType> {
+    pub fn get_from_environment(environment: Vec<bool>) -> TransitionType {
         // 0 1 2
         // 3 4 5
         // 6 7 8
         if environment == [false; 9] {
-            return Some(TransitionType::Nothing);
+            return TransitionType::Nothing;
         }
         if !environment[4] {
             if environment[1] {
@@ -123,189 +123,189 @@ impl TransitionType {
                     // all states with at least a FTopFLeft in them
                     if environment[5] {
                         if environment[7] {
-                            return Some(TransitionType::FTopFLeftFBottomFRight);
+                            return TransitionType::FTopFLeftFBottomFRight;
                         }
                         else {
-                            return Some(TransitionType::FTopFLeftFRight);
+                            return TransitionType::FTopFLeftFRight;
                         }
                     }
                     else if environment[7] {
-                        return Some(TransitionType::FTopFLeftFBottom);
+                        return TransitionType::FTopFLeftFBottom;
                     }
                     else if environment[8] {
-                        return Some(TransitionType::FTopFLeftBottomRight);
+                        return TransitionType::FTopFLeftBottomRight;
                     }
                     else {
-                        return Some(TransitionType::FTopFLeft);
+                        return TransitionType::FTopFLeft;
                     }
                 }
                 else if environment[5] {
                     // all states with at least a FTopFRight in them
                     if environment[7] {
-                        return Some(TransitionType::FTopFBottomFRight);
+                        return TransitionType::FTopFBottomFRight;
                     }
                     else if environment[6] {
-                        return Some(TransitionType::FTopFRightBottomLeft);
+                        return TransitionType::FTopFRightBottomLeft;
                     }
                     else {
-                        return Some(TransitionType::FTopFRight);
+                        return TransitionType::FTopFRight;
                     }
                 }
                 else if environment[7] {
                     // all states with at least a FTopFBottom in them
-                    return Some(TransitionType::FTopFBottom);
+                    return TransitionType::FTopFBottom;
                 }
                 // all states with at only an FTop and unknown corners
                 else if environment[6] {
                     if environment[8] {
-                        return Some(TransitionType::FTopBottomLeftBottomRight);
+                        return TransitionType::FTopBottomLeftBottomRight;
                     }
                     else {
-                        return Some(TransitionType::FTopBottomLeft);
+                        return TransitionType::FTopBottomLeft;
                     }
                 }
                 else if environment[8] {
-                    return Some(TransitionType::FTopBottomRight);
+                    return TransitionType::FTopBottomRight;
                 }
                 else {
-                    return Some(TransitionType::FTop);
+                    return TransitionType::FTop;
                 }
             }
             else if environment[3] {
                 if environment[5] {
                     if environment[7] {
-                        return Some(TransitionType::FLeftFBottomFRight);
+                        return TransitionType::FLeftFBottomFRight;
                     }
                     else {
-                        return Some(TransitionType::FLeftFRight);
+                        return TransitionType::FLeftFRight;
                     }
                 }
                 else if environment[7] {
                     if environment[2] {
-                        return Some(TransitionType::FLeftFBottomTopRight);
+                        return TransitionType::FLeftFBottomTopRight;
                     }
                     else {
-                        return Some(TransitionType::FLeftFBottom);
+                        return TransitionType::FLeftFBottom;
                     }
                 }
                 if environment[2] {
                     if environment[8] {
-                        return Some(TransitionType::FLeftTopRightBottomRight);
+                        return TransitionType::FLeftTopRightBottomRight;
                     }
                     else {
-                        return Some(TransitionType::FLeftTopRight);
+                        return TransitionType::FLeftTopRight;
                     }
                 }
                 else if environment[8] {
-                    return Some(TransitionType::FLeftBottomRight);
+                    return TransitionType::FLeftBottomRight;
                 }
                 else {
-                    return Some(TransitionType::FLeft);
+                    return TransitionType::FLeft;
                 }
             }
             else if environment[5] {
                 if environment[7] {
                     if environment[0] {
-                        return Some(TransitionType::FBottomFRightTopLeft);
+                        return TransitionType::FBottomFRightTopLeft;
                     }
                     else {
-                        return Some(TransitionType::FBottomFRight);
+                        return TransitionType::FBottomFRight;
                     }
                 }
                 else if environment[0] {
                     if environment[6] {
-                        return Some(TransitionType::FRightTopLeftBottomLeft);
+                        return TransitionType::FRightTopLeftBottomLeft;
                     }
                     else {
-                        return Some(TransitionType::FRightTopLeft);
+                        return TransitionType::FRightTopLeft;
                     }
                 }
                 else if environment[6] {
-                    return Some(TransitionType::FRightBottomLeft);
+                    return TransitionType::FRightBottomLeft;
                 }
                 else {
-                    return Some(TransitionType::FRight);
+                    return TransitionType::FRight;
                 }
             }
             else if environment[7] {
                 if environment[0] {
                     if environment[2] {
-                        return Some(TransitionType::FBottomTopLeftTopRight);
+                        return TransitionType::FBottomTopLeftTopRight;
                     }
                     else {
-                        return Some(TransitionType::FBottomTopLeft);
+                        return TransitionType::FBottomTopLeft;
                     }
                 }
                 else if environment[2] {
-                    return Some(TransitionType::FBottomTopRight);
+                    return TransitionType::FBottomTopRight;
                 }
                 else {
-                    return Some(TransitionType::FBottom);
+                    return TransitionType::FBottom;
                 }
             }
             else if environment[0] {
                 if environment[2] {
                     if environment[6] {
                         if environment[8] {
-                            return Some(TransitionType::TopLeftTopRightBottomLeftBottomRight);
+                            return TransitionType::TopLeftTopRightBottomLeftBottomRight;
                         }
                         else {
-                            return Some(TransitionType::TopLeftTopRightBottomLeft);
+                            return TransitionType::TopLeftTopRightBottomLeft;
                         }
                     }
                     else if environment[8] {
-                        return Some(TransitionType::TopLeftTopRightBottomRight);
+                        return TransitionType::TopLeftTopRightBottomRight;
                     }
                     else {
-                        return Some(TransitionType::TopLeftTopRight);
+                        return TransitionType::TopLeftTopRight;
                     }
                 }
                 else if environment[6] {
                     if environment[8] {
-                        return Some(TransitionType::TopLeftBottomLeftBottomRight);
+                        return TransitionType::TopLeftBottomLeftBottomRight;
                     }
                     else {
-                        return Some(TransitionType::TopLeftBottomLeft);
+                        return TransitionType::TopLeftBottomLeft;
                     }
                 }
                 else if environment[8] {
-                    return Some(TransitionType::TopLeftBottomRight);
+                    return TransitionType::TopLeftBottomRight;
                 }
                 else {
-                    return Some(TransitionType::TopLeft);
+                    return TransitionType::TopLeft;
                 }
             }
             else if environment[2] {
                 if environment[6] {
                     if environment[8] {
-                        return Some(TransitionType::TopRightBottomLeftBottomRight);
+                        return TransitionType::TopRightBottomLeftBottomRight;
                     }
                     else {
-                        return Some(TransitionType::TopRightBottomLeft);
+                        return TransitionType::TopRightBottomLeft;
                     }
                 }
                 else if environment[8] {
-                    return Some(TransitionType::TopRightBottomRight);
+                    return TransitionType::TopRightBottomRight;
                 }
                 else {
-                    return Some(TransitionType::TopRight);
+                    return TransitionType::TopRight;
                 }
             }
             else if environment[6] {
                 if environment[8] {
-                    return Some(TransitionType::BottomLeftBottomRight);
+                    return TransitionType::BottomLeftBottomRight;
                 }
                 else {
-                    return Some(TransitionType::BottomLeft);
+                    return TransitionType::BottomLeft;
                 }
             }
             else if environment[8] {
-                return Some(TransitionType::BottomRight);
+                return TransitionType::BottomRight;
             }
         }
         else {
             // Inverted full
-            return Some(TransitionType::Nothing);
+            return TransitionType::Nothing;
         }
         panic!();
     }
