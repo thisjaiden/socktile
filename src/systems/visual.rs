@@ -23,7 +23,7 @@ pub fn loading_prog(
     if let Some(progress) = progress.map(|counter| counter.progress()) {
         let (_e, mut transform) = query.single_mut();
         let pd = (progress.done as f32) / (progress.total as f32);
-        transform.scale.x = pd * 10.0;
+        transform.scale.x = pd * 9.5;
         
         //warn!("Progress: {:?}", progress);
     }
@@ -49,63 +49,77 @@ pub fn logo(
     mut materials: ResMut<Assets<ColorMaterial>>,
     server: Res<AssetServer>
 ) {
-    commands.spawn_bundle(SpriteBundle {
-        texture: server.load("core/logo.png"),
-        ..default()
-    }).insert(RemoveOnStateChange {});
-    commands.spawn_bundle(Text2dBundle {
-        transform: Transform::from_xyz(0.0, -200.0, UI_TEXT),
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: String::from("Pat Cat Games"),
-                    style: TextStyle {
-                        font: server.load("font/blooming_grove.ttf"),
-                        font_size: 64.0,
-                        color: Color::BLACK
-                    }
-                },
-                TextSection {
-                    value: String::from("\nNow Loading..."),
-                    style: TextStyle {
-                        font: server.load("font/blooming_grove.ttf"),
-                        font_size: 48.0,
-                        color: Color::BLACK
-                    }
-                }
-            ],
-            alignment: TextAlignment {
-                horizontal: HorizontalAlign::Center,
-                vertical: VerticalAlign::Center
-            }
+    commands.spawn((
+        SpriteBundle {
+            texture: server.load("core/logo.png"),
+            ..default()
         },
-        ..default()
-    }).insert(RemoveOnStateChange {});
+        RemoveOnStateChange {}
+    ));
+    commands.spawn((
+        Text2dBundle {
+            transform: Transform::from_xyz(0.0, -200.0, UI_TEXT),
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::from("Pat Cat Games"),
+                        style: TextStyle {
+                            font: server.load("font/blooming_grove.ttf"),
+                            font_size: 64.0,
+                            color: Color::BLACK
+                        }
+                    },
+                    TextSection {
+                        value: String::from("\nNow Loading..."),
+                        style: TextStyle {
+                            font: server.load("font/blooming_grove.ttf"),
+                            font_size: 48.0,
+                            color: Color::BLACK
+                        }
+                    }
+                ],
+                alignment: TextAlignment {
+                    horizontal: HorizontalAlign::Center,
+                    vertical: VerticalAlign::Center
+                }
+            },
+            ..default()
+        },
+        RemoveOnStateChange {}
+    ));
     let square = RegularPolygon::new(50.0, 4);
     let mesh = meshes.add(Mesh::from(square));
     let color = materials.add(ColorMaterial::from(Color::BLACK));
-    commands.spawn_bundle(ColorMesh2dBundle {
-        mesh: mesh.clone().into(),
-        material: color.clone(),
-        transform: Transform::from_xyz(-500.0, -300.0, UI_IMG),
-        ..default()
-    }).insert(RemoveOnStateChange {});
-    commands.spawn_bundle(ColorMesh2dBundle {
-        mesh: mesh.clone().into(),
-        material: color.clone(),
-        transform: Transform::from_xyz(500.0, -300.0, UI_IMG),
-        ..default()
-    }).insert(RemoveOnStateChange {});
+    commands.spawn((
+        ColorMesh2dBundle {
+            mesh: mesh.clone().into(),
+            material: color.clone(),
+            transform: Transform::from_xyz(-500.0, -300.0, UI_IMG),
+            ..default()
+        },
+        RemoveOnStateChange {}
+    ));
+    commands.spawn((
+        ColorMesh2dBundle {
+            mesh: mesh.clone().into(),
+            material: color.clone(),
+            transform: Transform::from_xyz(500.0, -300.0, UI_IMG),
+            ..default()
+        },
+        RemoveOnStateChange {}
+    ));
     let i_transform = Transform::from_xyz(0.0, -300.0, UI_IMG);
     //i_transform.rotate_z(std::f32::consts::PI/4.0);
-    commands.spawn_bundle(ColorMesh2dBundle {
-        mesh: mesh.into(),
-        material: color,
-        transform: i_transform,
-        ..default()
-    })
-    .insert(LoadingScreenProgress {})
-    .insert(RemoveOnStateChange {});
+    commands.spawn((
+        ColorMesh2dBundle {
+            mesh: mesh.into(),
+            material: color,
+            transform: i_transform,
+            ..default()
+        },
+        LoadingScreenProgress {},
+        RemoveOnStateChange {}
+    ));
     state.overwrite_set(GameState::Load).unwrap();
 }
 

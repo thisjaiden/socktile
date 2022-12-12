@@ -58,19 +58,19 @@ pub enum Packet {
     LeaveWorld,
     /// A client has been connected. Send them their position.
     /// (Player Position, Owns Server)
-    JoinedGame(GamePosition, bool),
+    JoinedGame(Transform, bool),
     /// State of a user's inventory.
     /// (Inventory)
     InventoryState(Inventory),
     /// A list of online users for a given world
     /// (Array (User, Position))
-    OnlinePlayers(Vec<(User, GamePosition)>),
+    OnlinePlayers(Vec<(User, Transform)>),
     /// A client requests full data pertaining to a chunk
     /// (Chunk Location)
     RequestChunk((isize, isize)),
     /// The server sends over a chunk of terrain
     /// (Chunk Location, [(Tile ID, Height)])
-    ChunkData((isize, isize), Vec<(usize, usize)>),
+    ChunkData((isize, isize), Vec<usize>),
     /// An update has occurred to a single tile.
     /// (Chunk Location, Tile Location, New State, New Height)
     TileUpdate((isize, isize), (usize, usize), usize, usize),
@@ -88,10 +88,10 @@ pub enum Packet {
     CreateObject(Object),
     /// Requests moving a player to a new position in a world.
     /// (New Position)
-    RequestMove(GamePosition),
+    RequestMove(Transform),
     /// Updates the position of a players who has moved.
     /// (Player, New Position)
-    PlayerPositionUpdate(User, GamePosition),
+    PlayerPositionUpdate(User, Transform),
     /// A player has disconnected.
     /// (User)
     PlayerDisconnected(User),
@@ -109,7 +109,7 @@ pub enum Packet {
     Whitelisted,
     /// A user has joined the game.
     /// (User, Initial Position)
-    PlayerConnected(User, GamePosition),
+    PlayerConnected(User, Transform),
     /// Sends a chat message to other players.
     /// (Message)
     SendChatMessage(ChatMessage),

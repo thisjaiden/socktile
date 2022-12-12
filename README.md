@@ -4,7 +4,7 @@ An unfinished and in-development game.
 
 Running
 ---
-Dev builds are avalable by going to [Github Actions](https://github.com/thisjaiden/socktile/actions) and downloading build artifcats for your platform.
+Dev builds are avalable by going to [Github Actions](https://github.com/thisjaiden/socktile/actions) and downloading build artifacts for your platform.
 
 Building
 ---

@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use bevy::{utils::{HashMap, BoxedFuture}, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}};
-use bevy_kira_audio::AudioSource;
 
 #[derive(Deserialize, TypeUuid)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306e"]
@@ -170,20 +169,63 @@ struct TerrainRenderingFileJSON {
 
 #[derive(Deserialize, Clone)]
 pub struct Variant {
+    // tp - top
+    // lf - left
+    // bt - bottom
+    // ri - right
+    // tl - top left
+    // tr - top right
+    // bl - bottom left
+    // br - bottom right
+    // nz - nothing
     pub animation: Option<AnimationInfo>,
-    pub center: Option<Vec<usize>>,
-    pub up: Option<Vec<usize>>,
-    pub down: Option<Vec<usize>>,
-    pub left: Option<Vec<usize>>,
-    pub right: Option<Vec<usize>>,
-    pub up_left: Option<Vec<usize>>,
-    pub up_right: Option<Vec<usize>>,
-    pub down_left: Option<Vec<usize>>,
-    pub down_right: Option<Vec<usize>>,
-    pub inverted_up_left: Option<Vec<usize>>,
-    pub inverted_up_right: Option<Vec<usize>>,
-    pub inverted_down_left: Option<Vec<usize>>,
-    pub inverted_down_right: Option<Vec<usize>>
+    pub tl: Option<Vec<usize>>,
+    pub tr: Option<Vec<usize>>,
+    pub tp: Option<Vec<usize>>,
+    pub ri: Option<Vec<usize>>,
+    pub bt: Option<Vec<usize>>,
+    pub bl: Option<Vec<usize>>,
+    pub br: Option<Vec<usize>>,
+    pub lf: Option<Vec<usize>>,
+    pub nz: Option<Vec<usize>>,
+    pub tlbl: Option<Vec<usize>>,
+    pub tlbr: Option<Vec<usize>>,
+    pub trbl: Option<Vec<usize>>,
+    pub tltr: Option<Vec<usize>>,
+    pub tpbl: Option<Vec<usize>>,
+    pub tpbr: Option<Vec<usize>>,
+    pub lfbr: Option<Vec<usize>>,
+    pub ribl: Option<Vec<usize>>,
+    pub tplf: Option<Vec<usize>>,
+    pub tpri: Option<Vec<usize>>,
+    pub lfbt: Option<Vec<usize>>,
+    pub tpbt: Option<Vec<usize>>,
+    pub lfri: Option<Vec<usize>>,
+    pub btri: Option<Vec<usize>>,
+    pub bttl: Option<Vec<usize>>,
+    pub bttr: Option<Vec<usize>>,
+    pub lftr: Option<Vec<usize>>,
+    pub ritl: Option<Vec<usize>>,
+    pub blbr: Option<Vec<usize>>,
+    pub trbr: Option<Vec<usize>>,
+    pub tpblbr: Option<Vec<usize>>,
+    pub bttltr: Option<Vec<usize>>,
+    pub tplfbr: Option<Vec<usize>>,
+    pub tplfri: Option<Vec<usize>>,
+    pub tplfbt: Option<Vec<usize>>,
+    pub tpribl: Option<Vec<usize>>,
+    pub lfbttr: Option<Vec<usize>>,
+    pub lfbtri: Option<Vec<usize>>,
+    pub tpbtri: Option<Vec<usize>>,
+    pub btritl: Option<Vec<usize>>,
+    pub tlblbr: Option<Vec<usize>>,
+    pub trblbr: Option<Vec<usize>>,
+    pub lftrbr: Option<Vec<usize>>,
+    pub ritlbl: Option<Vec<usize>>,
+    pub tltrbl: Option<Vec<usize>>,
+    pub tltrbr: Option<Vec<usize>>,
+    pub tplfbtri: Option<Vec<usize>>,
+    pub tltrblbr: Option<Vec<usize>>
 }
 
 #[derive(Deserialize, Clone, Copy, Debug)]

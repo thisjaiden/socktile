@@ -17,6 +17,7 @@ mod window_setup;
 mod modular_assets;
 mod assets;
 mod matrix;
+mod utils;
 mod prelude;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
@@ -214,7 +215,6 @@ fn main() {
             SystemSet::on_update(GameState::Play)
                 .with_system(resources::Reality::system_spawn_objects)
                 .with_system(resources::Reality::system_pause_menu)
-                .with_system(resources::Reality::system_chunk_requester)
                 .with_system(resources::Reality::system_player_loader)
                 .with_system(resources::Reality::system_player_unloader)
                 .with_system(resources::Reality::system_player_controls)
@@ -230,7 +230,6 @@ fn main() {
                 .with_system(resources::Reality::system_hitbox_debug_lines)
                 .with_system(resources::Reality::system_player_debug_lines)
                 .with_system(resources::Reality::system_chunk_derenderer)
-                .with_system(resources::Reality::system_rerender_edges)
                 .with_system(resources::Reality::system_render_waiting_chunks)
                 .with_system(resources::Reality::system_action_none)
                 .with_system(resources::Reality::system_action_chop)

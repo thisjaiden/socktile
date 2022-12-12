@@ -8,23 +8,6 @@ pub struct TextBox {}
 /// An Entity with both a Transform and a CursorMarker will be moved to the cursor's location.
 pub struct CursorMarker {}
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-// todo: remove this
-pub struct GamePosition {
-    pub x: f64,
-    pub y: f64
-}
-
-impl GamePosition {
-    pub fn zero() -> GamePosition {
-        GamePosition { x: 0.0, y: 0.0 }
-    }
-    pub fn distance(&self, other: GamePosition) -> f64 {
-        // d=√((x_2-x_1)²+(y_2-y_1)²)
-        (((other.x - self.x).powi(2))+((other.y - self.y).powi(2))).sqrt()
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
 pub struct ChatBox {
     pub location: usize

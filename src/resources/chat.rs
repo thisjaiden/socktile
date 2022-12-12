@@ -81,26 +81,30 @@ impl Chat {
         fonts: ResMut<FontAssets>
     ) {
         for index in 0..10 {
-            commands.spawn_bundle(Text2dBundle {
-                text: Text {
-                    sections: vec![
-                        TextSection {
-                            value: String::new(),
-                            style: TextStyle {
-                                font: fonts.apple_tea.clone(),
-                                font_size: 32.0,
-                                color: Color::BLACK
+            commands.spawn((
+                Text2dBundle {
+                    text: Text {
+                        sections: vec![
+                            TextSection {
+                                value: String::new(),
+                                style: TextStyle {
+                                    font: fonts.apple_tea.clone(),
+                                    font_size: 32.0,
+                                    color: Color::BLACK
+                                }
                             }
+                        ],
+                        alignment: TextAlignment {
+                            vertical: VerticalAlign::Center,
+                            horizontal: HorizontalAlign::Left
                         }
-                    ],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Center,
-                        horizontal: HorizontalAlign::Left
-                    }
+                    },
+                    transform: Transform::from_xyz(-(1920.0 / 2.0), -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32), UI_TEXT),
+                    ..Default::default()
                 },
-                transform: Transform::from_xyz(-(1920.0 / 2.0), -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32), UI_TEXT),
-                ..Default::default()
-            }).insert(ChatBox { location: index }).insert(UILocked {});
+                ChatBox { location: index },
+                UILocked {}
+            ));
         }
     }
     pub fn system_display_chat(

@@ -8,23 +8,7 @@
     ],
     "variants": [
         {
-            "harsh": false,
-            "center": [0]
-        },
-        {
-            "harsh": true,
-            "up": [0],
-            "down": [0],
-            "left": [0],
-            "right": [0],
-            "up_left": [0],
-            "up_right": [0],
-            "down_left": [0],
-            "down_right": [0],
-            "inverted_up_left": [0],
-            "inverted_up_right": [0],
-            "inverted_down_left": [0],
-            "inverted_down_right": [0]
+            "nz": [0]
         }
     ]
 }

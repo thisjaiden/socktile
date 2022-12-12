@@ -136,15 +136,18 @@ pub fn game_creation(
             tb.clear_buffer();
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();
-            commands.spawn_bundle(SpriteBundle {
-                texture: materials.not_animated.clone(),
-                transform: Transform::from_xyz(
-                    0.0,
-                    0.0,
-                    PLAYER_CHARACTERS
-                ),
-                ..Default::default()
-            }).insert(disk.user().unwrap());
+            commands.spawn((
+                SpriteBundle {
+                    texture: materials.not_animated.clone(),
+                    transform: Transform::from_xyz(
+                        0.0,
+                        0.0,
+                        PLAYER_CHARACTERS
+                    ),
+                    ..Default::default()
+                },
+                disk.user().unwrap()
+            ));
         }
     }
 }
@@ -153,26 +156,28 @@ pub fn game_creation_once(
     mut commands: Commands,
     font_assets: Res<FontAssets>
 ) {
-    commands.spawn_bundle(Text2dBundle {
-        text: Text {
-            sections: vec![
-                TextSection {
-                    value: String::new(),
-                    style: TextStyle {
-                        font: font_assets.simvoni.clone(),
-                        font_size: 35.0,
-                        color: Color::BLACK
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![
+                    TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: font_assets.simvoni.clone(),
+                            font_size: 35.0,
+                            color: Color::BLACK
+                        }
                     }
+                ],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center
                 }
-            ],
-            alignment: TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center
-            }
+            },
+            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+            ..Default::default()
         },
-        transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-        ..Default::default()
-    })
-    .insert(TextBox {})
-    .insert(RemoveOnStateChange {});
+        TextBox {},
+        RemoveOnStateChange {}
+    ));
 }

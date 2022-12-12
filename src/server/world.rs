@@ -3,11 +3,11 @@ use bevy::utils::HashMap;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct World {
-    pub players: Vec<(User, GamePosition, PlayerData)>,
-    pub offline_players: Vec<(User, GamePosition, PlayerData)>,
+    pub players: Vec<(User, Transform, PlayerData)>,
+    pub offline_players: Vec<(User, Transform, PlayerData)>,
     /// All of the generated terrain in the world.
     /// (chunk coords, terrain data array)
-    pub terrain: HashMap<(isize, isize), Vec<(usize, usize)>>,
+    pub terrain: HashMap<(isize, isize), Vec<usize>>,
     pub objects: Vec<Object>,
     pub generated_objects: Vec<(isize, isize)>
 }
@@ -22,7 +22,7 @@ impl World {
             generated_objects: vec![]
         }
     }
-    pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<(usize, usize)> {
+    pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<usize> {
         if let Some(chunk_data) = self.terrain.get(&chunk) {
             chunk_data.clone()
         }
@@ -68,7 +68,6 @@ impl World {
         let level = selected_level.expect("FATAL: LDTK file missing required backup environment");
         let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut chunk_data = vec![];
-        let mut chunk_height = vec![];
         for layer in layers {
             if layer.layer_instance_type.as_str() == "IntGrid" {
                 if layer.identifier == "Terrain" {
@@ -76,14 +75,6 @@ impl World {
                         let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
                         for width_layer in 0..CHUNK_WIDTH {
                             chunk_data.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
-                        }
-                    }
-                }
-                else if layer.identifier == "Heightmap" {
-                    for pot_height_layer in 0..CHUNK_HEIGHT {
-                        let height_layer = CHUNK_HEIGHT - 1 - pot_height_layer;
-                        for width_layer in 0..CHUNK_WIDTH {
-                            chunk_height.push((layer.int_grid_csv[width_layer + (height_layer * CHUNK_WIDTH)] - 1) as usize);
                         }
                     }
                 }
@@ -95,14 +86,9 @@ impl World {
             error!("Chunk location: ({}, {})", chunk.0, chunk.1);
             panic!("{FATAL_ERROR}");
         }
-        if chunk_height.len() != CHUNK_SIZE {
-            error!("Chunk heightmap was improper ({} != {CHUNK_SIZE})", chunk_data.len());
-            error!("Chunk location: ({}, {})", chunk.0, chunk.1);
-            panic!("{FATAL_ERROR}");
-        }
         let mut final_data = vec![];
         for i in 0..chunk_data.len() {
-            final_data.push((chunk_data[i], chunk_height[i]));
+            final_data.push(chunk_data[i]);
         }
         // save data
         self.terrain.insert(chunk, final_data);
@@ -155,10 +141,11 @@ impl World {
                     match entity.identifier.as_str() {
                         "Tree" => {
                             self.objects.push(Object {
-                                pos: GamePosition {
-                                    x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                    y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                },
+                                pos: Transform::from_xyz(
+                                    (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                    (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                    0.0
+                                ),
                                 rep: ObjectType::Tree(3),
                                 uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                             });
@@ -172,10 +159,11 @@ impl World {
                                         .as_str().expect("FATAL: LDtk entity had a non-string ItemName")
                                     );
                                     self.objects.push(Object {
-                                        pos: GamePosition {
-                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                        },
+                                        pos: Transform::from_xyz(
+                                            (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                            (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                            0.0
+                                        ),
                                         rep: ObjectType::GroundItem(item),
                                         uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                                     });
@@ -191,10 +179,11 @@ impl World {
                                         .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
                                     );
                                     self.objects.push(Object {
-                                        pos: GamePosition {
-                                            x: (-1920.0 / 2.0) + entity.px[0] as f64 + 32.0 + (1920.0 * chunk.0 as f64),
-                                            y: (1080.0 / 2.0) - entity.px[1] as f64 - 32.0 + (1088.0 * chunk.1 as f64)
-                                        },
+                                        pos: Transform::from_xyz(
+                                            (-1920.0 / 2.0) + entity.px[0] as f32 + 32.0 + (1920.0 * chunk.0 as f32),
+                                            (1080.0 / 2.0) - entity.px[1] as f32 - 32.0 + (1088.0 * chunk.1 as f32),
+                                            0.0
+                                        ),
                                         rep: ObjectType::Npc(npc),
                                         uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
                                     });
@@ -214,7 +203,7 @@ impl World {
 
         dupe_objects
     }
-    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: (usize, usize)) {
+    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
         let mut dta = self.get_or_gen(chunk);
         dta[tile.0 + (tile.1 * CHUNK_WIDTH)] = state;
         self.terrain.insert(chunk, dta);

@@ -50,10 +50,13 @@ pub fn settings_video(
             tag: Some(String::from("Settings"))
         });
         // Background
-        commands.spawn_bundle(SpriteBundle {
-            texture: core.video_settings.clone(),
-            ..default()
-        }).insert(SettingsPageComp { type_: 0 });
+        commands.spawn((
+            SpriteBundle {
+                texture: core.video_settings.clone(),
+                ..default()
+            },
+            SettingsPageComp { type_: 0 }
+        ));
         // Leave button/text
         man.add_ui(UIClickable {
             action: UIClickAction::CloseSettings,
@@ -62,24 +65,27 @@ pub fn settings_video(
             removed_on_use: true,
             tag: Some(String::from("Settings"))
         });
-        commands.spawn_bundle(Text2dBundle {
-            text: Text {
-                sections: vec![TextSection {
-                    value: lang.get("en_us.core.settings.leave"),
-                    style: TextStyle {
-                        font: fonts.simvoni.clone(),
-                        font_size: 36.0,
-                        color: Color::BLACK
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: lang.get("en_us.core.settings.leave"),
+                        style: TextStyle {
+                            font: fonts.simvoni.clone(),
+                            font_size: 36.0,
+                            color: Color::BLACK
+                        }
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Top,
+                        horizontal: HorizontalAlign::Left
                     }
-                }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Top,
-                    horizontal: HorizontalAlign::Left
-                }
+                },
+                transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT),
+                ..default()
             },
-            transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT),
-            ..default()
-        }).insert(SettingsPageComp { type_: 0 });
+            SettingsPageComp { type_: 0 }
+        ));
         // Fullscreen button/text
         man.add_ui(UIClickable {
             action: UIClickAction::ToggleFullscreen,
@@ -95,23 +101,26 @@ pub fn settings_video(
         else {
             txtout = lang.get("en_us.core.settings.fullscreen.off");
         }
-        commands.spawn_bundle(Text2dBundle {
-            text: Text {
-                sections: vec![TextSection {
-                    value: txtout,
-                    style: TextStyle {
-                        font: fonts.simvoni.clone(),
-                        font_size: 36.0,
-                        color: Color::BLACK
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: txtout,
+                        style: TextStyle {
+                            font: fonts.simvoni.clone(),
+                            font_size: 36.0,
+                            color: Color::BLACK
+                        }
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Top,
+                        horizontal: HorizontalAlign::Left
                     }
-                }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Top,
-                    horizontal: HorizontalAlign::Left
-                }
+                },
+                transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                ..default()
             },
-            transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
-            ..default()
-        }).insert(SettingsPageComp { type_: 1 });
+            SettingsPageComp { type_: 1 }
+        ));
     }
 }

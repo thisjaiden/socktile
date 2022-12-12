@@ -3,7 +3,7 @@ use crate::prelude::*;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Component)]
 /// Represents a single game object.
 pub struct Object {
-    pub pos: GamePosition,
+    pub pos: Transform,
     pub rep: ObjectType,
     pub uuid: uuid::Uuid
 }
@@ -24,7 +24,7 @@ pub enum ObjectType {
 }
 
 impl ObjectType {
-    pub fn collider(&self) -> Option<(f64, f64)> {
+    pub fn collider(&self) -> Option<(f32, f32)> {
         match self {
             Self::Tree(_str) => Some((64.0, 64.0)),
             Self::Npc(_who) => Some((64.0, 64.0)),
