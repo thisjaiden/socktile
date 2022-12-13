@@ -1,0 +1,14 @@
+{
+    "files": [
+        {
+            "location": "stone.png",
+            "width": 1,
+            "height": 1
+        }
+    ],
+    "variants": [
+        {
+            "nz": [0]
+        }
+    ]
+}

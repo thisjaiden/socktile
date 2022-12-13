@@ -22,5 +22,9 @@
     {
         "names": ["water", "water"],
         "meta_location": "heightmaps/water.vjson"
+    },
+    {
+        "names": ["stone", "stone"],
+        "meta_location": "heightmaps/stone.vjson"
     }
 ]

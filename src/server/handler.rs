@@ -151,7 +151,7 @@ pub fn handler(
                 constructable_players.push((us.clone(), *gp));
             }
             let mut new_objs = vec![];
-            run_matrix_nxn(-1..1, |x, y| {
+            run_matrix_nxn(-2..2, |x, y| {
                 new_objs.append(&mut globals.worlds[world_index].data.try_generating_objects(
                     (spawn_centre_chnks_lack.0 + x, spawn_centre_chnks_lack.1 + y)
                 ));
