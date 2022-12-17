@@ -168,6 +168,8 @@ fn main() {
             SystemSet::on_update(GameState::Settings)
                 .with_system(resources::ui::ui_settings_tab)
                 .with_system(resources::ui::ui_toggle_fullscreen)
+                .with_system(resources::ui::ui_increase_scaling)
+                .with_system(resources::ui::ui_decrease_scaling)
                 .with_system(resources::ui::ui_return_titlescreen)
                 .with_system(resources::ui::ui_settings_text_updater)
         )

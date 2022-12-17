@@ -128,7 +128,6 @@ pub enum UIClickAction {
     CloseProgram,
     ClosePauseMenu,
     ToggleFullscreen,
-    ToggleVSync,
     IncreaseWindowScaling,
     DecreaseWindowScaling,
     InvitePlayer,
@@ -185,7 +184,6 @@ pub fn ui_forward(
     mut reality: ResMut<Reality>
 ) {
     if man.queue_player_action {
-        info!("Player action queued!");
         man.queue_player_action = false;
         reality.queue_action();
     }
@@ -375,6 +373,30 @@ pub fn ui_toggle_fullscreen(
     }
 }
 
+pub fn ui_increase_scaling(
+    mut man: ResMut<UIManager>,
+    mut disk: ResMut<Disk>
+) {
+    if man.queued_action == Some(UIClickAction::IncreaseWindowScaling) {
+        let mut winconf = disk.window_config();
+        winconf.scale_factor += 0.25;
+        disk.update_window_config(winconf);
+        man.queued_action = None;
+    }
+}
+
+pub fn ui_decrease_scaling(
+    mut man: ResMut<UIManager>,
+    mut disk: ResMut<Disk>
+) {
+    if man.queued_action == Some(UIClickAction::DecreaseWindowScaling) {
+        let mut winconf = disk.window_config();
+        winconf.scale_factor -= 0.25;
+        disk.update_window_config(winconf);
+        man.queued_action = None;
+    }
+}
+
 pub fn ui_settings_text_updater(
     mut query: Query<(&mut Text, &SettingsPageComp)>,
     disk: Res<Disk>,
@@ -392,6 +414,9 @@ pub fn ui_settings_text_updater(
                 txtout = lang.get("en_us.core.settings.fullscreen.off");
             }
             text.sections[0].value = txtout;
+        }
+        else if component.type_ == 4 {
+            text.sections[0].value = format!("{}", disk.window_config().scale_factor);
         }
     });
 }

@@ -28,40 +28,100 @@ pub fn settings_video(
     if man.settings_page == SettingsPage::Video && !man.on_page {
         let lang = lang_serve.get(&core.lang).unwrap();
         man.on_page = true;
-        man.add_ui(UIClickable {
-            action: UIClickAction::IncreaseWindowScaling,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        man.add_ui(UIClickable {
-            action: UIClickAction::DecreaseWindowScaling,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
-        man.add_ui(UIClickable {
-            action: UIClickAction::ToggleVSync,
-            location: (0.0, 0.0), // TODO
-            size: (0.0, 0.0), // TODO
-            removed_on_use: false,
-            tag: Some(String::from("Settings"))
-        });
         // Background
         commands.spawn((
             SpriteBundle {
                 texture: core.video_settings.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 0 }
+        ));
+        // Decrease scaling button/text
+        man.add_ui(UIClickable {
+            action: UIClickAction::DecreaseWindowScaling,
+            location: (-45.0, -38.0), // TODO
+            size: (20.0, 36.0), // TODO
+            removed_on_use: false,
+            tag: Some(String::from("Settings"))
+        });
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: lang.get("en_us.core.settings.scaling.decrease"),
+                        style: TextStyle {
+                            font: fonts.simvoni.clone(),
+                            font_size: 36.0,
+                            color: Color::BLACK
+                        }
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Top,
+                        horizontal: HorizontalAlign::Center
+                    }
+                },
+                transform: Transform::from_xyz(-40.0, -38.0, UI_TEXT + 105.0),
+                ..default()
+            },
+            SettingsPageComp { type_: 3 }
+        ));
+        // Increase scaling button/text
+        man.add_ui(UIClickable {
+            action: UIClickAction::IncreaseWindowScaling,
+            location: (35.0, -38.0), // TODO
+            size: (20.0, 36.0), // TODO
+            removed_on_use: false,
+            tag: Some(String::from("Settings"))
+        });
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: lang.get("en_us.core.settings.scaling.increase"),
+                        style: TextStyle {
+                            font: fonts.simvoni.clone(),
+                            font_size: 36.0,
+                            color: Color::BLACK
+                        }
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Top,
+                        horizontal: HorizontalAlign::Center
+                    }
+                },
+                transform: Transform::from_xyz(40.0, -38.0, UI_TEXT + 105.0),
+                ..default()
+            },
+            SettingsPageComp { type_: 2 }
+        ));
+        // Show scaling amount text
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: String::new(),
+                        style: TextStyle {
+                            font: fonts.simvoni.clone(),
+                            font_size: 36.0,
+                            color: Color::BLACK
+                        }
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Top,
+                        horizontal: HorizontalAlign::Center
+                    }
+                },
+                transform: Transform::from_xyz(0.0, -38.0, UI_TEXT + 105.0),
+                ..default()
+            },
+            SettingsPageComp { type_: 4 }
         ));
         // Leave button/text
         man.add_ui(UIClickable {
             action: UIClickAction::CloseSettings,
             location: (-600.0, -300.0),
-            size: (150.0, 36.0),
+            size: (100.0, 36.0),
             removed_on_use: true,
             tag: Some(String::from("Settings"))
         });
@@ -81,7 +141,7 @@ pub fn settings_video(
                         horizontal: HorizontalAlign::Left
                     }
                 },
-                transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT),
+                transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 0 }
@@ -90,7 +150,7 @@ pub fn settings_video(
         man.add_ui(UIClickable {
             action: UIClickAction::ToggleFullscreen,
             location: (0.0, 0.0),
-            size: (260.0, 36.0),
+            size: (315.0, 36.0),
             removed_on_use: false,
             tag: Some(String::from("Settings"))
         });
@@ -117,7 +177,7 @@ pub fn settings_video(
                         horizontal: HorizontalAlign::Left
                     }
                 },
-                transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
+                transform: Transform::from_xyz(0.0, 0.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 1 }

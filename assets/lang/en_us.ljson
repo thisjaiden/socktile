@@ -24,6 +24,10 @@
             "fullscreen": {
                 "on": "Fullscreen: Enabled",
                 "off": "Fullscreen: Disabled"
+            },
+            "scaling": {
+                "increase": "+",
+                "decrease": "-"
             }
         },
         "create_user": {

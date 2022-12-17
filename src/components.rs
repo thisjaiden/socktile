@@ -41,6 +41,9 @@ pub struct SettingsPageComp {
     /// What type of component this is
     /// 0 | unimportant/misc
     /// 1 | video settings fullscreen text
+    /// 2 | video settings increase scaling text
+    /// 3 | video settings decrease scaling text
+    /// 4 | video settings scaling text
     pub type_: u8
 }
 
