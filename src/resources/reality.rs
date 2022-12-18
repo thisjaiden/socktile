@@ -138,8 +138,13 @@ impl Reality {
         mut selfs: ResMut<Reality>
     ) {
         if selfs.waiting_for_action {
-            let action = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot].action();
-            if action == ItemAction::None {
+            let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
+            if let Some(item) = slotted {
+                if item.action() == ItemAction::None {
+                    selfs.waiting_for_action = false;
+                }
+            }
+            else {
                 selfs.waiting_for_action = false;
             }
         }
@@ -153,36 +158,39 @@ impl Reality {
         mut objects: Query<(Entity, &mut Object)>
     ) {
         if selfs.waiting_for_action {
-            let action = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot].action();
-            if let ItemAction::Chop(power) = action {
-                // chop time!
-                info!("Executing player action 'Chop' with power {power}");
-                // mark action for animation
-                animator.mark_action(disk.user().unwrap(), action);
-                // send animation to others
-                netty.n.send(Packet::ActionAnimation(action));
-                // check for tree in range
-                objects.for_each_mut(|(e, mut obj)| {
-                    if let ObjectType::Tree(strength) = obj.rep {
-                        if distance(obj.pos, selfs.player_position) < TREE_CHOP_DISTANCE {
-                            if strength > power {
-                                // damage tree
-                                obj.rep = ObjectType::Tree(strength - power);
-                                // update entity on server
-                                netty.n.send(Packet::UpdateObject(obj.clone()));
-                            }
-                            else {
-                                // destroy tree
-                                // remove entity on server
-                                netty.n.send(Packet::RemoveObject(obj.uuid));
-                                // despawn entity locally
-                                commands.entity(e).despawn();
+            let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
+            if let Some(item) = slotted {
+                let action = item.action();
+                if let ItemAction::Chop(power) = action {
+                    // chop time!
+                    info!("Executing player action 'Chop' with power {power}");
+                    // mark action for animation
+                    animator.mark_action(disk.user().unwrap(), action);
+                    // send animation to others
+                    netty.n.send(Packet::ActionAnimation(action));
+                    // check for tree in range
+                    objects.for_each_mut(|(e, mut obj)| {
+                        if let ObjectType::Tree(strength) = obj.rep {
+                            if distance(obj.pos, selfs.player_position) < TREE_CHOP_DISTANCE {
+                                if strength > power {
+                                    // damage tree
+                                    obj.rep = ObjectType::Tree(strength - power);
+                                    // update entity on server
+                                    netty.n.send(Packet::UpdateObject(obj.clone()));
+                                }
+                                else {
+                                    // destroy tree
+                                    // remove entity on server
+                                    netty.n.send(Packet::RemoveObject(obj.uuid));
+                                    // despawn entity locally
+                                    commands.entity(e).despawn();
+                                }
                             }
                         }
-                    }
-                });
-                // cleanup state
-                selfs.waiting_for_action = false;
+                    });
+                    // cleanup state
+                    selfs.waiting_for_action = false;
+                }
             }
         }
     }
@@ -328,7 +336,6 @@ impl Reality {
                                 mainarr.push(false);
                             }
                         }
-                        // TODO: FLip!
                         if handle_transitions.get(&[main.clone(), sub.clone()]).is_none() {
                             // Flip everything!
                             let mut mainarr2 = vec![];
@@ -372,7 +379,6 @@ impl Reality {
                             }
                         }
                     }
-                    // ERROR! (TODO: Switch to safe mode)
                     let selected_options_option = safe_rand_from_array(appropriate_variants);
                     if let Some(selected_options) = selected_options_option {
                         if selected_options.len() == 1 {
@@ -494,7 +500,7 @@ impl Reality {
                 ObjectType::GroundItem(item) => {
                     commands.spawn((
                         SpriteBundle {
-                            texture: item_assets.pick_from_item(*item),
+                            texture: item_assets.pick_from_item(Some(*item)),
                             transform: Transform::from_xyz(object.pos.translation.x, object.pos.translation.y, FRONT_OBJECTS),
                             ..default()
                         },

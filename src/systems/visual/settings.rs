@@ -40,8 +40,8 @@ pub fn settings_video(
         // Decrease scaling button/text
         man.add_ui(UIClickable {
             action: UIClickAction::DecreaseWindowScaling,
-            location: (-45.0, -38.0), // TODO
-            size: (20.0, 36.0), // TODO
+            location: (-45.0, -38.0),
+            size: (20.0, 36.0),
             removed_on_use: false,
             tag: Some(String::from("Settings"))
         });
@@ -69,8 +69,8 @@ pub fn settings_video(
         // Increase scaling button/text
         man.add_ui(UIClickable {
             action: UIClickAction::IncreaseWindowScaling,
-            location: (35.0, -38.0), // TODO
-            size: (20.0, 36.0), // TODO
+            location: (35.0, -38.0),
+            size: (20.0, 36.0),
             removed_on_use: false,
             tag: Some(String::from("Settings"))
         });

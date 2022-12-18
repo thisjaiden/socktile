@@ -40,7 +40,7 @@ pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
                                 outgoing.push((Packet::RemoveObject(object.uuid), *ips.get(&player.0).expect("No IP found for a user connected to a server")));
                             }
                             // Add item to hotbar
-                            server.data.players[index].2.inventory.hotbar[slot] = item;
+                            server.data.players[index].2.inventory.hotbar[slot] = Some(item);
                             // Tell user they have a new item
                             outgoing.push((Packet::InventoryState(server.data.players[index].2.inventory.clone()), *ips.get(&server.data.players[index].0).expect("No IP found for a user connected to a server")));
                             // Remove entity from server data

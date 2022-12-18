@@ -2,6 +2,8 @@ echo "[1/3] Building..."
 cargo build
 echo "[2/3] Copying files..."
 rm -d -r testenv
+rm -d -r users
+rm -d -r saves
 mkdir -p testenv/server
 mkdir testenv/client
 cp target/debug/socktile testenv/client/socktile

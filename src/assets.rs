@@ -86,9 +86,11 @@ pub struct ItemAssets {
 }
 
 impl ItemAssets {
-    pub fn pick_from_item(&self, item: Item) -> Handle<Image> {
-        match item {
-            Item::None => self.none.clone(),
+    pub fn pick_from_item(&self, item: Option<Item>) -> Handle<Image> {
+        if item.is_none() {
+            return self.none.clone();
+        }
+        match item.unwrap() {
             Item::DemoAxe => self.demo_axe.clone(),
             Item::DemoRod => self.demo_rod.clone(),
             Item::Wood => self.wood.clone()

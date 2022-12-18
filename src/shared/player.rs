@@ -22,19 +22,19 @@ impl PlayerData {
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct Inventory {
     pub selected_slot: usize,
-    pub hotbar: [Item; 10]
+    pub hotbar: [Option<Item>; 10]
 }
 
 impl Inventory {
     pub fn empty() -> Inventory {
         Inventory {
             selected_slot: 0,
-            hotbar: [Item::None; 10]
+            hotbar: [None; 10]
         }
     }
     pub fn hotbar_empty_space(&self) -> Option<usize> {
         for (index, item) in self.hotbar.iter().enumerate() {
-            if item == &Item::None {
+            if item.is_none() {
                 return Some(index);
             }
         }
@@ -44,7 +44,6 @@ impl Inventory {
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Item {
-    None,
     DemoAxe,
     DemoRod,
     Wood

@@ -40,6 +40,6 @@ socktile uses:
 | [tracing-log](https://github.com/tokio-rs/tracing/tree/master/tracing-log) | Terminal extension for `tracing` | [MIT](https://github.com/tokio-rs/tracing/blob/master/tracing-log/LICENSE) |
 | [rand](https://github.com/rust-random/rand) | Random number generation | [MIT](https://github.com/rust-random/rand/blob/master/LICENSE-MIT) |
 | [num](https://github.com/rust-num/num) | Generic number types | [MIT](https://github.com/rust-num/num/blob/master/LICENSE-MIT) |
-| [netty] | Networking | Owner |
+| [netty](https://github.com/thisjaiden/netty) | Networking | Owner |
 
 All sublibraries of the above may have their own licenses which should all fall under fair use or be otherwise accounted for.
