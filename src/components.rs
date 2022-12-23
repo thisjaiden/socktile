@@ -58,11 +58,3 @@ pub struct Tile {
     pub position: (usize, usize),
     pub transition_type: TransitionType,
 }
-
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-pub struct NPCPopup {
-    pub gframe: usize,
-    pub sframe: usize,
-    pub sactive: bool
-}

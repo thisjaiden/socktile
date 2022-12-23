@@ -24,12 +24,11 @@ pub struct AnimatedSprite {
 
 impl AnimatedSprite {
     pub fn update(&mut self, time: Time, writeable: &mut Handle<Image>, blank: Handle<Image>) {
-        info!("updating!");
         self.current_time += time.delta();
         if !self.stalled {
             let frame = self.current_time.as_millis() as usize / self.delay_between_frames;
             if frame != self.current_frame {
-                if frame > self.number_of_frames {
+                if frame > self.number_of_frames - 1 {
                     match self.end_behavior {
                         EndBehavior::Stall => {
                             self.stalled = true;
@@ -51,6 +50,9 @@ impl AnimatedSprite {
                 }
             }
         }
+    }
+    pub fn stall(&mut self) {
+        self.stalled = true;
     }
 }
 

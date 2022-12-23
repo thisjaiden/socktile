@@ -144,17 +144,17 @@ impl Reality {
                 ObjectType::Npc(mut npc) => {
                     if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
                         if !npc.active_popup() {
-                            npc.start_popup();
+                            npc.start_popup(commands.spawn((
+                                    SpriteBundle {
+                                        transform: Transform::from_xyz(location.translation.x, location.translation.y + 40.0, UI_IMG),
+                                        ..Default::default()
+                                    },
+                                    // TODO: BUG: THIS SHARES THIS ANIMATION FOR ENTIRE RUNTIME WITH ALL INSTANCES
+                                    // MAKE IT NOT A HANDLE AND FIX IT DUMMY
+                                    npc_assets.popup_grow.clone(),
+                                )).id()
+                            );
                             object.rep = ObjectType::Npc(npc);
-                            commands.spawn((
-                                SpriteBundle {
-                                    transform: Transform::from_xyz(location.translation.x, location.translation.y + 40.0, UI_IMG),
-                                    texture: npc_assets.popup.clone(),
-                                    ..Default::default()
-                                },
-                                NPCPopup { gframe: 0, sframe: 0, sactive: false },
-                                npc_assets.popup_grow.clone()
-                            ));
                         }
                     }
                 }
@@ -163,10 +163,25 @@ impl Reality {
         });
     }
     pub fn system_destroy_npc_popups(
-
+        mut commands: Commands,
+        selfs: ResMut<Reality>,
+        mut all_objects: Query<(&mut Object, &Transform)>
     ) {
-        // TODO:
-        // ...
+        // TODO: Proper shrinking of popup
+        all_objects.for_each_mut(|(mut object, location)| {
+            match object.rep.clone() {
+                ObjectType::Npc(mut npc) => {
+                    if npc.active_popup() {
+                        if distance(selfs.player_position, *location) > NPC_INTERACTION_DISTANCE {
+                            commands.entity(npc.popup_e()).despawn();
+                            npc.stop_popup();
+                            object.rep = ObjectType::Npc(npc);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        });
     }
     /// Clears pending action if the held item has no action.
     pub fn system_action_none(

@@ -5,7 +5,7 @@ pub struct Npc {
     /// Who is this NPC?
     who: Who,
     /// Does this NPC have a popup above its head indicating that it is interactable?
-    popup: bool,
+    popup: Option<Entity>,
     /// What memories does this NPC find important?
     memories: Vec<Memory>,
     /// TODO: better data type
@@ -27,7 +27,7 @@ impl Npc {
         let who = Who::from_str(from);
         Npc {
             who,
-            popup: false,
+            popup: None,
             memories: vec![],
             relationships: vec![],
             current_task: Task::Rest(std::time::Duration::from_secs(1)),
@@ -36,13 +36,16 @@ impl Npc {
         }
     }
     pub fn active_popup(&self) -> bool {
-        self.popup
+        self.popup.is_some()
     }
-    pub fn start_popup(&mut self) {
-        self.popup = true;
+    pub fn start_popup(&mut self, popup_id: Entity) {
+        self.popup = Some(popup_id);
     }
     pub fn stop_popup(&mut self) {
-        self.popup = false;
+        self.popup = None;
+    }
+    pub fn popup_e(&self) -> Entity {
+        return self.popup.unwrap();
     }
 }
 

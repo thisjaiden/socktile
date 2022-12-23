@@ -485,7 +485,8 @@ pub fn ui_disconnect_game(
             With<Tile>,
             With<PauseMenuMarker>,
             With<HotbarMarker>,
-            With<Object>
+            With<Object>,
+            With<AnimatedSprite>
         )>
     >
 ) {
