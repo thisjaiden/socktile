@@ -4,6 +4,8 @@ use crate::prelude::*;
 pub struct Npc {
     /// Who is this NPC?
     who: Who,
+    /// Does this NPC have a popup above its head indicating that it is interactable?
+    popup: bool,
     /// What memories does this NPC find important?
     memories: Vec<Memory>,
     /// TODO: better data type
@@ -25,12 +27,22 @@ impl Npc {
         let who = Who::from_str(from);
         Npc {
             who,
+            popup: false,
             memories: vec![],
             relationships: vec![],
             current_task: Task::Rest(std::time::Duration::from_secs(1)),
             queued_tasks: vec![],
             home_location: who.get_inital_home()
         }
+    }
+    pub fn active_popup(&self) -> bool {
+        self.popup
+    }
+    pub fn start_popup(&mut self) {
+        self.popup = true;
+    }
+    pub fn stop_popup(&mut self) {
+        self.popup = false;
     }
 }
 

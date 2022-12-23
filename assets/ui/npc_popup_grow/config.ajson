@@ -1,0 +1,9 @@
+{
+    "image_locations": [
+        "0.png",
+        "1.png"
+    ],
+    "number_of_frames": 20,
+    "delay_between_frames": 50,
+    "end_behavior": "Blank"
+}

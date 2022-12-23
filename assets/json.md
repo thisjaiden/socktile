@@ -18,3 +18,4 @@ What are the extensions used?
 | Terrain Variations          | .vjson    |
 | Terrain Variation Locations | .ujson    |
 | Terrain Metadata            | .tjson    |
+| Animated Sprite             | .ajson    |

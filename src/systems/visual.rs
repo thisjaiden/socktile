@@ -12,6 +12,8 @@ mod join_world;
 pub use join_world::join_world;
 mod settings;
 pub use settings::*;
+mod animated_sprites;
+pub use animated_sprites::*;
 
 use crate::prelude::*;
 

@@ -1,4 +1,4 @@
-use crate::prelude::{*, tiles::{TileTypeConfig, TileTypeConfigLoader, TileTransitionMasterConfig, TileTransitionMasterConfigLoader, TileTransitionConfig, TileTransitionConfigLoader, Variant}};
+use crate::prelude::{*, tiles::{TileTypeConfig, TileTypeConfigLoader, TileTransitionMasterConfig, TileTransitionMasterConfigLoader, TileTransitionConfig, TileTransitionConfigLoader, Variant}, animated_sprite::AnimatedSpriteLoader};
 
 use crate::language::LanguageKeysLoader;
 use crate::audio::AudioSamplesLoader;
@@ -18,7 +18,9 @@ impl Plugin for ModularAssetsPlugin {
             .add_asset::<TileTransitionMasterConfig>()
             .add_asset_loader(TileTransitionMasterConfigLoader)
             .add_asset::<TileTransitionConfig>()
-            .add_asset_loader(TileTransitionConfigLoader);
+            .add_asset_loader(TileTransitionConfigLoader)
+            .add_asset::<AnimatedSprite>()
+            .add_asset_loader(AnimatedSpriteLoader);
     }
 }
 

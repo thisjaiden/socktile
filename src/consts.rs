@@ -63,6 +63,8 @@ pub const CHUNK_WIDTH: usize = 30;
 pub const CHUNK_HEIGHT: usize = 17;
 /// Amount of tiles in a chunk
 pub const CHUNK_SIZE: usize = CHUNK_WIDTH * CHUNK_HEIGHT;
+/// The distance at which a player can interact with an NPC
+pub const NPC_INTERACTION_DISTANCE: f32 = 100.0;
 
 /// The message used for panic!s when a non-recoverable error occurs
 pub const FATAL_ERROR: &str = "A fatal error occured and socktile cannot continue";

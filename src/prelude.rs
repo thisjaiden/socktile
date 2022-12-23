@@ -26,3 +26,4 @@ pub use crate::audio::AudioSamples;
 pub use crate::tiles::TileTransitionMasterConfig;
 pub use crate::tiles::TileTypeConfig;
 pub use crate::resources::network::Netty;
+pub use crate::animated_sprite::AnimatedSprite;

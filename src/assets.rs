@@ -4,6 +4,7 @@ use bevy_asset_loader::prelude::*;
 pub mod language;
 pub mod audio;
 pub mod tiles;
+pub mod animated_sprite;
 
 #[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
@@ -27,6 +28,8 @@ pub struct CoreAssets {
     pub video_settings: Handle<Image>,
     #[asset(path = "core/offline.png")]
     pub offline_no_support: Handle<Image>,
+    #[asset(path = "core/nothing.png")]
+    pub blank: Handle<Image>
 }
 
 #[derive(AssetCollection, Resource, Clone)]
@@ -59,6 +62,10 @@ pub struct AnimatorAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct NPCAssets {
+    #[asset(path = "ui/npc_popup_grow/config.ajson")]
+    pub popup_grow: Handle<AnimatedSprite>,
+    #[asset(path = "npc/popup/display.png")]
+    pub popup: Handle<Image>,
     #[asset(path = "npc/thomas_kontos/idle/0.png")]
     pub not_animated: Handle<Image>,
     #[asset(path = "npc/thomas_kontos/idle/0.png")]

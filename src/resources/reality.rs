@@ -133,6 +133,41 @@ impl Reality {
     }
 
     // Systems
+    pub fn system_start_npc_popups(
+        mut commands: Commands,
+        selfs: ResMut<Reality>,
+        npc_assets: Res<NPCAssets>,
+        mut all_objects: Query<(&mut Object, &Transform)>
+    ) {
+        all_objects.for_each_mut(|(mut object, location)| {
+            match object.rep.clone() {
+                ObjectType::Npc(mut npc) => {
+                    if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
+                        if !npc.active_popup() {
+                            npc.start_popup();
+                            object.rep = ObjectType::Npc(npc);
+                            commands.spawn((
+                                SpriteBundle {
+                                    transform: Transform::from_xyz(location.translation.x, location.translation.y + 40.0, UI_IMG),
+                                    texture: npc_assets.popup.clone(),
+                                    ..Default::default()
+                                },
+                                NPCPopup { gframe: 0, sframe: 0, sactive: false },
+                                npc_assets.popup_grow.clone()
+                            ));
+                        }
+                    }
+                }
+                _ => {}
+            }
+        });
+    }
+    pub fn system_destroy_npc_popups(
+
+    ) {
+        // TODO:
+        // ...
+    }
     /// Clears pending action if the held item has no action.
     pub fn system_action_none(
         mut selfs: ResMut<Reality>
