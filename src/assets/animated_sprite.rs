@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::prelude::*;
-use bevy::{utils::BoxedFuture, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}};
+use bevy::{utils::BoxedFuture, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}, ecs::system::EntityCommands};
 
 #[derive(TypeUuid, Deserialize, Component, Clone)]
 #[uuid = "0789aad4-6f48-4721-a492-704cdf0f303a"]
@@ -23,7 +23,7 @@ pub struct AnimatedSprite {
 }
 
 impl AnimatedSprite {
-    pub fn update(&mut self, time: Time, writeable: &mut Handle<Image>, blank: Handle<Image>) {
+    pub fn update(&mut self, time: Time, writeable: &mut Handle<Image>, blank: Handle<Image>, mut me: EntityCommands) {
         self.current_time += time.delta();
         if !self.stalled {
             let frame = self.current_time.as_millis() as usize / self.delay_between_frames;
@@ -41,6 +41,9 @@ impl AnimatedSprite {
                             self.current_time = Duration::ZERO;
                             self.current_frame = 0;
                             writeable.set(Box::new(self.images[0].clone())).unwrap();
+                        },
+                        EndBehavior::Despawn => {
+                            me.despawn();
                         }
                     }
                 }
@@ -51,8 +54,15 @@ impl AnimatedSprite {
             }
         }
     }
-    pub fn stall(&mut self) {
-        self.stalled = true;
+    pub fn get_frame(&self) -> usize {
+        self.current_frame
+    }
+    pub fn set_frame(&mut self, frame: usize) {
+        self.current_frame = frame;
+        self.current_time = Duration::from_millis((self.delay_between_frames * frame) as u64);
+    }
+    pub fn set(&mut self, to: &Self) {
+        *self = to.clone();
     }
 }
 
@@ -60,7 +70,8 @@ impl AnimatedSprite {
 pub enum EndBehavior {
     Stall,
     Blank,
-    Repeat
+    Repeat,
+    Despawn
 }
 
 pub struct AnimatedSpriteLoader;

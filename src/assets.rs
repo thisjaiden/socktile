@@ -62,10 +62,10 @@ pub struct AnimatorAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct NPCAssets {
-    #[asset(path = "ui/npc_popup_grow/config.ajson")]
+    #[asset(path = "ui/npc_popup/grow.ajson")]
     pub popup_grow: Handle<AnimatedSprite>,
-    #[asset(path = "npc/popup/display.png")]
-    pub popup: Handle<Image>,
+    #[asset(path = "ui/npc_popup/shrink.ajson")]
+    pub popup_shrink: Handle<AnimatedSprite>,
     #[asset(path = "npc/thomas_kontos/idle/0.png")]
     pub not_animated: Handle<Image>,
     #[asset(path = "npc/thomas_kontos/idle/0.png")]

@@ -236,7 +236,7 @@ fn main() {
                 .with_system(resources::Reality::system_action_none)
                 .with_system(resources::Reality::system_action_chop)
                 .with_system(resources::Reality::system_start_npc_popups)
-                .with_system(resources::Reality::system_destroy_npc_popups)
+                .with_system(resources::Reality::system_shrink_npc_popups)
                 .with_system(resources::Animator::system_player_animator)
                 .with_system(resources::Animator::system_player_initiator)
                 .with_system(resources::Chat::system_display_chat)

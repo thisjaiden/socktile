@@ -137,6 +137,7 @@ impl Reality {
         mut commands: Commands,
         selfs: ResMut<Reality>,
         npc_assets: Res<NPCAssets>,
+        animated_server: Res<Assets<AnimatedSprite>>,
         mut all_objects: Query<(&mut Object, &Transform)>
     ) {
         all_objects.for_each_mut(|(mut object, location)| {
@@ -144,15 +145,13 @@ impl Reality {
                 ObjectType::Npc(mut npc) => {
                     if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
                         if !npc.active_popup() {
-                            npc.start_popup(commands.spawn((
+                            let grabbed = animated_server.get(&npc_assets.popup_grow).unwrap();
+                            npc.start_popup(commands.spawn(
                                     SpriteBundle {
-                                        transform: Transform::from_xyz(location.translation.x, location.translation.y + 40.0, UI_IMG),
+                                        transform: Transform::from_xyz(location.translation.x + 6.0, location.translation.y + 50.0, UI_IMG),
                                         ..Default::default()
                                     },
-                                    // TODO: BUG: THIS SHARES THIS ANIMATION FOR ENTIRE RUNTIME WITH ALL INSTANCES
-                                    // MAKE IT NOT A HANDLE AND FIX IT DUMMY
-                                    npc_assets.popup_grow.clone(),
-                                )).id()
+                                ).insert(grabbed.clone()).id()
                             );
                             object.rep = ObjectType::Npc(npc);
                         }
@@ -162,10 +161,12 @@ impl Reality {
             }
         });
     }
-    pub fn system_destroy_npc_popups(
-        mut commands: Commands,
+    pub fn system_shrink_npc_popups(
         selfs: ResMut<Reality>,
-        mut all_objects: Query<(&mut Object, &Transform)>
+        npc_assets: Res<NPCAssets>,
+        animated_server: Res<Assets<AnimatedSprite>>,
+        mut all_objects: Query<(&mut Object, &Transform)>,
+        mut popups: Query<(Entity, &mut AnimatedSprite)>
     ) {
         // TODO: Proper shrinking of popup
         all_objects.for_each_mut(|(mut object, location)| {
@@ -173,7 +174,13 @@ impl Reality {
                 ObjectType::Npc(mut npc) => {
                     if npc.active_popup() {
                         if distance(selfs.player_position, *location) > NPC_INTERACTION_DISTANCE {
-                            commands.entity(npc.popup_e()).despawn();
+                            popups.for_each_mut(|(e, mut sprite)| {
+                                if e == npc.popup_e() {
+                                    let shrink_frame = sprite.get_frame();
+                                    sprite.set(animated_server.get(&npc_assets.popup_shrink).unwrap());
+                                    sprite.set_frame(19 - shrink_frame);
+                                }
+                            });
                             npc.stop_popup();
                             object.rep = ObjectType::Npc(npc);
                         }

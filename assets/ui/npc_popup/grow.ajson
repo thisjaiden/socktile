@@ -22,6 +22,6 @@
         "J.png"
     ],
     "number_of_frames": 20,
-    "delay_between_frames": 50,
+    "delay_between_frames": 15,
     "end_behavior": "Stall"
 }

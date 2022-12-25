@@ -18,11 +18,11 @@ pub const DEV_BUILD: bool = true;
 /// Allow a GGS to be run from this build?
 pub const ALLOW_GGS: bool = true;
 /// Show debug lines over UI hitboxes?
-pub const UI_DEBUG: bool = true;
+pub const UI_DEBUG: bool = false;
 /// Show debug lines over terrain hitboxes?
-pub const TERRAIN_DEBUG: bool = true;
+pub const TERRAIN_DEBUG: bool = false;
 /// Show debug lines over player hitboxes?
-pub const PLAYER_DEBUG: bool = true;
+pub const PLAYER_DEBUG: bool = false;
 /// Should assets be included in the exe?
 #[cfg(not(target_arch = "wasm32"))]
 pub const EMBED_ASSETS: bool = true;
