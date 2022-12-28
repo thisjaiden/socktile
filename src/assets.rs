@@ -77,17 +77,24 @@ pub struct UIAssets {
     #[asset(path = "ui/slot.png")]
     pub slot: Handle<Image>,
     #[asset(path = "ui/selected.png")]
-    pub selected: Handle<Image>
+    pub selected: Handle<Image>,
+    #[asset(path = "ui/blueprint_selector.png")]
+    pub blueprint: Handle<Image>
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct ItemAssets {
     #[asset(path = "nothing.png")]
     pub none: Handle<Image>,
-    #[asset(path = "item/demo_axe.png")]
-    pub demo_axe: Handle<Image>,
+    #[asset(path = "item/makeshift_axe.png")]
+    pub makeshift_axe: Handle<Image>,
+    // axe
+    // reinforced axe
+    // opalescent axe
     #[asset(path = "item/placeholder.png")]
-    pub demo_rod: Handle<Image>,
+    pub makeshift_fishing_rod: Handle<Image>,
+    #[asset(path = "item/placeholder.png")]
+    pub blueprint: Handle<Image>,
     #[asset(path = "item/wood.png")]
     pub wood: Handle<Image>
 }
@@ -98,8 +105,9 @@ impl ItemAssets {
             return self.none.clone();
         }
         match item.unwrap() {
-            Item::DemoAxe => self.demo_axe.clone(),
-            Item::DemoRod => self.demo_rod.clone(),
+            Item::MakeshiftAxe => self.makeshift_axe.clone(),
+            Item::MakeshiftFishingRod => self.makeshift_fishing_rod.clone(),
+            Item::Blueprint => self.blueprint.clone(),
             Item::Wood => self.wood.clone()
         }
     }

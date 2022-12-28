@@ -44,16 +44,18 @@ impl Inventory {
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Item {
-    DemoAxe,
-    DemoRod,
+    MakeshiftAxe,
+    MakeshiftFishingRod,
+    Blueprint,
     Wood
 }
 
 impl Item {
     pub fn from_str(from: &str) -> Item {
         match from {
-            "DemoAxe" => Item::DemoAxe,
-            "DemoRod" => Item::DemoRod,
+            "MakeshiftAxe" => Item::MakeshiftAxe,
+            "MakeshiftFishingRod" => Item::MakeshiftFishingRod,
+            "Blueprint" => Item::Blueprint,
             "Wood" => Item::Wood,
             invalid_name => {
                 error!("No item with name {invalid_name}");
@@ -63,8 +65,9 @@ impl Item {
     }
     pub fn action(&self) -> ItemAction {
         match self {
-            Item::DemoAxe => ItemAction::Chop(1),
-            Item::DemoRod => ItemAction::Fish(1),
+            Item::MakeshiftAxe => ItemAction::Chop(1),
+            Item::MakeshiftFishingRod => ItemAction::Fish(1),
+            Item::Blueprint => ItemAction::Blueprint,
             _ => ItemAction::None
         }
     }
@@ -77,7 +80,13 @@ pub enum ItemAction {
     /// Item chops materials (power multiplier)
     Chop(usize),
     /// Item fishes (power multiplier)
-    Fish(usize)
+    Fish(usize),
+    /// Item digs (power multiplier)
+    Dig(usize),
+    /// Item mines (power multipler)
+    Mine(usize),
+    /// Item modifies terrain
+    Blueprint
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Debug)]

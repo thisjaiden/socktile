@@ -206,6 +206,75 @@ impl Reality {
             }
         }
     }
+    pub fn system_display_blueprint(
+        mut commands: Commands,
+        selfs: Res<Reality>,
+        ui_assets: Res<UIAssets>,
+        mut qs: ParamSet<(
+            Query<&Transform, With<CursorMarker>>,
+            Query<(Entity, &mut Transform), With<BlueprintSelector>>
+        )>
+    ) {
+        let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
+        if qs.p1().is_empty() {
+            if let Some(item) = slotted {
+                if item.action() == ItemAction::Blueprint {
+                    // spawn a blueprint overlay!
+                    let cursor_transform = qs.p0().get_single().unwrap().clone();
+                    let tile_x = ((cursor_transform.translation.x + CURSOR_OFFSET[0] + selfs.player_position.translation.x + 32.0) / 64.0).round();
+                    let tile_y = ((cursor_transform.translation.y + CURSOR_OFFSET[1] + selfs.player_position.translation.y) / 64.0).round();
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: ui_assets.blueprint.clone(),
+                            transform: Transform::from_xyz((tile_x * 64.0) - 32.0, tile_y * 64.0, BACKGROUND + 1.0),
+                            ..default()
+                        },
+                        BlueprintSelector {}
+                    ));
+                }
+            }
+        }
+        else {
+            if let Some(item) = slotted {
+                if item.action() == ItemAction::Blueprint {
+                    // update blueprint overlay
+                    let cursor_transform = qs.p0().get_single().unwrap().clone();
+                    qs.p1().for_each_mut(|(_e, mut t)| {
+                        let tile_x = ((cursor_transform.translation.x + CURSOR_OFFSET[0] + selfs.player_position.translation.x + 32.0) / 64.0).round();
+                        let tile_y = ((cursor_transform.translation.y + CURSOR_OFFSET[1] + selfs.player_position.translation.y) / 64.0).round();
+                        t.translation.x = (tile_x * 64.0) - 32.0;
+                        t.translation.y = tile_y * 64.0;
+                    });
+                }
+                else {
+                    // despawn overlay
+                    qs.p1().for_each_mut(|(e, _t)| {
+                        commands.entity(e).despawn();
+                    });
+                }
+            }
+            else {
+                // despawn overlay
+                qs.p1().for_each_mut(|(e, _t)| {
+                    commands.entity(e).despawn();
+                });
+            }
+        }
+    }
+    pub fn system_action_blueprint(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        mut netty: ResMut<Netty>
+    ) {
+        if selfs.waiting_for_action {
+            let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
+            if let Some(item) = slotted {
+                if item.action() == ItemAction::Blueprint {
+                    // do the thing!
+                }
+            }
+        }
+    }
     pub fn system_action_chop(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,

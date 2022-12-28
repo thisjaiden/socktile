@@ -569,7 +569,7 @@
 						},
 						{
 							"__identifier": "Item",
-							"__grid": [22,10],
+							"__grid": [21,9],
 							"__pivot": [0,0],
 							"__tags": ["OBJECT"],
 							"__tile": { "tilesetUid": 97, "x": 128, "y": 16, "w": 16, "h": 16 },
@@ -578,15 +578,15 @@
 							"width": 64,
 							"height": 64,
 							"defUid": 83,
-							"px": [1408,640],
-							"fieldInstances": [{ "__identifier": "ItemName", "__value": "DemoAxe", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
+							"px": [1344,576],
+							"fieldInstances": [{ "__identifier": "ItemName", "__value": "MakeshiftAxe", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["DemoAxe"]
+								"params": ["MakeshiftAxe"]
 							}] }]
 						},
 						{
 							"__identifier": "Item",
-							"__grid": [22,12],
+							"__grid": [21,11],
 							"__pivot": [0,0],
 							"__tags": ["OBJECT"],
 							"__tile": { "tilesetUid": 97, "x": 128, "y": 16, "w": 16, "h": 16 },
@@ -595,10 +595,10 @@
 							"width": 64,
 							"height": 64,
 							"defUid": 83,
-							"px": [1408,768],
-							"fieldInstances": [{ "__identifier": "ItemName", "__value": "DemoRod", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
+							"px": [1344,704],
+							"fieldInstances": [{ "__identifier": "ItemName", "__value": "MakeshiftFishingRod", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["DemoRod"]
+								"params": ["MakeshiftFishingRod"]
 							}] }]
 						},
 						{
@@ -628,6 +628,40 @@
 							"defUid": 62,
 							"px": [1600,64],
 							"fieldInstances": []
+						},
+						{
+							"__identifier": "Item",
+							"__grid": [23,11],
+							"__pivot": [0,0],
+							"__tags": ["OBJECT"],
+							"__tile": { "tilesetUid": 97, "x": 128, "y": 16, "w": 16, "h": 16 },
+							"__smartColor": "#94D9B3",
+							"iid": "bafeb6f0-7820-11ed-84ca-b9d41d02f6a6",
+							"width": 64,
+							"height": 64,
+							"defUid": 83,
+							"px": [1472,704],
+							"fieldInstances": [{ "__identifier": "ItemName", "__value": "Wood", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
+								"id": "V_String",
+								"params": ["Wood"]
+							}] }]
+						},
+						{
+							"__identifier": "Item",
+							"__grid": [23,9],
+							"__pivot": [0,0],
+							"__tags": ["OBJECT"],
+							"__tile": { "tilesetUid": 97, "x": 128, "y": 16, "w": 16, "h": 16 },
+							"__smartColor": "#94D9B3",
+							"iid": "be1593e0-7820-11ed-84ca-8de6a40ca23d",
+							"width": 64,
+							"height": 64,
+							"defUid": 83,
+							"px": [1472,576],
+							"fieldInstances": [{ "__identifier": "ItemName", "__value": "Blueprint", "__type": "String", "__tile": null, "defUid": 84, "realEditorValues": [{
+								"id": "V_String",
+								"params": ["Blueprint"]
+							}] }]
 						}
 					]
 				},
