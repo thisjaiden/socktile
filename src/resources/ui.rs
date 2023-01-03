@@ -229,7 +229,7 @@ pub fn ui_game(
                 },
                 disk.user().unwrap()
             ));
-            netty.n.send(Packet::JoinWorld(game_id));
+            netty.send(Packet::JoinWorld(game_id));
             man.reset_ui();
         }
     }
@@ -494,7 +494,7 @@ pub fn ui_disconnect_game(
         let samples = audio_serve.get(&core.audio).unwrap();
         audio.play(samples.get("click"));
         man.reset_ui();
-        netty.n.send(Packet::LeaveWorld);
+        netty.send(Packet::LeaveWorld);
         query.for_each_mut(|e| {
             commands.entity(e).despawn();
         });

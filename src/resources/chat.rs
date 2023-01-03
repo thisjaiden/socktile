@@ -65,7 +65,7 @@ impl Chat {
             boxes.for_each_mut(|(mut text, box_)| {
                 if box_.location == 0 {
                     text.sections[0].value = String::new();
-                    netty.n.send(Packet::SendChatMessage(ChatMessage {
+                    netty.send(Packet::SendChatMessage(ChatMessage {
                         text: tb.grab_buffer().trim_end_matches('\n').trim_end_matches('\r').to_string(),
                         color: Color::BLACK,
                         sent_at: std::time::Instant::now()

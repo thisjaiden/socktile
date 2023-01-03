@@ -293,7 +293,7 @@ impl Reality {
                     // mark action for animation
                     animator.mark_action(disk.user().unwrap(), action);
                     // send animation to others
-                    netty.n.send(Packet::ActionAnimation(action));
+                    netty.send(Packet::ActionAnimation(action));
                     // check for tree in range
                     objects.for_each_mut(|(e, mut obj)| {
                         if let ObjectType::Tree(strength) = obj.rep {
@@ -302,12 +302,12 @@ impl Reality {
                                     // damage tree
                                     obj.rep = ObjectType::Tree(strength - power);
                                     // update entity on server
-                                    netty.n.send(Packet::UpdateObject(obj.clone()));
+                                    netty.send(Packet::UpdateObject(obj.clone()));
                                 }
                                 else {
                                     // destroy tree
                                     // remove entity on server
-                                    netty.n.send(Packet::RemoveObject(obj.uuid));
+                                    netty.send(Packet::RemoveObject(obj.uuid));
                                     // despawn entity locally
                                     commands.entity(e).despawn();
                                 }
@@ -347,7 +347,7 @@ impl Reality {
                             stop_rendering: false,
                         }
                     );
-                    netty.n.send(Packet::RequestChunk((chunk_x + x, chunk_y + y)));
+                    netty.send(Packet::RequestChunk((chunk_x + x, chunk_y + y)));
                 }
             });
             let copy_of_chunk_statuses = selfs.chunk_status.clone();
@@ -966,7 +966,7 @@ impl Reality {
             // send to server
             if had_movement {
                 selfs.set_player_position(new_pos);
-                netty.n.send(Packet::RequestMove(selfs.player_position));
+                netty.send(Packet::RequestMove(selfs.player_position));
             }
         }
     }
@@ -1107,7 +1107,7 @@ impl Reality {
             strs = String::from(strs.trim_end_matches('\n'));
             let tag = strs.split('#').nth(1).unwrap().parse::<u16>();
             if let Ok(val) = tag {
-                netty.n.send(Packet::WhitelistUser(User {
+                netty.send(Packet::WhitelistUser(User {
                     username: tb.grab_buffer().split('#').next().unwrap().to_string(),
                     tag: val
                 }));

@@ -94,7 +94,7 @@ pub fn user_creation(
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
-            netty.n.send(Packet::CreateUser(User {
+            netty.send(Packet::CreateUser(User {
                 username: mode.clone(),
                 tag: 0
             }));
@@ -132,7 +132,7 @@ pub fn game_creation(
             let mut mode = tb.grab_buffer();
             mode = String::from(mode.trim_end());
             mode = String::from(mode.trim_end_matches('\n'));
-            netty.n.send(Packet::CreateWorld(mode));
+            netty.send(Packet::CreateWorld(mode));
             tb.clear_buffer();
             state.replace(GameState::Play).unwrap();
             commands.entity(entity).despawn_recursive();

@@ -126,7 +126,7 @@ impl netty::Packet for Packet {
         let maybe_pkt = bincode::deserialize_from(reader);
         match maybe_pkt {
             Ok(pkt) => {
-                //println!("Got a packet {:?}!", pkt);
+                trace!("Got a packet {:?}!", pkt);
                 return pkt;
             }
             Err(e) => {
@@ -144,5 +144,8 @@ impl netty::Packet for Packet {
             warn!("Packet data: {:?}", self);
         }
         writer.flush().expect("Netty unable to flush buffer");
+    }
+    fn to_vec(&self) -> Vec<u8> {
+        bincode::serialize(self).unwrap()
     }
 }

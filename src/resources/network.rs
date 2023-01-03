@@ -5,7 +5,41 @@ use super::{Reality, chat::ChatMessage};
 
 #[derive(Resource)]
 pub struct Netty {
-    pub n: Client<Packet>
+    n: Client<Packet>,
+    #[cfg(target_arch = "wasm32")]
+    buffer: Vec<Packet>
+}
+
+impl Netty {
+    pub fn new(n: Client<Packet>) -> Netty {
+        Netty {
+            n,
+            #[cfg(target_arch = "wasm32")]
+            buffer: vec![]
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    pub fn send(&mut self, p: Packet) {
+        // TODO: this is a particularally wasteful clone. Don't care!
+        let success = self.n.send(p.clone()).is_ok();
+        if !success {
+            self.buffer.push(p);
+        }
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn send(&mut self, p: Packet) {
+        self.n.send(p);
+    }
+    pub fn update(&mut self) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            let cl = self.buffer.clone();
+            self.buffer.clear();
+            for pkt in cl {
+                self.send(pkt);
+            }
+        }
+    }
 }
 
 fn init() -> Option<Netty> {
@@ -18,12 +52,14 @@ fn init() -> Option<Netty> {
         connection_timeout: TIMEOUT_DURATION,
         ..default()
     });
-    if let Some(mut client) = client_attempt {
+    if let Some(client) = client_attempt {
         info!("Good connection to GGS, Netty constructed");
-        client.send(Packet::NettyVersion(String::from(NETTY_VERSION)));
-        Some(Netty { n: client })
+        let mut n = Netty::new(client);
+        n.send(Packet::NettyVersion(String::from(NETTY_VERSION)));
+        Some(n)
     }
     else {
+        warn!("Unable to construct Netty.");
         None
     }
 }
@@ -37,7 +73,7 @@ pub fn system_startup_checks(
     if let Some(mut client) = pot_client {
         if disk.user().is_some() {
             info!("Logging in user");
-            client.n.send(Packet::UserPresence(disk.user().unwrap()));
+            client.send(Packet::UserPresence(disk.user().unwrap()));
             state.overwrite_set(GameState::TitleScreen).unwrap();
         }
         else {
@@ -47,7 +83,7 @@ pub fn system_startup_checks(
         commands.insert_resource(client);
     }
     else {
-        info!("No network connection");
+        warn!("No network connection");
         state.overwrite_set(GameState::OfflineTitle).unwrap();
     }
 }
@@ -58,6 +94,7 @@ pub fn system_step(
     mut disk: ResMut<Disk>,
 ) {
     if let Some(mut netty) = netty {
+        netty.update();
         let pkts = netty.n.get_packets();
         for packet in pkts {
             match packet {
@@ -69,7 +106,7 @@ pub fn system_step(
                     // do nothing
                 }
                 Packet::CreatedWorld(id) => {
-                    netty.n.send(Packet::JoinWorld(id));
+                    netty.send(Packet::JoinWorld(id));
                 }
                 Packet::JoinedGame(mypos, ownership) => {
                     reality.set_player_position(mypos);
@@ -149,5 +186,5 @@ pub fn system_step(
 pub fn system_server_list(
     mut netty: ResMut<Netty>,
 ) {
-    netty.n.send(Packet::AvalableServers)
+    netty.send(Packet::AvalableServers)
 }

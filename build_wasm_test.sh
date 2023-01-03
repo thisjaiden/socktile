@@ -4,7 +4,6 @@ if [ $# -eq 1 ]
     cargo clean
 fi
 cargo build
-trunk build
 echo "[2/3] Copying files..."
 rm -d -r testenv
 mkdir -p testenv/server

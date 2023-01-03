@@ -291,11 +291,11 @@ fn log_setup() {
     }
     #[cfg(target_arch = "wasm32")]
     {
+        console_error_panic_hook::set_once();
         tracing_wasm::set_as_global_default_with_config(
             tracing_wasm::WASMLayerConfigBuilder::new()
                 .set_max_level(tracing::Level::WARN)
                 .build()
         );
-        console_error_panic_hook::set_once();
     }
 }
