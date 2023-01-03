@@ -1,6 +1,6 @@
 Licence
 ===
-All contents of this repository are property of [Jaiden Bernard](https://github.com/thisjaiden) (c) 2022  
+All contents of this repository are property of [Jaiden Bernard](https://github.com/thisjaiden) (c) 2021-2023  
 This licence is subject to change without notice.
 
 Allowances

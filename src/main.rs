@@ -51,7 +51,7 @@ fn main() {
     
     // Warn about distribution of internal builds
     if consts::DEV_BUILD {
-        info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021-2022.");
+        info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021-2023.");
         info!("Do not share this software without permission from the property owners.");
     }
     #[cfg(not(target_arch = "wasm32"))]
