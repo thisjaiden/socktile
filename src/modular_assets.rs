@@ -1,7 +1,14 @@
-use crate::prelude::{*, tiles::{TileTypeConfig, TileTypeConfigLoader, TileTransitionMasterConfig, TileTransitionMasterConfigLoader, TileTransitionConfig, TileTransitionConfigLoader, Variant}, animated_sprite::AnimatedSpriteLoader};
+use crate::prelude::{
+    animated_sprite::AnimatedSpriteLoader,
+    tiles::{
+        TileTransitionConfig, TileTransitionConfigLoader, TileTransitionMasterConfig,
+        TileTransitionMasterConfigLoader, TileTypeConfig, TileTypeConfigLoader, Variant,
+    },
+    *,
+};
 
-use crate::language::LanguageKeysLoader;
 use crate::audio::AudioSamplesLoader;
+use crate::language::LanguageKeysLoader;
 
 #[derive(Default)]
 pub struct ModularAssetsPlugin;
@@ -72,7 +79,7 @@ pub enum TransitionType {
     TopLeftTopRightBottomLeft,
     TopLeftTopRightBottomRight,
     FTopFLeftFBottomFRight,
-    TopLeftTopRightBottomLeftBottomRight
+    TopLeftTopRightBottomLeftBottomRight,
 }
 
 impl TransitionType {
@@ -89,8 +96,8 @@ impl TransitionType {
                     player_location.0 - 32.0,
                     player_location.1 - 28.0,
                     PLAYER_HITBOX.0,
-                    PLAYER_HITBOX.1
-                )
+                    PLAYER_HITBOX.1,
+                ),
             ) {
                 return true;
             }
@@ -102,7 +109,7 @@ impl TransitionType {
             Self::Nothing => &[],
             //Self::FTop => &[(0.0, 47.0, 64.0, 2.0)],
             //Self::FBottom => &[(0.0, 15.0, 64.0, 2.0)],
-            _ => &[] // todo!()
+            _ => &[], // todo!()
         }
     }
     fn cube_colliders(a: (f32, f32, f32, f32), b: (f32, f32, f32, f32)) -> bool {
@@ -312,7 +319,6 @@ impl TransitionType {
         }
         panic!();
     }
-    
 }
 
 // This is gross. There must be a better way to do this (I know there is)

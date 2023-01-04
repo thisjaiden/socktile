@@ -8,5 +8,5 @@ pub struct GameListing {
     pub local: bool,
     pub address: String,
     pub password: bool,
-    pub played: bool
+    pub played: bool,
 }

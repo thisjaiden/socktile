@@ -1,7 +1,12 @@
 use std::time::Duration;
 
 use crate::prelude::*;
-use bevy::{utils::BoxedFuture, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}, ecs::system::EntityCommands};
+use bevy::{
+    asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
+    ecs::system::EntityCommands,
+    reflect::TypeUuid,
+    utils::BoxedFuture,
+};
 
 #[derive(TypeUuid, Deserialize, Component, Clone)]
 #[uuid = "0789aad4-6f48-4721-a492-704cdf0f303a"]
@@ -19,11 +24,17 @@ pub struct AnimatedSprite {
     #[serde(default)]
     current_frame: usize,
     #[serde(default)]
-    stalled: bool
+    stalled: bool,
 }
 
 impl AnimatedSprite {
-    pub fn update(&mut self, time: Time, writeable: &mut Handle<Image>, blank: Handle<Image>, mut me: EntityCommands) {
+    pub fn update(
+        &mut self,
+        time: Time,
+        writeable: &mut Handle<Image>,
+        blank: Handle<Image>,
+        mut me: EntityCommands,
+    ) {
         self.current_time += time.delta();
         if !self.stalled {
             let frame = self.current_time.as_millis() as usize / self.delay_between_frames;
@@ -32,16 +43,16 @@ impl AnimatedSprite {
                     match self.end_behavior {
                         EndBehavior::Stall => {
                             self.stalled = true;
-                        },
+                        }
                         EndBehavior::Blank => {
                             self.stalled = true;
                             writeable.set(Box::new(blank)).unwrap();
-                        },
+                        }
                         EndBehavior::Repeat => {
                             self.current_time = Duration::ZERO;
                             self.current_frame = 0;
                             writeable.set(Box::new(self.images[0].clone())).unwrap();
-                        },
+                        }
                         EndBehavior::Despawn => {
                             me.despawn();
                         }
@@ -71,7 +82,7 @@ pub enum EndBehavior {
     Stall,
     Blank,
     Repeat,
-    Despawn
+    Despawn,
 }
 
 pub struct AnimatedSpriteLoader;
@@ -92,7 +103,9 @@ impl AssetLoader for AnimatedSpriteLoader {
                     .unwrap()
                     .join(format!("{}", sample))
                     .into();
-                partially_propigated.images.push(load_context.get_handle(path.clone()));
+                partially_propigated
+                    .images
+                    .push(load_context.get_handle(path.clone()));
                 dependencies.push(path);
             }
 

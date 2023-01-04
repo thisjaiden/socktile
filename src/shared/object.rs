@@ -5,7 +5,7 @@ use crate::prelude::*;
 pub struct Object {
     pub pos: Transform,
     pub rep: ObjectType,
-    pub uuid: uuid::Uuid
+    pub uuid: uuid::Uuid,
 }
 
 impl Object {
@@ -20,7 +20,7 @@ impl Object {
 pub enum ObjectType {
     Tree(usize),
     GroundItem(Item),
-    Npc(Npc)
+    Npc(Npc),
 }
 
 impl ObjectType {
@@ -28,7 +28,7 @@ impl ObjectType {
         match self {
             Self::Tree(_str) => Some((64.0, 64.0)),
             Self::Npc(_who) => Some((64.0, 64.0)),
-            _ => None
+            _ => None,
         }
     }
 }

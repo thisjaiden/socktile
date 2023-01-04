@@ -7,7 +7,7 @@ pub struct Globals {
     pub user_to_addr: HashMap<User, SocketAddr>,
     pub addr_to_user: HashMap<SocketAddr, User>,
     pub user_to_world: HashMap<User, usize>,
-    pub last_autosave: std::time::Instant
+    pub last_autosave: std::time::Instant,
 }
 
 impl Default for Globals {
@@ -27,7 +27,7 @@ impl Default for Globals {
             user_to_addr: default(),
             addr_to_user: default(),
             user_to_world: default(),
-            last_autosave: std::time::Instant::now()
+            last_autosave: std::time::Instant::now(),
         }
     }
 }

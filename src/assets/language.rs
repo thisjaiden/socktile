@@ -1,11 +1,15 @@
 use crate::prelude::*;
-use bevy::{utils::{HashMap, BoxedFuture}, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset}};
+use bevy::{
+    asset::{AssetLoader, LoadContext, LoadedAsset},
+    reflect::TypeUuid,
+    utils::{BoxedFuture, HashMap},
+};
 use serde_json::Value;
 
 #[derive(TypeUuid)]
 #[uuid = "fbf9ee66-3a2b-433d-9329-fc2681eb3a47"]
 pub struct LanguageKeys {
-    keys: HashMap<String, LanguageValue>
+    keys: HashMap<String, LanguageValue>,
 }
 
 impl LanguageKeys {
@@ -14,7 +18,7 @@ impl LanguageKeys {
         if let Some(value) = potential_value {
             match value {
                 LanguageValue::Value(val) => val.clone(),
-                LanguageValue::RandomValue(vals) => rand_from_array(vals.to_vec())
+                LanguageValue::RandomValue(vals) => rand_from_array(vals.to_vec()),
             }
         }
         else {
@@ -30,7 +34,7 @@ impl LanguageKeys {
         if let Some(value) = potential_value {
             match value {
                 LanguageValue::Value(val) => Some(val.clone()),
-                LanguageValue::RandomValue(vals) => Some(rand_from_array(vals.to_vec()))
+                LanguageValue::RandomValue(vals) => Some(rand_from_array(vals.to_vec())),
             }
         }
         else {
@@ -43,7 +47,7 @@ impl LanguageKeys {
 #[derive(Debug)]
 enum LanguageValue {
     Value(String),
-    RandomValue(Vec<String>)
+    RandomValue(Vec<String>),
 }
 
 pub struct LanguageKeysLoader;
@@ -57,7 +61,10 @@ impl AssetLoader for LanguageKeysLoader {
         Box::pin(async move {
             let mut keys: HashMap<String, LanguageValue> = default();
             let lang_core = serde_json::from_slice(bytes)?;
-            let fresh_keys = grab_keys_recursively(load_context.path().file_stem().unwrap().to_str().unwrap(), lang_core);
+            let fresh_keys = grab_keys_recursively(
+                load_context.path().file_stem().unwrap().to_str().unwrap(),
+                lang_core,
+            );
             for (key, value) in fresh_keys {
                 keys.insert(key, value);
             }
@@ -78,17 +85,26 @@ fn grab_keys_recursively(current_key: &str, current_value: Value) -> Vec<(String
     let mut returnable = vec![];
     for (key, value) in current_value.as_object().unwrap() {
         if value.is_string() {
-            returnable.push((format!("{}.{}", current_key, key), LanguageValue::Value(value.as_str().unwrap().to_string())));
+            returnable.push((
+                format!("{}.{}", current_key, key),
+                LanguageValue::Value(value.as_str().unwrap().to_string()),
+            ));
         }
         if value.is_array() {
             let mut smallarray = vec![];
             for element in value.as_array().unwrap() {
                 smallarray.push(element.as_str().unwrap().to_string());
             }
-            returnable.push((format!("{}.{}", current_key, key), LanguageValue::RandomValue(smallarray)));
+            returnable.push((
+                format!("{}.{}", current_key, key),
+                LanguageValue::RandomValue(smallarray),
+            ));
         }
         if value.is_object() {
-            returnable.append(&mut grab_keys_recursively(&format!("{}.{}", current_key, key), value.clone()));
+            returnable.append(&mut grab_keys_recursively(
+                &format!("{}.{}", current_key, key),
+                value.clone(),
+            ));
         }
     }
     returnable

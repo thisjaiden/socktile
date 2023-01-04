@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 pub fn update_title_screen_user(
     disk: Res<Disk>,
-    mut text: Query<&mut Text, With<TitleScreenUser>>
+    mut text: Query<&mut Text, With<TitleScreenUser>>,
 ) {
     if disk.is_changed() {
         let mut txt = text.single_mut();
@@ -14,9 +14,7 @@ pub fn update_title_screen_user(
     }
 }
 
-pub fn update_title_screen_camera(
-    mut camera: Query<&mut Transform, With<Camera>>
-) {
+pub fn update_title_screen_camera(mut camera: Query<&mut Transform, With<Camera>>) {
     camera.for_each_mut(|mut campos| {
         campos.translation.x = 0.0;
         campos.translation.y = 0.0;

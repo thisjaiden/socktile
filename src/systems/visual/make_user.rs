@@ -1,17 +1,13 @@
 use crate::prelude::*;
 
-pub fn make_user(
-    mut commands: Commands,
-    font_assets: Res<FontAssets>,
-    core: Res<CoreAssets>
-) {
+pub fn make_user(mut commands: Commands, font_assets: Res<FontAssets>, core: Res<CoreAssets>) {
     commands.spawn((
         SpriteBundle {
             texture: core.create_user.clone(),
             transform: Transform::from_xyz(0.0, 0.0, BACKGROUND),
             ..default()
         },
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
 
     commands.spawn((
@@ -30,13 +26,13 @@ pub fn make_user(
                 ],
                 alignment: TextAlignment {
                     vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center
-                }
+                    horizontal: HorizontalAlign::Center,
+                },
             },
             transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()
         },
         TextBox {},
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
 }

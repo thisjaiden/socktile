@@ -1,9 +1,16 @@
-use crate::{prelude::{*, tiles::TileTransitionConfig}, modular_assets::{TransitionType, conjoin_styles}};
-use bevy::{render::camera::Camera, utils::HashMap, input::mouse::{MouseWheel, MouseScrollUnit}};
+use super::{chat::ChatMessage, Animator, Chat};
+use crate::shared::{listing::GameListing, player::Inventory};
+use crate::{
+    modular_assets::{conjoin_styles, TransitionType},
+    prelude::{tiles::TileTransitionConfig, *},
+};
+use bevy::{
+    input::mouse::{MouseScrollUnit, MouseWheel},
+    render::camera::Camera,
+    utils::HashMap,
+};
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
-use crate::shared::{listing::GameListing, player::Inventory};
-use super::{chat::ChatMessage, Chat, Animator};
 
 #[derive(Resource)]
 pub struct Reality {
@@ -39,7 +46,7 @@ pub struct Reality {
     /// Data for all chunks
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
-    blueprint_tile: (isize, isize)
+    blueprint_tile: (isize, isize),
 }
 
 impl Reality {
@@ -62,8 +69,14 @@ impl Reality {
             waiting_for_action: false,
             chunk_data: default(),
             chunk_status: default(),
-            blueprint_tile: (0, 0)
+            blueprint_tile: (0, 0),
         }
+    }
+    pub fn update_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
+        let dta = self.chunk_data.get_mut(&chunk).unwrap();
+        dta[tile.0 + ((CHUNK_HEIGHT - tile.1 - 1) * CHUNK_WIDTH)] = state;
+        let meta_dta = self.chunk_status.get_mut(&chunk).unwrap();
+        meta_dta.stop_rendering = true;
     }
     pub fn reset(&mut self) {
         *self = Reality::init();
@@ -109,7 +122,8 @@ impl Reality {
     }
     /// Add brand new chunk data for a not seen before chunk
     pub fn add_chunk(&mut self, chunk_position: (isize, isize), chunk_data: Vec<usize>) {
-        self.chunk_data.insert((chunk_position.0, chunk_position.1), chunk_data);
+        self.chunk_data
+            .insert((chunk_position.0, chunk_position.1), chunk_data);
         // we should never be sent a chunk we haven't requested and therefore don't have metadata for
         let status = self.chunk_status.get_mut(&chunk_position).unwrap();
         status.downloaded = true;
@@ -140,27 +154,31 @@ impl Reality {
         selfs: ResMut<Reality>,
         npc_assets: Res<NPCAssets>,
         animated_server: Res<Assets<AnimatedSprite>>,
-        mut all_objects: Query<(&mut Object, &Transform)>
+        mut all_objects: Query<(&mut Object, &Transform)>,
     ) {
-        all_objects.for_each_mut(|(mut object, location)| {
-            match object.rep.clone() {
-                ObjectType::Npc(mut npc) => {
-                    if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
-                        if !npc.active_popup() {
-                            let grabbed = animated_server.get(&npc_assets.popup_grow).unwrap();
-                            npc.start_popup(commands.spawn(
-                                    SpriteBundle {
-                                        transform: Transform::from_xyz(location.translation.x + 6.0, location.translation.y + 50.0, UI_IMG),
-                                        ..Default::default()
-                                    },
-                                ).insert(grabbed.clone()).id()
-                            );
-                            object.rep = ObjectType::Npc(npc);
-                        }
+        all_objects.for_each_mut(|(mut object, location)| match object.rep.clone() {
+            ObjectType::Npc(mut npc) => {
+                if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
+                    if !npc.active_popup() {
+                        let grabbed = animated_server.get(&npc_assets.popup_grow).unwrap();
+                        npc.start_popup(
+                            commands
+                                .spawn(SpriteBundle {
+                                    transform: Transform::from_xyz(
+                                        location.translation.x + 6.0,
+                                        location.translation.y + 50.0,
+                                        UI_IMG,
+                                    ),
+                                    ..Default::default()
+                                })
+                                .insert(grabbed.clone())
+                                .id(),
+                        );
+                        object.rep = ObjectType::Npc(npc);
                     }
                 }
-                _ => {}
             }
+            _ => {}
         });
     }
     pub fn system_shrink_npc_popups(
@@ -168,34 +186,30 @@ impl Reality {
         npc_assets: Res<NPCAssets>,
         animated_server: Res<Assets<AnimatedSprite>>,
         mut all_objects: Query<(&mut Object, &Transform)>,
-        mut popups: Query<(Entity, &mut AnimatedSprite)>
+        mut popups: Query<(Entity, &mut AnimatedSprite)>,
     ) {
         // TODO: Proper shrinking of popup
-        all_objects.for_each_mut(|(mut object, location)| {
-            match object.rep.clone() {
-                ObjectType::Npc(mut npc) => {
-                    if npc.active_popup() {
-                        if distance(selfs.player_position, *location) > NPC_INTERACTION_DISTANCE {
-                            popups.for_each_mut(|(e, mut sprite)| {
-                                if e == npc.popup_e() {
-                                    let shrink_frame = sprite.get_frame();
-                                    sprite.set(animated_server.get(&npc_assets.popup_shrink).unwrap());
-                                    sprite.set_frame(19 - shrink_frame);
-                                }
-                            });
-                            npc.stop_popup();
-                            object.rep = ObjectType::Npc(npc);
-                        }
+        all_objects.for_each_mut(|(mut object, location)| match object.rep.clone() {
+            ObjectType::Npc(mut npc) => {
+                if npc.active_popup() {
+                    if distance(selfs.player_position, *location) > NPC_INTERACTION_DISTANCE {
+                        popups.for_each_mut(|(e, mut sprite)| {
+                            if e == npc.popup_e() {
+                                let shrink_frame = sprite.get_frame();
+                                sprite.set(animated_server.get(&npc_assets.popup_shrink).unwrap());
+                                sprite.set_frame(19 - shrink_frame);
+                            }
+                        });
+                        npc.stop_popup();
+                        object.rep = ObjectType::Npc(npc);
                     }
                 }
-                _ => {}
             }
+            _ => {}
         });
     }
     /// Clears pending action if the held item has no action.
-    pub fn system_action_none(
-        mut selfs: ResMut<Reality>
-    ) {
+    pub fn system_action_none(mut selfs: ResMut<Reality>) {
         if selfs.waiting_for_action {
             let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
             if let Some(item) = slotted {
@@ -214,8 +228,8 @@ impl Reality {
         ui_assets: Res<UIAssets>,
         mut qs: ParamSet<(
             Query<&Transform, With<CursorMarker>>,
-            Query<(Entity, &mut Transform), With<BlueprintSelector>>
-        )>
+            Query<(Entity, &mut Transform), With<BlueprintSelector>>,
+        )>,
     ) {
         let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
         if qs.p1().is_empty() {
@@ -228,10 +242,14 @@ impl Reality {
                     commands.spawn((
                         SpriteBundle {
                             texture: ui_assets.blueprint.clone(),
-                            transform: Transform::from_xyz((tile_x * 64.0) - 32.0, tile_y * 64.0, BACKGROUND + 1.0),
+                            transform: Transform::from_xyz(
+                                (tile_x * 64.0) - 32.0,
+                                tile_y * 64.0,
+                                BACKGROUND + 1.0,
+                            ),
                             ..default()
                         },
-                        BlueprintSelector {}
+                        BlueprintSelector {},
                     ));
                 }
             }
@@ -264,11 +282,7 @@ impl Reality {
             }
         }
     }
-    pub fn system_action_blueprint(
-        mut commands: Commands,
-        mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Netty>
-    ) {
+    pub fn system_action_blueprint(mut selfs: ResMut<Reality>, mut netty: ResMut<Netty>) {
         if selfs.waiting_for_action {
             let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
             if let Some(item) = slotted {
@@ -280,15 +294,20 @@ impl Reality {
                     let adj_x = raw_x + (CHUNK_WIDTH / 2) as isize;
                     let adj_y = raw_y + (CHUNK_HEIGHT / 2) as isize;
                     let chunk_x = adj_x / CHUNK_WIDTH as isize;
-                    // TODO: Error on bottom chunk
+                    // TODO: Error on bottom of chunks
                     let chunk_y = adj_y / CHUNK_HEIGHT as isize;
                     let loc_x = adj_x % CHUNK_WIDTH as isize;
                     let loc_y = (CHUNK_HEIGHT as isize - adj_y) % CHUNK_HEIGHT as isize;
                     let dta = selfs.chunk_data.get_mut(&(chunk_x, chunk_y)).unwrap();
-                    dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize] = 3;
+                    dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize] -= 1;
+                    let val = dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize];
                     let meta_dta = selfs.chunk_status.get_mut(&(chunk_x, chunk_y)).unwrap();
                     meta_dta.stop_rendering = true;
-                    //netty.send(Packet::TileUpdate((chunk_x, chunk_y), (loc_x as usize, loc_y as usize), 3));
+                    netty.send(Packet::TileUpdate(
+                        (chunk_x, chunk_y),
+                        (loc_x as usize, (CHUNK_HEIGHT as isize - loc_y) as usize),
+                        val,
+                    ));
                     // cleanup state
                     selfs.waiting_for_action = false;
                 }
@@ -301,7 +320,7 @@ impl Reality {
         mut animator: ResMut<Animator>,
         mut netty: ResMut<Netty>,
         disk: Res<Disk>,
-        mut objects: Query<(Entity, &mut Object)>
+        mut objects: Query<(Entity, &mut Object)>,
     ) {
         if selfs.waiting_for_action {
             let slotted = selfs.player.inventory.hotbar[selfs.player.inventory.selected_slot];
@@ -342,10 +361,7 @@ impl Reality {
     }
     /// Marks chunks to be rendered, downloaded, and unrendered. This system is essential to
     /// the world loading and collision loading
-    pub fn system_mark_chunks(
-        mut selfs: ResMut<Reality>,
-        mut netty: ResMut<Netty>
-    ) {
+    pub fn system_mark_chunks(mut selfs: ResMut<Reality>, mut netty: ResMut<Netty>) {
         if selfs.is_changed() && selfs.in_valid_world {
             // Chunk sizes in coordinate space
             const ENV_WIDTH: f32 = 1920.0;
@@ -365,7 +381,7 @@ impl Reality {
                             downloaded: false,
                             waiting_to_render: false,
                             stop_rendering: false,
-                        }
+                        },
                     );
                     netty.send(Packet::RequestChunk((chunk_x + x, chunk_y + y)));
                 }
@@ -383,7 +399,9 @@ impl Reality {
                     if !status.rendered && status.downloaded {
                         status.waiting_to_render = true;
                         run_matrix_nxn(-1..1, |x, y| {
-                            if let Some(near_chunk_data) = copy_of_chunk_statuses.get(&(chunk.0 + x, chunk.1 + y)) {
+                            if let Some(near_chunk_data) =
+                                copy_of_chunk_statuses.get(&(chunk.0 + x, chunk.1 + y))
+                            {
                                 if !near_chunk_data.downloaded {
                                     status.waiting_to_render = false;
                                 }
@@ -400,7 +418,7 @@ impl Reality {
     pub fn system_chunk_derenderer(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
-        tiles: Query<(Entity, &Tile)>
+        tiles: Query<(Entity, &Tile)>,
     ) {
         for (chunk, status) in selfs.chunk_status.iter_mut() {
             if status.stop_rendering && status.rendered {
@@ -422,10 +440,13 @@ impl Reality {
         types_serve: Res<Assets<TileTypeConfig>>,
         master_transition_serve: Res<Assets<TileTransitionMasterConfig>>,
         transition_serve: Res<Assets<TileTransitionConfig>>,
-        mut atlas_serve: ResMut<Assets<TextureAtlas>>
+        mut atlas_serve: ResMut<Assets<TextureAtlas>>,
     ) {
         let representations = &types_serve.get(&core.tiles).unwrap().states;
-        let handle_transitions = &master_transition_serve.get(&core.transitions).unwrap().transitions;
+        let handle_transitions = &master_transition_serve
+            .get(&core.transitions)
+            .unwrap()
+            .transitions;
         let chunk_data_copy = selfs.chunk_data.clone();
         for (chunk_location, chunk_status) in selfs.chunk_status.iter_mut() {
             if chunk_status.waiting_to_render {
@@ -434,11 +455,7 @@ impl Reality {
                 for i in 0..CHUNK_SIZE {
                     let tile_x = i % CHUNK_WIDTH;
                     let tile_y = i / CHUNK_WIDTH;
-                    let layout = get_9fold_layout(
-                        tile_x, tile_y,
-                        &chunk_data_copy,
-                        chunk_location
-                    );
+                    let layout = get_9fold_layout(tile_x, tile_y, &chunk_data_copy, chunk_location);
                     if layout.is_none() {
                         warn!("Chunks missing!");
                         chunk_status.rendered = false;
@@ -457,7 +474,10 @@ impl Reality {
                     let mut tt;
                     if unique_tiles.len() > 2 {
                         error!("Invalid terrain map! (>2 TPTSF)");
-                        error!("Chunk ({}, {}), Tile ({}, {})", chunk_location.0, chunk_location.1, tile_x, tile_y);
+                        error!(
+                            "Chunk ({}, {}), Tile ({}, {})",
+                            chunk_location.0, chunk_location.1, tile_x, tile_y
+                        );
                         continue;
                         //panic!();
                     }
@@ -482,7 +502,10 @@ impl Reality {
                                 mainarr.push(false);
                             }
                         }
-                        if handle_transitions.get(&[main.clone(), sub.clone()]).is_none() {
+                        if handle_transitions
+                            .get(&[main.clone(), sub.clone()])
+                            .is_none()
+                        {
                             // Flip everything!
                             let mut mainarr2 = vec![];
                             for elem in mainarr {
@@ -500,7 +523,10 @@ impl Reality {
                     }
                     let handle = handle_transitions.get(&[main.clone(), sub.clone()]);
                     if handle.is_none() {
-                        error!("Transition for {}, {} does not exist! (chunk {:?}, tile ({}, {}))", main, sub, chunk_location, tile_x, tile_y);
+                        error!(
+                            "Transition for {}, {} does not exist! (chunk {:?}, tile ({}, {}))",
+                            main, sub, chunk_location, tile_x, tile_y
+                        );
                     }
                     let handle = handle.unwrap();
                     let transition = transition_serve.get(&handle).unwrap();
@@ -514,7 +540,10 @@ impl Reality {
                         }
                     }
                     if appropriate_variants.is_empty() {
-                        warn!("No appropriate variants for {:?}... (tiles {} and {})", tt, main, sub);
+                        warn!(
+                            "No appropriate variants for {:?}... (tiles {} and {})",
+                            tt, main, sub
+                        );
                         tt = TransitionType::Nothing;
                         for variant in &transition.variants {
                             let m_variants = conjoin_styles(variant.clone());
@@ -541,12 +570,13 @@ impl Reality {
                                 Tile {
                                     chunk: *chunk_location,
                                     position: (tile_x, tile_y),
-                                    transition_type: tt
-                                }
+                                    transition_type: tt,
+                                },
                             ));
                         }
                         else if selected_options.len() == 2 {
-                            let (img, width, height) = transition.images[selected_options[0]].force_sprite_sheet();
+                            let (img, width, height) =
+                                transition.images[selected_options[0]].force_sprite_sheet();
                             let sprite = TextureAtlasSprite {
                                 index: selected_options[1],
                                 ..default()
@@ -554,8 +584,10 @@ impl Reality {
                             let new_atlas = TextureAtlas::from_grid(
                                 img,
                                 Vec2::new(64.0, 64.0),
-                                width, height,
-                                None, None
+                                width,
+                                height,
+                                None,
+                                None,
                             );
                             let atlas_handle = atlas_serve.add(new_atlas);
                             commands.spawn((
@@ -572,8 +604,8 @@ impl Reality {
                                 Tile {
                                     chunk: *chunk_location,
                                     position: (tile_x, tile_y),
-                                    transition_type: tt
-                                }
+                                    transition_type: tt,
+                                },
                             ));
                         }
                         else {
@@ -590,7 +622,7 @@ impl Reality {
     pub fn system_remove_objects(
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
-        mut objects: Query<(Entity, &Object)>
+        mut objects: Query<(Entity, &Object)>,
     ) {
         for removable in &selfs.objects_to_remove {
             objects.for_each_mut(|(entity, object)| {
@@ -603,7 +635,7 @@ impl Reality {
     }
     pub fn system_update_objects(
         mut selfs: ResMut<Reality>,
-        mut objects: Query<(&mut Transform, &mut Object)>
+        mut objects: Query<(&mut Transform, &mut Object)>,
     ) {
         for updateable in &selfs.objects_to_update {
             objects.for_each_mut(|(mut transform, mut object)| {
@@ -621,7 +653,7 @@ impl Reality {
         obj_assets: Res<ObjectAssets>,
         item_assets: Res<ItemAssets>,
         npc_assets: Res<NPCAssets>,
-        mut commands: Commands
+        mut commands: Commands,
     ) {
         for object in &selfs.queued_objects {
             match &object.rep {
@@ -633,34 +665,42 @@ impl Reality {
                                 translation: Vec3::new(
                                     object.pos.translation.x,
                                     object.pos.translation.y,
-                                    FRONT_OBJECTS
+                                    FRONT_OBJECTS,
                                 ),
                                 rotation: Quat::default(),
-                                scale: Vec3::new(0.1, 0.1, 1.0)
+                                scale: Vec3::new(0.1, 0.1, 1.0),
                             },
                             ..default()
                         },
-                        object.clone()
+                        object.clone(),
                     ));
                 }
                 ObjectType::GroundItem(item) => {
                     commands.spawn((
                         SpriteBundle {
                             texture: item_assets.pick_from_item(Some(*item)),
-                            transform: Transform::from_xyz(object.pos.translation.x, object.pos.translation.y, FRONT_OBJECTS),
+                            transform: Transform::from_xyz(
+                                object.pos.translation.x,
+                                object.pos.translation.y,
+                                FRONT_OBJECTS,
+                            ),
                             ..default()
                         },
-                        object.clone()
+                        object.clone(),
                     ));
                 }
                 ObjectType::Npc(_who) => {
                     commands.spawn((
                         SpriteBundle {
                             texture: npc_assets.not_animated.clone(),
-                            transform: Transform::from_xyz(object.pos.translation.x, object.pos.translation.y, PLAYER_CHARACTERS),
+                            transform: Transform::from_xyz(
+                                object.pos.translation.x,
+                                object.pos.translation.y,
+                                PLAYER_CHARACTERS,
+                            ),
                             ..default()
                         },
-                        object.clone()
+                        object.clone(),
                     ));
                 }
             }
@@ -671,56 +711,75 @@ impl Reality {
         mut commands: Commands,
         textures: Res<UIAssets>,
         items: Res<ItemAssets>,
-        selfs: Res<Reality>
+        selfs: Res<Reality>,
     ) {
         for i in 0..10 {
             commands.spawn((
                 SpriteBundle {
                     texture: textures.slot.clone(),
-                    transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG),
+                    transform: Transform::from_xyz(
+                        i as f32 * 64.0 - (64.0 * 5.0),
+                        -(1080.0 / 2.0) + 32.0,
+                        UI_IMG,
+                    ),
                     ..Default::default()
                 },
-                HotbarMarker { location: i, type_: 1 },
-                UILocked {}
+                HotbarMarker {
+                    location: i,
+                    type_: 1,
+                },
+                UILocked {},
             ));
             commands.spawn((
                 SpriteBundle {
                     texture: items.none.clone(),
-                    transform: Transform::from_xyz(i as f32 * 64.0 - (64.0 * 5.0), -(1080.0 / 2.0) + 32.0, UI_IMG + 0.01),
+                    transform: Transform::from_xyz(
+                        i as f32 * 64.0 - (64.0 * 5.0),
+                        -(1080.0 / 2.0) + 32.0,
+                        UI_IMG + 0.01,
+                    ),
                     ..Default::default()
                 },
-                HotbarMarker { location: i, type_: 3 },
-                UILocked {}
+                HotbarMarker {
+                    location: i,
+                    type_: 3,
+                },
+                UILocked {},
             ));
         }
         commands.spawn((
             SpriteBundle {
                 texture: textures.selected.clone(),
                 transform: Transform::from_xyz(
-                        selfs.player.inventory.selected_slot as f32 * 64.0 - (64.0 * 5.0),
-                        -(1080.0 / 2.0) + 32.0,
-                        UI_IMG + 0.02
-                    ),
-                    ..Default::default()
+                    selfs.player.inventory.selected_slot as f32 * 64.0 - (64.0 * 5.0),
+                    -(1080.0 / 2.0) + 32.0,
+                    UI_IMG + 0.02,
+                ),
+                ..Default::default()
             },
-            HotbarMarker { location: selfs.player.inventory.selected_slot, type_: 2 },
-            UILocked {}
+            HotbarMarker {
+                location: selfs.player.inventory.selected_slot,
+                type_: 2,
+            },
+            UILocked {},
         ));
     }
     pub fn system_update_hotbar(
         selfs: Res<Reality>,
         textures: Res<ItemAssets>,
-        mut query: Query<(&HotbarMarker, &mut Handle<Image>)>
+        mut query: Query<(&HotbarMarker, &mut Handle<Image>)>,
     ) {
         query.for_each_mut(|(marker, mut texture)| {
             if marker.type_ == 3 {
-                texture.set(Box::new(textures.pick_from_item(selfs.player.inventory.hotbar[marker.location]))).unwrap();
+                texture
+                    .set(Box::new(textures.pick_from_item(
+                        selfs.player.inventory.hotbar[marker.location],
+                    )))
+                    .unwrap();
             }
         });
     }
-    pub fn system_position_hotbar(
-        mut query: Query<(&mut Transform, &HotbarMarker)>
-    ) {
+    pub fn system_position_hotbar(mut query: Query<(&mut Transform, &HotbarMarker)>) {
         query.for_each_mut(|(mut location, spot)| {
             location.translation.x = spot.location as f32 * 64.0 - (64.0 * 5.0);
             location.translation.y = -(1080.0 / 2.0) + 32.0;
@@ -729,7 +788,7 @@ impl Reality {
     pub fn system_scroll_hotbar(
         mut query: Query<&mut HotbarMarker>,
         mut scroll: EventReader<MouseWheel>,
-        mut selfs: ResMut<Reality>
+        mut selfs: ResMut<Reality>,
     ) {
         for event in scroll.iter() {
             match event.unit {
@@ -771,17 +830,21 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         assets: Res<AnimatorAssets>,
         disk: Res<Disk>,
-        mut commands: Commands
+        mut commands: Commands,
     ) {
         for (user, location) in selfs.players_to_spawn.clone() {
             if user != disk.user().unwrap() {
                 commands.spawn((
                     SpriteBundle {
-                        transform: Transform::from_xyz(location.translation.x, location.translation.y, PLAYER_CHARACTERS),
+                        transform: Transform::from_xyz(
+                            location.translation.x,
+                            location.translation.y,
+                            PLAYER_CHARACTERS,
+                        ),
                         texture: assets.not_animated.clone(),
                         ..Default::default()
                     },
-                    user
+                    user,
                 ));
             }
         }
@@ -790,7 +853,7 @@ impl Reality {
     pub fn system_player_unloader(
         mut selfs: ResMut<Reality>,
         mut unloads: Query<(Entity, &mut User)>,
-        mut commands: Commands
+        mut commands: Commands,
     ) {
         unloads.for_each_mut(|(e, m)| {
             if selfs.players_to_despawn.contains(&m) {
@@ -803,7 +866,7 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         mut uiman: ResMut<UIManager>,
         disk: Res<Disk>,
-        keyboard: Res<Input<KeyCode>>
+        keyboard: Res<Input<KeyCode>>,
     ) {
         if keyboard.just_pressed(disk.control_config().close_menu) {
             if selfs.pause_menu == MenuState::Closed {
@@ -821,13 +884,13 @@ impl Reality {
         keyboard: Res<Input<KeyCode>>,
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
-        mut queries: ParamSet<(
-            Query<&Tile>,
-            Query<&Object>,
-        )>
+        mut queries: ParamSet<(Query<&Tile>, Query<&Object>)>,
     ) {
         let ctrls = disk.control_config();
-        if !chat.is_open() && selfs.pause_menu == MenuState::Closed && keyboard.just_pressed(ctrls.open_chat) {
+        if !chat.is_open()
+            && selfs.pause_menu == MenuState::Closed
+            && keyboard.just_pressed(ctrls.open_chat)
+        {
             chat.queue_open();
             return;
         }
@@ -838,7 +901,7 @@ impl Reality {
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
             let centered_chunk = (
                 ((selfs.player_position.translation.x + (1920.0 / 2.0)) / 1920.0).floor() as isize,
-                ((selfs.player_position.translation.y + (1088.0 / 2.0)) / 1088.0).floor() as isize
+                ((selfs.player_position.translation.y + (1088.0 / 2.0)) / 1088.0).floor() as isize,
             );
             let centered_tile = (
                 ((selfs.player_position.translation.x - (1920 * centered_chunk.0) as f32 + (1920.0 / 2.0)) / 64.0) as isize,
@@ -874,7 +937,10 @@ impl Reality {
                     }
                     else {
                         // location is right and down one chunk
-                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1 - 1), (0, l_height - 1)));
+                        needed_pairs.push((
+                            (centered_chunk.0 + 1, centered_chunk.1 - 1),
+                            (0, l_height - 1),
+                        ));
                         if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1 - 1)) {
                             needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1 - 1));
                         }
@@ -883,21 +949,30 @@ impl Reality {
                 else if tile.0 < 0 {
                     if tile.1 < l_height && tile.1 >= 0 {
                         // location is left one chunk
-                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1), (l_width - 1, tile.1)));
+                        needed_pairs.push((
+                            (centered_chunk.0 - 1, centered_chunk.1),
+                            (l_width - 1, tile.1),
+                        ));
                         if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1)) {
                             needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1));
                         }
                     }
                     else if tile.1 >= l_height {
                         // location is left and up one chunk
-                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 + 1), (l_width - 1, 0)));
+                        needed_pairs.push((
+                            (centered_chunk.0 - 1, centered_chunk.1 + 1),
+                            (l_width - 1, 0),
+                        ));
                         if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 + 1)) {
                             needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 + 1));
                         }
                     }
                     else {
                         // location is left and down one chunk
-                        needed_pairs.push(((centered_chunk.0 - 1, centered_chunk.1 - 1), (l_width - 1, l_height - 1)));
+                        needed_pairs.push((
+                            (centered_chunk.0 - 1, centered_chunk.1 - 1),
+                            (l_width - 1, l_height - 1),
+                        ));
                         if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 - 1)) {
                             needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 - 1));
                         }
@@ -919,7 +994,10 @@ impl Reality {
                 }
                 else {
                     // location is down one chunk
-                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 - 1), (tile.0, l_height - 1)));
+                    needed_pairs.push((
+                        (centered_chunk.0, centered_chunk.1 - 1),
+                        (tile.0, l_height - 1),
+                    ));
                     if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 - 1)) {
                         needed_chunks.push((centered_chunk.0, centered_chunk.1 - 1));
                     }
@@ -929,7 +1007,9 @@ impl Reality {
             queries.p0().for_each(|tile| {
                 if needed_chunks.contains(&tile.chunk) {
                     for (chunk, n_tile) in &needed_pairs {
-                        if tile.chunk == *chunk && tile.position == (n_tile.0 as usize, n_tile.1 as usize) {
+                        if tile.chunk == *chunk
+                            && tile.position == (n_tile.0 as usize, n_tile.1 as usize)
+                        {
                             pulled_tiles.push(*tile);
                         }
                     }
@@ -982,7 +1062,7 @@ impl Reality {
                     new_pos.translation.x -= 4.0;
                 }
             }
-            
+
             // send to server
             if had_movement {
                 selfs.set_player_position(new_pos);
@@ -995,7 +1075,7 @@ impl Reality {
         mut selfs: ResMut<Reality>,
         mut uiman: ResMut<UIManager>,
         fonts: Res<FontAssets>,
-        mut desps: Query<(Entity, &mut Transform, &PauseMenuMarker)>
+        mut desps: Query<(Entity, &mut Transform, &PauseMenuMarker)>,
     ) {
         match selfs.pause_menu {
             MenuState::Closed => {
@@ -1021,82 +1101,80 @@ impl Reality {
                                     style: TextStyle {
                                         font: fonts.simvoni.clone(),
                                         font_size: 55.0,
-                                        color: Color::BLACK
-                                    }
+                                        color: Color::BLACK,
+                                    },
                                 },
                                 TextSection {
                                     value: String::from("Invite\n"),
                                     style: TextStyle {
                                         font: fonts.simvoni.clone(),
                                         font_size: 55.0,
-                                        color: m_color
-                                    }
+                                        color: m_color,
+                                    },
                                 },
                                 TextSection {
                                     value: String::from("Settings\nExit"),
                                     style: TextStyle {
                                         font: fonts.simvoni.clone(),
                                         font_size: 55.0,
-                                        color: Color::BLACK
-                                    }
-                                }
+                                        color: Color::BLACK,
+                                    },
+                                },
                             ],
                             alignment: TextAlignment {
                                 vertical: VerticalAlign::Center,
-                                horizontal: HorizontalAlign::Center
-                            }
+                                horizontal: HorizontalAlign::Center,
+                            },
                         },
                         transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                         ..Default::default()
                     },
                     PauseMenuMarker { type_: 1 },
-                    UILocked {}
+                    UILocked {},
                 ));
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::ClosePauseMenu,
                     location: (-150.0, 110.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
-                    tag: None
+                    tag: None,
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::InvitePlayer,
                     location: (-150.0, 55.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
-                    tag: None
+                    tag: None,
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::OpenSettings,
                     location: (-150.0, 0.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
-                    tag: None
+                    tag: None,
                 });
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::DisconnectFromWorld,
                     location: (-150.0, -55.0),
                     size: (300.0, 55.0),
                     removed_on_use: false,
-                    tag: None
+                    tag: None,
                 });
                 selfs.pause_menu = MenuState::Open;
             }
             MenuState::Open => {
                 // Update menu (if applicable)
-                desps.for_each_mut(|(_, mut loc, type_)| {
-                    match type_.type_ {
-                        1 => {
-                            loc.translation.x = 0.0;
-                            loc.translation.y = 0.0;
-                        }
-                        2 => {
-                            loc.translation.x = 0.0;
-                            loc.translation.y = 100.0;
-                        }
-                        component_id => {
-                            warn!("Pause menu component has unkown type id {component_id}");
-                        }
+                desps.for_each_mut(|(_, mut loc, type_)| match type_.type_ {
+                    1 => {
+                        loc.translation.x = 0.0;
+                        loc.translation.y = 0.0;
+                    }
+                    2 => {
+                        loc.translation.x = 0.0;
+                        loc.translation.y = 100.0;
+                    }
+                    component_id => {
+                        warn!("Pause menu component has unkown type id {component_id}");
                     }
                 });
             }
@@ -1106,7 +1184,7 @@ impl Reality {
         mut tb: ResMut<crate::resources::TextBox>,
         mut netty: ResMut<Netty>,
         mut selfs: ResMut<Reality>,
-        mut tbe: Query<&mut Text, With<crate::components::TextBox>>
+        mut tbe: Query<&mut Text, With<crate::components::TextBox>>,
     ) {
         tbe.for_each_mut(|mut textable| {
             textable.sections[0].value = tb.grab_buffer();
@@ -1121,7 +1199,7 @@ impl Reality {
             if !tb.grab_buffer().contains('#') {
                 // do nothing, invalid without a tag
                 tb.eat_buffer();
-                return
+                return;
             }
             let mut strs = tb.grab_buffer();
             strs = String::from(strs.trim_end_matches('\n'));
@@ -1129,11 +1207,15 @@ impl Reality {
             if let Ok(val) = tag {
                 netty.send(Packet::WhitelistUser(User {
                     username: tb.grab_buffer().split('#').next().unwrap().to_string(),
-                    tag: val
+                    tag: val,
                 }));
             }
             else {
-                selfs.queue_chat(ChatMessage { text: String::from("Invalid user tag."), color: Color::RED, sent_at: std::time::Instant::now() });
+                selfs.queue_chat(ChatMessage {
+                    text: String::from("Invalid user tag."),
+                    color: Color::RED,
+                    sent_at: std::time::Instant::now(),
+                });
             }
             tb.clear_buffer();
             selfs.pause_closed();
@@ -1143,8 +1225,8 @@ impl Reality {
         selfs: Res<Reality>,
         mut queries: ParamSet<(
             Query<&mut Transform, With<Camera>>,
-            Query<&mut Transform, With<UILocked>>
-        )>
+            Query<&mut Transform, With<UILocked>>,
+        )>,
     ) {
         queries.p0().for_each_mut(|mut campos| {
             campos.translation.x = selfs.player_position.translation.x as f32;
@@ -1159,31 +1241,25 @@ impl Reality {
             transform.translation.y += selfs.player_position.translation.y as f32;
         });
     }
-    pub fn system_player_debug_lines(
-        selfs: Res<Reality>,
-        mut lines: ResMut<DebugLines>
-    ) {
+    pub fn system_player_debug_lines(selfs: Res<Reality>, mut lines: ResMut<DebugLines>) {
         if PLAYER_DEBUG {
             lines.line_colored(
                 Vec3::new(
                     (selfs.player_position.translation.x - (PLAYER_HITBOX.0 / 2.0)) as f32,
                     (selfs.player_position.translation.y - (PLAYER_HITBOX.1 / 2.0)) as f32,
-                    DEBUG
+                    DEBUG,
                 ),
                 Vec3::new(
                     (selfs.player_position.translation.x + (PLAYER_HITBOX.0 / 2.0)) as f32,
                     (selfs.player_position.translation.y + (PLAYER_HITBOX.1 / 2.0)) as f32,
-                    DEBUG
+                    DEBUG,
                 ),
                 0.0,
-                Color::ORANGE
+                Color::ORANGE,
             );
         }
     }
-    pub fn system_hitbox_debug_lines(
-        mut lines: ResMut<DebugLines>,
-        tiles: Query<&Tile>
-    ) {
+    pub fn system_hitbox_debug_lines(mut lines: ResMut<DebugLines>, tiles: Query<&Tile>) {
         if TERRAIN_DEBUG {
             tiles.for_each(|tile| {
                 let dta = tile.transition_type.collider_dimensions();
@@ -1194,25 +1270,33 @@ impl Reality {
                         Vec3::new(true_x as f32, true_y as f32, DEBUG),
                         Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
                         0.0,
-                        Color::RED
+                        Color::RED,
                     );
                     lines.line_colored(
                         Vec3::new(true_x as f32, true_y as f32, DEBUG),
                         Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
                         0.0,
-                        Color::RED
+                        Color::RED,
                     );
                     lines.line_colored(
                         Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                        Vec3::new(
+                            (true_x + collider.2) as f32,
+                            (true_y + collider.3) as f32,
+                            DEBUG,
+                        ),
                         0.0,
-                        Color::RED
+                        Color::RED,
                     );
                     lines.line_colored(
                         Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, (true_y + collider.3) as f32, DEBUG),
+                        Vec3::new(
+                            (true_x + collider.2) as f32,
+                            (true_y + collider.3) as f32,
+                            DEBUG,
+                        ),
                         0.0,
-                        Color::RED
+                        Color::RED,
                     );
                 }
             });
@@ -1221,7 +1305,7 @@ impl Reality {
     pub fn system_player_locator(
         mut selfs: ResMut<Reality>,
         disk: Res<Disk>,
-        mut player: Query<(&mut Transform, &User)>
+        mut player: Query<(&mut Transform, &User)>,
     ) {
         player.for_each_mut(|(mut l, m)| {
             if m == &disk.user().unwrap() {
@@ -1240,39 +1324,44 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         mut uiman: ResMut<UIManager>,
-        font_handles: Res<FontAssets>
+        font_handles: Res<FontAssets>,
     ) {
         if let Some(servers) = selfs.display_servers() {
             for (index, server) in servers.iter().enumerate() {
                 commands.spawn((
                     Text2dBundle {
                         text: Text {
-                            sections: vec![
-                                TextSection {
-                                    value: server.public_name.clone(),
-                                    style: TextStyle {
-                                        font: font_handles.simvoni.clone(),
-                                        font_size: 35.0,
-                                        color: Color::BLACK
-                                    }
-                                }
-                            ],
+                            sections: vec![TextSection {
+                                value: server.public_name.clone(),
+                                style: TextStyle {
+                                    font: font_handles.simvoni.clone(),
+                                    font_size: 35.0,
+                                    color: Color::BLACK,
+                                },
+                            }],
                             alignment: TextAlignment {
                                 vertical: VerticalAlign::Center,
-                                horizontal: HorizontalAlign::Left
-                            }
+                                horizontal: HorizontalAlign::Left,
+                            },
                         },
-                        transform: Transform::from_xyz(0.0, (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0), UI_TEXT),
+                        transform: Transform::from_xyz(
+                            0.0,
+                            (1080.0 / 2.0) - 200.0 - (index as f32 * 128.0),
+                            UI_TEXT,
+                        ),
                         ..Default::default()
                     },
-                    RemoveOnStateChange {}
+                    RemoveOnStateChange {},
                 ));
                 uiman.add_ui(UIClickable {
                     action: UIClickAction::JoinWorld(server.internal_id),
-                    location: (-200.0, ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0),
+                    location: (
+                        -200.0,
+                        ((1080.0 / 2.0) - 200.0 - (index as f32 * 128.0)) + 64.0,
+                    ),
                     size: (400.0, 128.0),
                     removed_on_use: false,
-                    tag: None
+                    tag: None,
                 })
             }
         }
@@ -1283,7 +1372,7 @@ impl Reality {
 pub enum MenuState {
     Closed,
     Queued,
-    Open
+    Open,
 }
 
 /// true if collided, false otherwise
@@ -1354,14 +1443,12 @@ fn get_9fold_layout(
                         this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                         this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                         this_chunk[find_chunk_index(tile_x, tile_y)],
                         this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
                     ]);
                 }
                 else {
@@ -1370,14 +1457,12 @@ fn get_9fold_layout(
                         chunk_up[find_chunk_index(tile_x - 1, 0)],
                         chunk_up[find_chunk_index(tile_x, 0)],
                         chunk_up[find_chunk_index(tile_x + 1, 0)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                         this_chunk[find_chunk_index(tile_x, tile_y)],
                         this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
                     ]);
                 }
             }
@@ -1387,14 +1472,12 @@ fn get_9fold_layout(
                     this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
                     this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                     this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-
                     this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                     this_chunk[find_chunk_index(tile_x, tile_y)],
                     this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                     chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
                     chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)]
+                    chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)],
                 ]);
             }
         }
@@ -1406,14 +1489,12 @@ fn get_9fold_layout(
                         this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                         chunk_right[find_chunk_index(0, tile_y + 1)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                         this_chunk[find_chunk_index(tile_x, tile_y)],
                         chunk_right[find_chunk_index(0, tile_y)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        chunk_right[find_chunk_index(0, tile_y - 1)]
+                        chunk_right[find_chunk_index(0, tile_y - 1)],
                     ]);
                 }
                 else {
@@ -1422,14 +1503,12 @@ fn get_9fold_layout(
                         chunk_up[find_chunk_index(tile_x - 1, 0)],
                         chunk_up[find_chunk_index(tile_x, 0)],
                         chunk_up_right[find_chunk_index(0, 0)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                         this_chunk[find_chunk_index(tile_x, tile_y)],
                         chunk_right[find_chunk_index(0, tile_y)],
-
                         this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
                         this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        chunk_right[find_chunk_index(0, tile_y - 1)]
+                        chunk_right[find_chunk_index(0, tile_y - 1)],
                     ]);
                 }
             }
@@ -1439,14 +1518,12 @@ fn get_9fold_layout(
                     this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
                     this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                     chunk_right[find_chunk_index(0, tile_y + 1)],
-
                     this_chunk[find_chunk_index(tile_x - 1, tile_y)],
                     this_chunk[find_chunk_index(tile_x, tile_y)],
                     chunk_right[find_chunk_index(0, tile_y)],
-
                     chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
                     chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down_right[find_chunk_index(0, CHUNK_HEIGHT - 1)]
+                    chunk_down_right[find_chunk_index(0, CHUNK_HEIGHT - 1)],
                 ]);
             }
         }
@@ -1459,14 +1536,12 @@ fn get_9fold_layout(
                     chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
                     this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                     this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-
                     chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
                     this_chunk[find_chunk_index(tile_x, tile_y)],
                     this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                     chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
                     this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
                 ]);
             }
             else {
@@ -1475,14 +1550,12 @@ fn get_9fold_layout(
                     chunk_up_left[find_chunk_index(CHUNK_WIDTH - 1, 0)],
                     chunk_up[find_chunk_index(tile_x, 0)],
                     chunk_up[find_chunk_index(tile_x + 1, 0)],
-
                     chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
                     this_chunk[find_chunk_index(tile_x, tile_y)],
                     this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                     chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
                     this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
                 ]);
             }
         }
@@ -1492,14 +1565,12 @@ fn get_9fold_layout(
                 chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
                 this_chunk[find_chunk_index(tile_x, tile_y + 1)],
                 this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-
                 chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
                 this_chunk[find_chunk_index(tile_x, tile_y)],
                 this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-
                 chunk_down_left[find_chunk_index(CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1)],
                 chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)]
+                chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)],
             ]);
         }
     }

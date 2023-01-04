@@ -1,6 +1,6 @@
+use super::{Profile, SaveGame};
 use crate::prelude::*;
 use std::net::SocketAddr;
-use super::{SaveGame, Profile};
 
 use std::sync::{Arc, Mutex};
 
@@ -37,12 +37,22 @@ pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
                         if let Some(slot) = data.inventory.hotbar_empty_space() {
                             // Remove entity from every player
                             for player in server_players {
-                                outgoing.push((Packet::RemoveObject(object.uuid), *ips.get(&player.0).expect("No IP found for a user connected to a server")));
+                                outgoing.push((
+                                    Packet::RemoveObject(object.uuid),
+                                    *ips.get(&player.0)
+                                        .expect("No IP found for a user connected to a server"),
+                                ));
                             }
                             // Add item to hotbar
                             server.data.players[index].2.inventory.hotbar[slot] = Some(item);
                             // Tell user they have a new item
-                            outgoing.push((Packet::InventoryState(server.data.players[index].2.inventory.clone()), *ips.get(&server.data.players[index].0).expect("No IP found for a user connected to a server")));
+                            outgoing.push((
+                                Packet::InventoryState(
+                                    server.data.players[index].2.inventory.clone(),
+                                ),
+                                *ips.get(&server.data.players[index].0)
+                                    .expect("No IP found for a user connected to a server"),
+                            ));
                             // Remove entity from server data
                             server.data.objects.remove(object_index - removed);
                             removed += 1;
@@ -62,16 +72,24 @@ pub fn tick(globals: Arc<Mutex<Globals>>) -> Vec<(Packet, SocketAddr)> {
                             // dtotal=√((x_2-x_1)²+(y_2-y_1)²)
                             let dx = pos.translation.x - object.pos.translation.x;
                             let dy = pos.translation.y - object.pos.translation.y;
-                            let dtotal = ((dx.powi(2))+(dy.powi(2))).sqrt();
+                            let dtotal = ((dx.powi(2)) + (dy.powi(2))).sqrt();
                             let Δ = 64.0 / (((dtotal.powi(2)) + 100.0).sqrt());
-                            let Δx = Δ*(dx/dtotal);
-                            let Δy = Δ*(dy/dtotal);
-                            let new_pos = Transform::from_xyz(object.pos.translation.x + Δx, object.pos.translation.y + Δy, 0.0);
+                            let Δx = Δ * (dx / dtotal);
+                            let Δy = Δ * (dy / dtotal);
+                            let new_pos = Transform::from_xyz(
+                                object.pos.translation.x + Δx,
+                                object.pos.translation.y + Δy,
+                                0.0,
+                            );
                             let mut new_object = object.clone();
                             new_object.pos = new_pos;
                             // Update entity for every player
                             for player in server_players {
-                                outgoing.push((Packet::UpdateObject(new_object.clone()), *ips.get(&player.0).expect("No IP found for a user connected to a server")));
+                                outgoing.push((
+                                    Packet::UpdateObject(new_object.clone()),
+                                    *ips.get(&player.0)
+                                        .expect("No IP found for a user connected to a server"),
+                                ));
                             }
                             // Update entity on the server side
                             server.data.objects[object_index - removed].pos = new_pos;

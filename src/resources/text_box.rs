@@ -2,13 +2,13 @@ use crate::prelude::*;
 
 #[derive(Clone, Debug, Eq, PartialEq, Resource)]
 pub struct TextBox {
-    buffer: String
+    buffer: String,
 }
 
 impl TextBox {
     pub fn init() -> TextBox {
         TextBox {
-            buffer: String::new()
+            buffer: String::new(),
         }
     }
     pub fn clear_buffer(&mut self) {

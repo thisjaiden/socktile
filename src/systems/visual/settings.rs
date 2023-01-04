@@ -4,7 +4,7 @@ use crate::resources::ui::SettingsPage;
 pub fn clear_settings(
     mut commands: Commands,
     mut ui: ResMut<UIManager>,
-    query: Query<Entity, With<SettingsPageComp>>
+    query: Query<Entity, With<SettingsPageComp>>,
 ) {
     // Despawn entities tagged with `SettingsPageComp`
     query.for_each(|e| {
@@ -35,7 +35,7 @@ pub fn settings_video(
                 transform: Transform::from_xyz(0.0, 0.0, 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 0 }
+            SettingsPageComp { type_: 0 },
         ));
         // Decrease scaling button/text
         man.add_ui(UIClickable {
@@ -43,7 +43,7 @@ pub fn settings_video(
             location: (-45.0, -38.0),
             size: (20.0, 36.0),
             removed_on_use: false,
-            tag: Some(String::from("Settings"))
+            tag: Some(String::from("Settings")),
         });
         commands.spawn((
             Text2dBundle {
@@ -53,18 +53,18 @@ pub fn settings_video(
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     }],
                     alignment: TextAlignment {
                         vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center
-                    }
+                        horizontal: HorizontalAlign::Center,
+                    },
                 },
                 transform: Transform::from_xyz(-40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 3 }
+            SettingsPageComp { type_: 3 },
         ));
         // Increase scaling button/text
         man.add_ui(UIClickable {
@@ -72,7 +72,7 @@ pub fn settings_video(
             location: (35.0, -38.0),
             size: (20.0, 36.0),
             removed_on_use: false,
-            tag: Some(String::from("Settings"))
+            tag: Some(String::from("Settings")),
         });
         commands.spawn((
             Text2dBundle {
@@ -82,18 +82,18 @@ pub fn settings_video(
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     }],
                     alignment: TextAlignment {
                         vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center
-                    }
+                        horizontal: HorizontalAlign::Center,
+                    },
                 },
                 transform: Transform::from_xyz(40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 2 }
+            SettingsPageComp { type_: 2 },
         ));
         // Show scaling amount text
         commands.spawn((
@@ -104,18 +104,18 @@ pub fn settings_video(
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     }],
                     alignment: TextAlignment {
                         vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center
-                    }
+                        horizontal: HorizontalAlign::Center,
+                    },
                 },
                 transform: Transform::from_xyz(0.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 4 }
+            SettingsPageComp { type_: 4 },
         ));
         // Leave button/text
         man.add_ui(UIClickable {
@@ -123,7 +123,7 @@ pub fn settings_video(
             location: (-600.0, -300.0),
             size: (100.0, 36.0),
             removed_on_use: true,
-            tag: Some(String::from("Settings"))
+            tag: Some(String::from("Settings")),
         });
         commands.spawn((
             Text2dBundle {
@@ -133,18 +133,18 @@ pub fn settings_video(
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     }],
                     alignment: TextAlignment {
                         vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Left
-                    }
+                        horizontal: HorizontalAlign::Left,
+                    },
                 },
                 transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT + 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 0 }
+            SettingsPageComp { type_: 0 },
         ));
         // Fullscreen button/text
         man.add_ui(UIClickable {
@@ -152,7 +152,7 @@ pub fn settings_video(
             location: (0.0, 0.0),
             size: (315.0, 36.0),
             removed_on_use: false,
-            tag: Some(String::from("Settings"))
+            tag: Some(String::from("Settings")),
         });
         let txtout;
         if disk.window_config().fullscreen {
@@ -169,18 +169,18 @@ pub fn settings_video(
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     }],
                     alignment: TextAlignment {
                         vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Left
-                    }
+                        horizontal: HorizontalAlign::Left,
+                    },
                 },
                 transform: Transform::from_xyz(0.0, 0.0, UI_TEXT + 105.0),
                 ..default()
             },
-            SettingsPageComp { type_: 1 }
+            SettingsPageComp { type_: 1 },
         ));
     }
 }

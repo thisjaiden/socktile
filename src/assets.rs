@@ -1,10 +1,10 @@
 use crate::prelude::*;
 use bevy_asset_loader::prelude::*;
 
-pub mod language;
-pub mod audio;
-pub mod tiles;
 pub mod animated_sprite;
+pub mod audio;
+pub mod language;
+pub mod tiles;
 
 #[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
@@ -29,7 +29,7 @@ pub struct CoreAssets {
     #[asset(path = "core/offline.png")]
     pub offline_no_support: Handle<Image>,
     #[asset(path = "core/nothing.png")]
-    pub blank: Handle<Image>
+    pub blank: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource, Clone)]
@@ -46,7 +46,7 @@ pub struct FontAssets {
     _simvoni_bold_italic: Handle<Font>,
     /// WARNING: DEPRECATED FONT
     #[asset(path = "font/kreative_square.ttf")]
-    pub kreative_square: Handle<Font>
+    pub kreative_square: Handle<Font>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -79,7 +79,7 @@ pub struct UIAssets {
     #[asset(path = "ui/selected.png")]
     pub selected: Handle<Image>,
     #[asset(path = "ui/blueprint_selector.png")]
-    pub blueprint: Handle<Image>
+    pub blueprint: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -96,7 +96,7 @@ pub struct ItemAssets {
     #[asset(path = "item/placeholder.png")]
     pub blueprint: Handle<Image>,
     #[asset(path = "item/wood.png")]
-    pub wood: Handle<Image>
+    pub wood: Handle<Image>,
 }
 
 impl ItemAssets {
@@ -108,7 +108,7 @@ impl ItemAssets {
             Item::MakeshiftAxe => self.makeshift_axe.clone(),
             Item::MakeshiftFishingRod => self.makeshift_fishing_rod.clone(),
             Item::Blueprint => self.blueprint.clone(),
-            Item::Wood => self.wood.clone()
+            Item::Wood => self.wood.clone(),
         }
     }
 }
@@ -116,5 +116,5 @@ impl ItemAssets {
 #[derive(AssetCollection, Resource)]
 pub struct ObjectAssets {
     #[asset(path = "object/tree_ly.png")]
-    pub tree: Handle<Image>
+    pub tree: Handle<Image>,
 }

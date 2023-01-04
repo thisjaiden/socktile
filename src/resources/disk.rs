@@ -6,7 +6,7 @@ pub struct Disk {
     window_config: WindowConfig,
     control_config: ControlConfig,
     audio_config: AudioConfig,
-    user: Option<User>
+    user: Option<User>,
 }
 
 impl Disk {
@@ -17,8 +17,8 @@ impl Disk {
                 window_config: WindowConfig::default(),
                 control_config: ControlConfig::default(),
                 audio_config: AudioConfig::default(),
-                user: None
-            }
+                user: None,
+            };
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -33,14 +33,17 @@ impl Disk {
                 }
                 else {
                     warn!("Encountered courrupted profile data. Resetting data");
-                    warn!("Error causing a faliure: {}", att.expect_err("unreachable condition"));
+                    warn!(
+                        "Error causing a faliure: {}",
+                        att.expect_err("unreachable condition")
+                    );
                     user = None;
                 }
             }
             else {
                 user = None;
             }
-            
+
             let mut window_config_path = files_dir();
             window_config_path.push("window_config.bic");
             let window_config_data = std::fs::read(window_config_path);
@@ -78,7 +81,7 @@ impl Disk {
                 window_config,
                 control_config,
                 user,
-                audio_config
+                audio_config,
             }
         }
     }
@@ -170,7 +173,7 @@ pub struct WindowConfig {
     pub vsync: bool,
     pub fullscreen: bool,
     pub resolution: (f32, f32),
-    pub scale_factor: f64
+    pub scale_factor: f64,
 }
 
 impl Default for WindowConfig {
@@ -179,7 +182,7 @@ impl Default for WindowConfig {
             vsync: true,
             fullscreen: false,
             resolution: (1920.0, 1080.0),
-            scale_factor: 1.0
+            scale_factor: 1.0,
         }
     }
 }
@@ -219,13 +222,11 @@ fn files_dir() -> PathBuf {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct AudioConfig {
-    pub volume: f64
+    pub volume: f64,
 }
 
 impl Default for AudioConfig {
     fn default() -> Self {
-        AudioConfig {
-            volume: 1.0
-        }
+        AudioConfig { volume: 1.0 }
     }
 }

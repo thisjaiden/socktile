@@ -1,7 +1,7 @@
 use std::{net::SocketAddr, path::PathBuf};
 
-use bevy::utils::HashMap;
 use crate::prelude::*;
+use bevy::utils::HashMap;
 
 mod handler;
 use handler::handler;
@@ -34,7 +34,7 @@ pub fn startup(_arguments: Vec<String>) -> ! {
 /// Represents one user's profile.
 pub struct Profile {
     pub user: User,
-    pub avalable_games: Vec<usize>
+    pub avalable_games: Vec<usize>,
 }
 
 /// Returns all profiles from the disk.
@@ -44,7 +44,8 @@ pub fn profiles() -> Vec<Profile> {
         let wrkabl = file.unwrap().path();
         if wrkabl.extension().expect("File had no extension.") == "bic" {
             saved_users.push(
-                bincode::deserialize(&std::fs::read(wrkabl).expect("Unable to read a profile.")).expect("Encountered a courrupted profile.")
+                bincode::deserialize(&std::fs::read(wrkabl).expect("Unable to read a profile."))
+                    .expect("Encountered a courrupted profile."),
             );
         }
     }
@@ -57,14 +58,13 @@ pub fn saves() -> Vec<SaveGame> {
         let wrkabl = file.unwrap().path();
         if wrkabl.extension().expect("File had no extension.") == "bic" {
             saved_games.push(
-                bincode::deserialize(&std::fs::read(wrkabl).expect("Unable to read a save file.")).expect("Encountered a courrupted save file.")
+                bincode::deserialize(&std::fs::read(wrkabl).expect("Unable to read a save file."))
+                    .expect("Encountered a courrupted save file."),
             );
         }
     }
     saved_games
 }
-
-
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct SaveGame {

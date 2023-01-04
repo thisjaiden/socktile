@@ -1,11 +1,15 @@
 use crate::prelude::*;
-use bevy::{utils::{HashMap, BoxedFuture}, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}};
+use bevy::{
+    asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
+    reflect::TypeUuid,
+    utils::{BoxedFuture, HashMap},
+};
 use bevy_kira_audio::AudioSource;
 
 #[derive(TypeUuid)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306d"]
 pub struct AudioSamples {
-    keys: HashMap<String, Handle<AudioSource>>
+    keys: HashMap<String, Handle<AudioSource>>,
 }
 
 impl AudioSamples {
@@ -71,5 +75,5 @@ impl AssetLoader for AudioSamplesLoader {
 #[derive(Deserialize, Debug)]
 struct AudioSample {
     pub name: String,
-    pub meta_location: String
+    pub meta_location: String,
 }

@@ -1,10 +1,7 @@
 use crate::prelude::*;
 use crate::{
     resources::ChatMessage,
-    shared::{
-        listing::GameListing,
-        player::Inventory
-    }
+    shared::{listing::GameListing, player::Inventory},
 };
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
@@ -118,7 +115,7 @@ pub enum Packet {
     ChatMessage(ChatMessage),
     /// Sends/Recieves an animation for a player using an item
     /// (Action)
-    ActionAnimation(ItemAction)
+    ActionAnimation(ItemAction),
 }
 
 impl netty::Packet for Packet {

@@ -1,5 +1,9 @@
 use crate::prelude::*;
-use bevy::{utils::{HashMap, BoxedFuture}, reflect::TypeUuid, asset::{AssetLoader, LoadContext, LoadedAsset, AssetPath}};
+use bevy::{
+    asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
+    reflect::TypeUuid,
+    utils::{BoxedFuture, HashMap},
+};
 
 #[derive(Deserialize, TypeUuid)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306e"]
@@ -56,13 +60,13 @@ pub struct TerrainState {
     pub name: String,
     approx_color: String,
     walk_sound: String,
-    run_sound: String
+    run_sound: String,
 }
 
 #[derive(TypeUuid)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306f"]
 pub struct TileTransitionMasterConfig {
-    pub transitions: HashMap<[String; 2], Handle<TileTransitionConfig>>
+    pub transitions: HashMap<[String; 2], Handle<TileTransitionConfig>>,
 }
 
 pub struct TileTransitionMasterConfigLoader;
@@ -86,10 +90,15 @@ impl AssetLoader for TileTransitionMasterConfigLoader {
                     .unwrap()
                     .join(format!("terrain/{}", transition.meta_location))
                     .into();
-                out_trans.insert([transition.names[0].clone(), transition.names[1].clone()], load_context.get_handle(path.clone()));
+                out_trans.insert(
+                    [transition.names[0].clone(), transition.names[1].clone()],
+                    load_context.get_handle(path.clone()),
+                );
                 dependencies.push(path);
             }
-            let m_conf = TileTransitionMasterConfig { transitions: out_trans };
+            let m_conf = TileTransitionMasterConfig {
+                transitions: out_trans,
+            };
             let loaded_asset = LoadedAsset::new(m_conf).with_dependencies(dependencies);
             load_context.set_default_asset(loaded_asset);
             Ok(())
@@ -110,7 +119,7 @@ struct TerrainTransition {
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc3070"]
 pub struct TileTransitionConfig {
     pub images: Vec<ImageDefinition>,
-    pub variants: Vec<Variant>
+    pub variants: Vec<Variant>,
 }
 
 pub struct TileTransitionConfigLoader;
@@ -124,19 +133,27 @@ impl AssetLoader for TileTransitionConfigLoader {
         Box::pin(async move {
             let core: TerrainRenderingJSON = serde_json::from_slice(bytes)?;
             let mut dependencies = vec![];
-            let mut final_out = TileTransitionConfig { images: vec![], variants: vec![] };
+            let mut final_out = TileTransitionConfig {
+                images: vec![],
+                variants: vec![],
+            };
             for file in core.files {
                 let path: AssetPath = load_context
-                        .path()
-                        .parent()
-                        .unwrap()
-                        .join(file.location)
-                        .into();
+                    .path()
+                    .parent()
+                    .unwrap()
+                    .join(file.location)
+                    .into();
                 if file.width == 1 && file.height == 1 {
-                    final_out.images.push(ImageDefinition::Sprite(load_context.get_handle(path.clone())));
+                    final_out.images.push(ImageDefinition::Sprite(
+                        load_context.get_handle(path.clone()),
+                    ));
                 }
                 else {
-                    final_out.images.push(ImageDefinition::SpriteSheet(load_context.get_handle(path.clone()), (file.width, file.height)));
+                    final_out.images.push(ImageDefinition::SpriteSheet(
+                        load_context.get_handle(path.clone()),
+                        (file.width, file.height),
+                    ));
                 }
                 dependencies.push(path);
             }
@@ -153,7 +170,6 @@ impl AssetLoader for TileTransitionConfigLoader {
     }
 }
 
-
 #[derive(Deserialize)]
 struct TerrainRenderingJSON {
     files: Vec<TerrainRenderingFileJSON>,
@@ -164,7 +180,7 @@ struct TerrainRenderingJSON {
 struct TerrainRenderingFileJSON {
     location: String,
     width: usize,
-    height: usize
+    height: usize,
 }
 
 #[derive(Deserialize, Clone)]
@@ -225,7 +241,7 @@ pub struct Variant {
     pub tltrbl: Option<Vec<usize>>,
     pub tltrbr: Option<Vec<usize>>,
     pub tplfbtri: Option<Vec<usize>>,
-    pub tltrblbr: Option<Vec<usize>>
+    pub tltrblbr: Option<Vec<usize>>,
 }
 
 #[derive(Deserialize, Clone, Copy, Debug)]
@@ -237,14 +253,14 @@ pub struct AnimationInfo {
 #[derive(Clone)]
 pub enum ImageDefinition {
     Sprite(Handle<Image>),
-    SpriteSheet(Handle<Image>, (usize, usize))
+    SpriteSheet(Handle<Image>, (usize, usize)),
 }
 
 impl ImageDefinition {
     pub fn force_sprite(&self) -> Handle<Image> {
         match self {
             Self::Sprite(handle) => handle.clone(),
-            Self::SpriteSheet(_, _) => panic!()
+            Self::SpriteSheet(_, _) => panic!(),
         }
     }
     pub fn force_sprite_sheet(&self) -> (Handle<Image>, usize, usize) {

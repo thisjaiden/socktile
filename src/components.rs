@@ -24,12 +24,12 @@ pub struct RemoveOnStateChange;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
 pub struct PauseMenuMarker {
-    pub type_: usize
+    pub type_: usize,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
 pub struct ChatBox {
-    pub location: usize
+    pub location: usize,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
@@ -39,7 +39,7 @@ pub struct HotbarMarker {
     /// 1 = slot background
     /// 2 = selected slot
     /// 3 = slot contents
-    pub type_: usize
+    pub type_: usize,
 }
 
 #[derive(Clone, Copy, Debug, Component)]
@@ -50,7 +50,7 @@ pub struct SettingsPageComp {
     /// 2 | video settings increase scaling text
     /// 3 | video settings decrease scaling text
     /// 4 | video settings scaling text
-    pub type_: u8
+    pub type_: u8,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]

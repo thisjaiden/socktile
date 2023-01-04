@@ -17,7 +17,7 @@ pub struct Npc {
     /// These are mostly extensions of `current_task`, not other tasks
     queued_tasks: Vec<Task>,
     /// Where does this NPC call home?
-    home_location: GridPosition
+    home_location: GridPosition,
     // TODO: changed task prefrences
     // TODO: mood data bloq
 }
@@ -32,7 +32,7 @@ impl Npc {
             relationships: vec![],
             current_task: Task::Rest(std::time::Duration::from_secs(1)),
             queued_tasks: vec![],
-            home_location: who.get_inital_home()
+            home_location: who.get_inital_home(),
         }
     }
     pub fn active_popup(&self) -> bool {
@@ -54,7 +54,7 @@ pub enum Who {
     ZinDavidson,
     AnzhelaBristlesquack,
     CoraRanlor,
-    ThomasKontos
+    ThomasKontos,
 }
 
 impl Who {
@@ -76,7 +76,7 @@ impl Who {
                 warn!("TODO: home position for {:?}", self);
                 GridPosition {
                     chunk: (0, 0),
-                    tile: (0, 0)
+                    tile: (0, 0),
                 }
             }
         }
@@ -86,19 +86,19 @@ impl Who {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum Person {
     Npc(Who),
-    Player(User)
+    Player(User),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct Memory {
     pub task: Task,
-    pub person: Person
+    pub person: Person,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 struct GridPosition {
     pub chunk: (isize, isize),
-    pub tile: (usize, usize)
+    pub tile: (usize, usize),
 }
 
 /// Represents one thing an NPC could do
@@ -113,7 +113,7 @@ enum Task {
     /// Converse with someone
     Talk,
     /// Make or destroy something
-    Change(GridPosition, ChangeType)
+    Change(GridPosition, ChangeType),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -127,5 +127,5 @@ enum ChangeType {
     // Build a path
     Path,
     // Fence off an area
-    Fence
+    Fence,
 }

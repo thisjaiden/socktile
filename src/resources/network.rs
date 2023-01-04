@@ -1,13 +1,13 @@
 use netty::client::{Client, ClientConfig};
 
+use super::{chat::ChatMessage, Reality};
 use crate::prelude::*;
-use super::{Reality, chat::ChatMessage};
 
 #[derive(Resource)]
 pub struct Netty {
     n: Client<Packet>,
     #[cfg(target_arch = "wasm32")]
-    buffer: Vec<Packet>
+    buffer: Vec<Packet>,
 }
 
 impl Netty {
@@ -15,7 +15,7 @@ impl Netty {
         Netty {
             n,
             #[cfg(target_arch = "wasm32")]
-            buffer: vec![]
+            buffer: vec![],
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -67,7 +67,7 @@ fn init() -> Option<Netty> {
 pub fn system_startup_checks(
     mut commands: Commands,
     mut state: ResMut<State<GameState>>,
-    disk: Res<Disk>
+    disk: Res<Disk>,
 ) {
     let pot_client = init();
     if let Some(mut client) = pot_client {
@@ -99,7 +99,7 @@ pub fn system_step(
         for packet in pkts {
             match packet {
                 Packet::CreatedUser(user) => {
-                    while !disk.update_user(user.clone()) {};
+                    while !disk.update_user(user.clone()) {}
                     info!("Saved new user information.");
                 }
                 Packet::AllSet => {
@@ -138,21 +138,23 @@ pub fn system_step(
                     reality.queue_chat(ChatMessage {
                         text: String::from("User added to whitelist!"),
                         color: Color::BLACK,
-                        sent_at: std::time::Instant::now()
+                        sent_at: std::time::Instant::now(),
                     });
                 }
                 Packet::NoWhitelistPermission => {
                     reality.queue_chat(ChatMessage {
                         text: String::from("You don't have permission to whitelist other users."),
                         color: Color::RED,
-                        sent_at: std::time::Instant::now()
+                        sent_at: std::time::Instant::now(),
                     });
                 }
                 Packet::UnwhitelistableUser => {
                     reality.queue_chat(ChatMessage {
-                        text: String::from("Unable to whitelist user. (Did you spell everything right?)"),
+                        text: String::from(
+                            "Unable to whitelist user. (Did you spell everything right?)",
+                        ),
                         color: Color::RED,
-                        sent_at: std::time::Instant::now()
+                        sent_at: std::time::Instant::now(),
                     });
                 }
                 Packet::InventoryState(inventory) => {
@@ -175,6 +177,9 @@ pub fn system_step(
                 Packet::ChatMessage(message) => {
                     reality.queue_chat(message);
                 }
+                Packet::TileUpdate(chunk, tile, state) => {
+                    reality.update_tile(chunk, tile, state)
+                }
                 p => {
                     panic!("Unhandled client packet failed netty! ({:?})", p);
                 }
@@ -183,8 +188,6 @@ pub fn system_step(
     }
 }
 
-pub fn system_server_list(
-    mut netty: ResMut<Netty>,
-) {
+pub fn system_server_list(mut netty: ResMut<Netty>) {
     netty.send(Packet::AvalableServers)
 }

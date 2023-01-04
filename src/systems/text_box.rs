@@ -3,8 +3,7 @@ use crate::prelude::*;
 pub fn text_input(
     mut tb: ResMut<crate::resources::TextBox>,
     mut char_evr: EventReader<ReceivedCharacter>,
-    #[cfg(target_arch = "wasm32")]
-    key_events: Res<Input<KeyCode>>
+    #[cfg(target_arch = "wasm32")] key_events: Res<Input<KeyCode>>,
 ) {
     #[cfg(target_arch = "wasm32")]
     {
@@ -45,7 +44,7 @@ pub fn user_creation(
     mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<RemoveOnStateChange>>,
     core: Res<CoreAssets>,
-    lang_serve: Res<Assets<LanguageKeys>>
+    lang_serve: Res<Assets<LanguageKeys>>,
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
     let mut text = tb_q.single_mut();
@@ -96,11 +95,11 @@ pub fn user_creation(
             mode = String::from(mode.trim_end_matches('\n'));
             netty.send(Packet::CreateUser(User {
                 username: mode.clone(),
-                tag: 0
+                tag: 0,
             }));
             while !disk.update_user(User {
                 username: mode.clone(),
-                tag: 0
+                tag: 0,
             }) {}
             tb.clear_buffer();
             unloads.for_each(|e| {
@@ -139,45 +138,36 @@ pub fn game_creation(
             commands.spawn((
                 SpriteBundle {
                     texture: materials.not_animated.clone(),
-                    transform: Transform::from_xyz(
-                        0.0,
-                        0.0,
-                        PLAYER_CHARACTERS
-                    ),
+                    transform: Transform::from_xyz(0.0, 0.0, PLAYER_CHARACTERS),
                     ..Default::default()
                 },
-                disk.user().unwrap()
+                disk.user().unwrap(),
             ));
         }
     }
 }
 
-pub fn game_creation_once(
-    mut commands: Commands,
-    font_assets: Res<FontAssets>
-) {
+pub fn game_creation_once(mut commands: Commands, font_assets: Res<FontAssets>) {
     commands.spawn((
         Text2dBundle {
             text: Text {
-                sections: vec![
-                    TextSection {
-                        value: String::new(),
-                        style: TextStyle {
-                            font: font_assets.simvoni.clone(),
-                            font_size: 35.0,
-                            color: Color::BLACK
-                        }
-                    }
-                ],
+                sections: vec![TextSection {
+                    value: String::new(),
+                    style: TextStyle {
+                        font: font_assets.simvoni.clone(),
+                        font_size: 35.0,
+                        color: Color::BLACK,
+                    },
+                }],
                 alignment: TextAlignment {
                     vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center
-                }
+                    horizontal: HorizontalAlign::Center,
+                },
             },
             transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()
         },
         TextBox {},
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
 }

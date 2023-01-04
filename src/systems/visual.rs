@@ -20,13 +20,13 @@ use crate::prelude::*;
 // TODO: move to seperate file
 pub fn loading_prog(
     progress: Option<Res<ProgressCounter>>,
-    mut query: Query<(Entity, &mut Transform), With<LoadingScreenProgress>>
+    mut query: Query<(Entity, &mut Transform), With<LoadingScreenProgress>>,
 ) {
     if let Some(progress) = progress.map(|counter| counter.progress()) {
         let (_e, mut transform) = query.single_mut();
         let pd = (progress.done as f32) / (progress.total as f32);
         transform.scale.x = pd * 9.5;
-        
+
         //warn!("Progress: {:?}", progress);
     }
 }
@@ -34,7 +34,7 @@ pub fn loading_prog(
 pub fn clear_old(
     mut commands: Commands,
     mut ui: ResMut<UIManager>,
-    query: Query<Entity, With<RemoveOnStateChange>>
+    query: Query<Entity, With<RemoveOnStateChange>>,
 ) {
     // Despawn entities tagged with `RemoveOnStateChange`
     query.for_each(|e| {
@@ -49,14 +49,14 @@ pub fn logo(
     mut state: ResMut<State<GameState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    server: Res<AssetServer>
+    server: Res<AssetServer>,
 ) {
     commands.spawn((
         SpriteBundle {
             texture: server.load("core/logo.png"),
             ..default()
         },
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
     commands.spawn((
         Text2dBundle {
@@ -68,26 +68,26 @@ pub fn logo(
                         style: TextStyle {
                             font: server.load("font/blooming_grove.ttf"),
                             font_size: 64.0,
-                            color: Color::BLACK
-                        }
+                            color: Color::BLACK,
+                        },
                     },
                     TextSection {
                         value: String::from("\nNow Loading..."),
                         style: TextStyle {
                             font: server.load("font/blooming_grove.ttf"),
                             font_size: 48.0,
-                            color: Color::BLACK
-                        }
-                    }
+                            color: Color::BLACK,
+                        },
+                    },
                 ],
                 alignment: TextAlignment {
                     horizontal: HorizontalAlign::Center,
-                    vertical: VerticalAlign::Center
-                }
+                    vertical: VerticalAlign::Center,
+                },
             },
             ..default()
         },
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
     let square = RegularPolygon::new(50.0, 4);
     let mesh = meshes.add(Mesh::from(square));
@@ -99,7 +99,7 @@ pub fn logo(
             transform: Transform::from_xyz(-500.0, -300.0, UI_IMG),
             ..default()
         },
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
     commands.spawn((
         ColorMesh2dBundle {
@@ -108,7 +108,7 @@ pub fn logo(
             transform: Transform::from_xyz(500.0, -300.0, UI_IMG),
             ..default()
         },
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
     let i_transform = Transform::from_xyz(0.0, -300.0, UI_IMG);
     //i_transform.rotate_z(std::f32::consts::PI/4.0);
@@ -120,7 +120,7 @@ pub fn logo(
             ..default()
         },
         LoadingScreenProgress {},
-        RemoveOnStateChange {}
+        RemoveOnStateChange {},
     ));
     state.overwrite_set(GameState::Load).unwrap();
 }

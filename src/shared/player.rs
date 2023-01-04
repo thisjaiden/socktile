@@ -5,7 +5,7 @@ pub struct PlayerData {
     pub inventory: Inventory,
     pub stats: Stats,
     pub recipes: Recipes,
-    pub achievements: Achievements
+    pub achievements: Achievements,
 }
 
 impl PlayerData {
@@ -14,7 +14,7 @@ impl PlayerData {
             inventory: Inventory::empty(),
             stats: Stats::starting(),
             recipes: Recipes::starting(),
-            achievements: Achievements::none()
+            achievements: Achievements::none(),
         }
     }
 }
@@ -22,14 +22,14 @@ impl PlayerData {
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct Inventory {
     pub selected_slot: usize,
-    pub hotbar: [Option<Item>; 10]
+    pub hotbar: [Option<Item>; 10],
 }
 
 impl Inventory {
     pub fn empty() -> Inventory {
         Inventory {
             selected_slot: 0,
-            hotbar: [None; 10]
+            hotbar: [None; 10],
         }
     }
     pub fn hotbar_empty_space(&self) -> Option<usize> {
@@ -47,7 +47,7 @@ pub enum Item {
     MakeshiftAxe,
     MakeshiftFishingRod,
     Blueprint,
-    Wood
+    Wood,
 }
 
 impl Item {
@@ -68,7 +68,7 @@ impl Item {
             Item::MakeshiftAxe => ItemAction::Chop(1),
             Item::MakeshiftFishingRod => ItemAction::Fish(1),
             Item::Blueprint => ItemAction::Blueprint,
-            _ => ItemAction::None
+            _ => ItemAction::None,
         }
     }
 }
@@ -86,7 +86,7 @@ pub enum ItemAction {
     /// Item mines (power multipler)
     Mine(usize),
     /// Item modifies terrain
-    Blueprint
+    Blueprint,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Debug)]
@@ -95,8 +95,7 @@ pub struct Stats {
     pub fishing: usize,
     pub cooking: usize,
     pub crafting: usize,
-    pub trading: usize
-    // ...ect
+    pub trading: usize, // ...ect
 }
 
 impl Stats {
@@ -106,7 +105,7 @@ impl Stats {
             fishing: 1,
             cooking: 1,
             crafting: 1,
-            trading: 1
+            trading: 1,
         }
     }
 }
@@ -114,16 +113,14 @@ impl Stats {
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
 pub struct Recipes {
     unlocked: Vec<Recipe>,
-    locked: Vec<Recipe>
+    locked: Vec<Recipe>,
 }
 
 impl Recipes {
     pub fn starting() -> Recipes {
         Recipes {
             unlocked: vec![],
-            locked: vec![
-                Recipe::BigRock
-            ]
+            locked: vec![Recipe::BigRock],
         }
     }
     pub fn _unlock_all(&mut self) {
@@ -137,12 +134,10 @@ impl Recipes {
     }
 }
 
-
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize, Debug)]
 
 pub enum Recipe {
-    BigRock
-    // ...ect
+    BigRock, // ...ect
 }
 
 #[derive(Clone, PartialEq, Deserialize, Serialize, Debug)]
@@ -152,8 +147,6 @@ pub struct Achievements {
 
 impl Achievements {
     pub fn none() -> Achievements {
-        Achievements {
-
-        }
+        Achievements {}
     }
 }

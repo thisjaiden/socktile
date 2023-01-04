@@ -4,7 +4,7 @@ use bevy_prototype_debug_lines::DebugLines;
 pub fn cursor(
     windows: Res<Windows>,
     mut query: Query<&mut Transform, With<CursorMarker>>,
-    mut lines: ResMut<DebugLines>
+    mut lines: ResMut<DebugLines>,
 ) {
     for mut transform in query.iter_mut() {
         let p_window = windows.get_primary().unwrap();
@@ -17,7 +17,7 @@ pub fn cursor(
                 let line_pos = Vec3::new(
                     transform.translation.x + CURSOR_OFFSET[0] - 5.0,
                     transform.translation.y + CURSOR_OFFSET[1] - 5.0,
-                    DEBUG
+                    DEBUG,
                 );
                 let mut line_end = line_pos;
                 line_end.x += 10.0;
@@ -33,33 +33,27 @@ pub fn cursor(
     }
 }
 
-
-pub fn spawn(
-    mut commands: Commands,
-    fonts: Res<FontAssets>
-) {
+pub fn spawn(mut commands: Commands, fonts: Res<FontAssets>) {
     commands.spawn((
         Text2dBundle {
             text: Text {
-                sections: vec![
-                    TextSection {
-                        value: String::from('\u{f790}'),
-                        style: TextStyle {
-                            font: fonts.kreative_square.clone(),
-                            font_size: 34.0,
-                            color: Color::BLACK
-                        }
-                    }
-                ],
+                sections: vec![TextSection {
+                    value: String::from('\u{f790}'),
+                    style: TextStyle {
+                        font: fonts.kreative_square.clone(),
+                        font_size: 34.0,
+                        color: Color::BLACK,
+                    },
+                }],
                 alignment: TextAlignment {
                     vertical: VerticalAlign::Bottom,
-                    horizontal: HorizontalAlign::Right
-                }
+                    horizontal: HorizontalAlign::Right,
+                },
             },
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
         },
         CursorMarker {},
-        UILocked {}
+        UILocked {},
     ));
 }

@@ -1,17 +1,17 @@
+use super::{reality::MenuState, Reality, TextBox};
 use crate::prelude::*;
-use super::{Reality, reality::MenuState, TextBox};
 
 #[derive(Resource)]
 pub struct Chat {
     pub history: Vec<ChatMessage>,
-    pub is_chat_open: MenuState
+    pub is_chat_open: MenuState,
 }
 
 impl Chat {
     pub fn init() -> Chat {
         Chat {
             history: vec![],
-            is_chat_open: MenuState::Closed
+            is_chat_open: MenuState::Closed,
         }
     }
     pub fn is_open(&self) -> bool {
@@ -26,15 +26,13 @@ impl Chat {
     }
     fn add_message(&mut self, msg: ChatMessage) {
         self.history.push(msg);
-        self.history.sort_by(|a, b| a.sent_at.elapsed().cmp(&b.sent_at.elapsed()));
+        self.history
+            .sort_by(|a, b| a.sent_at.elapsed().cmp(&b.sent_at.elapsed()));
         while self.history.len() > 9 {
             self.history.pop();
         }
     }
-    pub fn system_open_chat(
-        mut selfs: ResMut<Chat>,
-        mut tb: ResMut<TextBox>
-    ) {
+    pub fn system_open_chat(mut selfs: ResMut<Chat>, mut tb: ResMut<TextBox>) {
         if selfs.is_chat_open == MenuState::Queued {
             tb.clear_buffer();
             selfs.is_chat_open = MenuState::Open;
@@ -43,7 +41,7 @@ impl Chat {
     pub fn system_type_chat(
         selfs: Res<Chat>,
         mut tb: ResMut<TextBox>,
-        mut boxes: Query<(&mut Text, &ChatBox)>
+        mut boxes: Query<(&mut Text, &ChatBox)>,
     ) {
         if selfs.is_chat_open == MenuState::Open {
             boxes.for_each_mut(|(mut text, box_)| {
@@ -59,16 +57,22 @@ impl Chat {
         mut netty: ResMut<Netty>,
         mut boxes: Query<(&mut Text, &ChatBox)>,
         disk: Res<Disk>,
-        keys: Res<Input<KeyCode>>
+        keys: Res<Input<KeyCode>>,
     ) {
-        if selfs.is_chat_open == MenuState::Open && keys.just_pressed(disk.control_config().send_chat) {
+        if selfs.is_chat_open == MenuState::Open
+            && keys.just_pressed(disk.control_config().send_chat)
+        {
             boxes.for_each_mut(|(mut text, box_)| {
                 if box_.location == 0 {
                     text.sections[0].value = String::new();
                     netty.send(Packet::SendChatMessage(ChatMessage {
-                        text: tb.grab_buffer().trim_end_matches('\n').trim_end_matches('\r').to_string(),
+                        text: tb
+                            .grab_buffer()
+                            .trim_end_matches('\n')
+                            .trim_end_matches('\r')
+                            .to_string(),
                         color: Color::BLACK,
-                        sent_at: std::time::Instant::now()
+                        sent_at: std::time::Instant::now(),
                     }));
                     tb.clear_buffer();
                     selfs.is_chat_open = MenuState::Closed;
@@ -76,40 +80,39 @@ impl Chat {
             });
         }
     }
-    pub fn system_init(
-        mut commands: Commands,
-        fonts: ResMut<FontAssets>
-    ) {
+    pub fn system_init(mut commands: Commands, fonts: ResMut<FontAssets>) {
         for index in 0..10 {
             commands.spawn((
                 Text2dBundle {
                     text: Text {
-                        sections: vec![
-                            TextSection {
-                                value: String::new(),
-                                style: TextStyle {
-                                    font: fonts.apple_tea.clone(),
-                                    font_size: 32.0,
-                                    color: Color::BLACK
-                                }
-                            }
-                        ],
+                        sections: vec![TextSection {
+                            value: String::new(),
+                            style: TextStyle {
+                                font: fonts.apple_tea.clone(),
+                                font_size: 32.0,
+                                color: Color::BLACK,
+                            },
+                        }],
                         alignment: TextAlignment {
                             vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Left
-                        }
+                            horizontal: HorizontalAlign::Left,
+                        },
                     },
-                    transform: Transform::from_xyz(-(1920.0 / 2.0), -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32), UI_TEXT),
+                    transform: Transform::from_xyz(
+                        -(1920.0 / 2.0),
+                        -(1080.0 / 2.0) + 12.0 + (40.0 * index as f32),
+                        UI_TEXT,
+                    ),
                     ..Default::default()
                 },
                 ChatBox { location: index },
-                UILocked {}
+                UILocked {},
             ));
         }
     }
     pub fn system_display_chat(
         selfs: Res<Chat>,
-        mut boxes: Query<(&mut Text, &ChatBox, &mut Transform)>
+        mut boxes: Query<(&mut Text, &ChatBox, &mut Transform)>,
     ) {
         boxes.for_each_mut(|(mut text, thisbox, mut loc)| {
             loc.translation.x = -(1920.0 / 2.0);
@@ -132,10 +135,7 @@ impl Chat {
             }
         });
     }
-    pub fn system_pull_messages(
-        mut selfs: ResMut<Chat>,
-        mut reality: ResMut<Reality>
-    ) {
+    pub fn system_pull_messages(mut selfs: ResMut<Chat>, mut reality: ResMut<Reality>) {
         for message in reality.pull_messages() {
             selfs.add_message(message);
         }
@@ -150,5 +150,5 @@ pub struct ChatMessage {
     pub color: Color,
     #[serde(skip)]
     #[serde(default = "Instant::now")]
-    pub sent_at: Instant
+    pub sent_at: Instant,
 }

@@ -9,7 +9,7 @@ pub struct World {
     /// (chunk coords, terrain data array)
     pub terrain: HashMap<(isize, isize), Vec<usize>>,
     pub objects: Vec<Object>,
-    pub generated_objects: Vec<(isize, isize)>
+    pub generated_objects: Vec<(isize, isize)>,
 }
 
 impl World {
@@ -19,7 +19,7 @@ impl World {
             offline_players: vec![],
             terrain: default(),
             objects: vec![],
-            generated_objects: vec![]
+            generated_objects: vec![],
         }
     }
     pub fn get_or_gen(&mut self, chunk: (isize, isize)) -> Vec<usize> {
@@ -56,7 +56,7 @@ impl World {
                 selected_level = Some(level);
             }
         }
-        
+
         // Use the backup if this level doesn't exist.
         if selected_level.is_none() {
             for level in &project.levels {
@@ -66,7 +66,10 @@ impl World {
             }
         }
         let level = selected_level.expect("FATAL: LDTK file missing required backup environment");
-        let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
+        let layers = level
+            .layer_instances
+            .as_ref()
+            .expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut chunk_data = vec![];
         for layer in layers {
             if layer.layer_instance_type.as_str() == "IntGrid" {
@@ -82,7 +85,10 @@ impl World {
         }
         // check data
         if chunk_data.len() != CHUNK_SIZE {
-            error!("Chunk terrain data was improper ({} != {CHUNK_SIZE})", chunk_data.len());
+            error!(
+                "Chunk terrain data was improper ({} != {CHUNK_SIZE})",
+                chunk_data.len()
+            );
             error!("Chunk location: ({}, {})", chunk.0, chunk.1);
             panic!("{FATAL_ERROR}");
         }
@@ -122,7 +128,7 @@ impl World {
                 selected_level = Some(level);
             }
         }
-        
+
         // Use the backup if this level doesn't exist.
         if selected_level.is_none() {
             for level in &project.levels {
@@ -133,7 +139,10 @@ impl World {
         }
 
         let level = selected_level.expect("FATAL: LDTK file missing required backup environment");
-        let layers = level.layer_instances.as_ref().expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
+        let layers = level
+            .layer_instances
+            .as_ref()
+            .expect("FATAL: The LDtk option to save levels/layers seperately isn't supported.");
         let mut dupe_objects = vec![];
         for layer in layers {
             if layer.layer_instance_type.as_str() == "Entities" {
@@ -147,16 +156,21 @@ impl World {
                                     0.0
                                 ),
                                 rep: ObjectType::Tree(3),
-                                uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                uuid: uuid::Uuid::parse_str(&entity.iid)
+                                    .expect("FATAL: LDtk entity had an invalid UUID"),
                             });
                             dupe_objects.push(self.objects[self.objects.len() - 1].clone());
                         }
                         "Item" => {
                             for dataseg in &entity.field_instances {
                                 if dataseg.identifier == "ItemName" {
-                                    let item = Item::from_str(dataseg.value.as_ref()
-                                        .expect("FATAL: LDtk entity of type Item had no ItemName")
-                                        .as_str().expect("FATAL: LDtk entity had a non-string ItemName")
+                                    let item = Item::from_str(
+                                        dataseg
+                                            .value
+                                            .as_ref()
+                                            .expect("FATAL: LDtk entity of type Item had no ItemName")
+                                            .as_str()
+                                            .expect("FATAL: LDtk entity had a non-string ItemName"),
                                     );
                                     self.objects.push(Object {
                                         pos: Transform::from_xyz(
@@ -165,7 +179,8 @@ impl World {
                                             0.0
                                         ),
                                         rep: ObjectType::GroundItem(item),
-                                        uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                        uuid: uuid::Uuid::parse_str(&entity.iid)
+                                            .expect("FATAL: LDtk entity had an invalid UUID"),
                                     });
                                     dupe_objects.push(self.objects[self.objects.len() - 1].clone());
                                 }
@@ -174,9 +189,13 @@ impl World {
                         "NPC" => {
                             for dataseg in &entity.field_instances {
                                 if dataseg.identifier == "NPCName" {
-                                    let npc = Npc::from_name_str(dataseg.value.as_ref()
-                                        .expect("FATAL: LDtk entity of type NPC had no NPCName")
-                                        .as_str().expect("FATAL: LDtk entity had a non-string NPCName")
+                                    let npc = Npc::from_name_str(
+                                        dataseg
+                                            .value
+                                            .as_ref()
+                                            .expect("FATAL: LDtk entity of type NPC had no NPCName")
+                                            .as_str()
+                                            .expect("FATAL: LDtk entity had a non-string NPCName"),
                                     );
                                     self.objects.push(Object {
                                         pos: Transform::from_xyz(
@@ -185,7 +204,8 @@ impl World {
                                             0.0
                                         ),
                                         rep: ObjectType::Npc(npc),
-                                        uuid: uuid::Uuid::parse_str(&entity.iid).expect("FATAL: LDtk entity had an invalid UUID")
+                                        uuid: uuid::Uuid::parse_str(&entity.iid)
+                                            .expect("FATAL: LDtk entity had an invalid UUID"),
                                     });
                                     dupe_objects.push(self.objects[self.objects.len() - 1].clone());
                                 }
@@ -203,9 +223,9 @@ impl World {
 
         dupe_objects
     }
-    pub fn _modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
+    pub fn modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
         let mut dta = self.get_or_gen(chunk);
-        dta[tile.0 + (tile.1 * CHUNK_WIDTH)] = state;
+        dta[tile.0 + ((CHUNK_HEIGHT - tile.1 - 1) * CHUNK_WIDTH)] = state;
         self.terrain.insert(chunk, dta);
     }
 }
