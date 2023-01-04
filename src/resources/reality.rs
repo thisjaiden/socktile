@@ -39,6 +39,7 @@ pub struct Reality {
     /// Data for all chunks
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
+    blueprint_tile: (isize, isize)
 }
 
 impl Reality {
@@ -61,6 +62,7 @@ impl Reality {
             waiting_for_action: false,
             chunk_data: default(),
             chunk_status: default(),
+            blueprint_tile: (0, 0)
         }
     }
     pub fn reset(&mut self) {
@@ -208,7 +210,7 @@ impl Reality {
     }
     pub fn system_display_blueprint(
         mut commands: Commands,
-        selfs: Res<Reality>,
+        mut selfs: ResMut<Reality>,
         ui_assets: Res<UIAssets>,
         mut qs: ParamSet<(
             Query<&Transform, With<CursorMarker>>,
@@ -242,6 +244,7 @@ impl Reality {
                     qs.p1().for_each_mut(|(_e, mut t)| {
                         let tile_x = ((cursor_transform.translation.x + CURSOR_OFFSET[0] + selfs.player_position.translation.x + 32.0) / 64.0).round();
                         let tile_y = ((cursor_transform.translation.y + CURSOR_OFFSET[1] + selfs.player_position.translation.y) / 64.0).round();
+                        selfs.blueprint_tile = (tile_x as isize, tile_y as isize);
                         t.translation.x = (tile_x * 64.0) - 32.0;
                         t.translation.y = tile_y * 64.0;
                     });
@@ -271,6 +274,23 @@ impl Reality {
             if let Some(item) = slotted {
                 if item.action() == ItemAction::Blueprint {
                     // do the thing!
+                    let (mut raw_x, mut raw_y) = selfs.blueprint_tile;
+                    raw_x -= 1;
+                    raw_y += 1;
+                    let adj_x = raw_x + (CHUNK_WIDTH / 2) as isize;
+                    let adj_y = raw_y + (CHUNK_HEIGHT / 2) as isize;
+                    let chunk_x = adj_x / CHUNK_WIDTH as isize;
+                    // TODO: Error on bottom chunk
+                    let chunk_y = adj_y / CHUNK_HEIGHT as isize;
+                    let loc_x = adj_x % CHUNK_WIDTH as isize;
+                    let loc_y = (CHUNK_HEIGHT as isize - adj_y) % CHUNK_HEIGHT as isize;
+                    let dta = selfs.chunk_data.get_mut(&(chunk_x, chunk_y)).unwrap();
+                    dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize] = 3;
+                    let meta_dta = selfs.chunk_status.get_mut(&(chunk_x, chunk_y)).unwrap();
+                    meta_dta.stop_rendering = true;
+                    //netty.send(Packet::TileUpdate((chunk_x, chunk_y), (loc_x as usize, loc_y as usize), 3));
+                    // cleanup state
+                    selfs.waiting_for_action = false;
                 }
             }
         }
@@ -1309,6 +1329,7 @@ fn calc_player_against_objects(objects: &[Object], player: (f32, f32)) -> bool {
     false
 }
 
+// TODO: issues with chunk left materials (inverted offscreen chunk?)
 fn get_9fold_layout(
     tile_x: usize,
     tile_y: usize,
@@ -1330,50 +1351,50 @@ fn get_9fold_layout(
                 if tile_y < CHUNK_HEIGHT - 1 {
                     // all tiles are within this chunk
                     return Some([
-                        this_chunk[crdcv(tile_x - 1, tile_y + 1)],
-                        this_chunk[crdcv(tile_x, tile_y + 1)],
-                        this_chunk[crdcv(tile_x + 1, tile_y + 1)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y)],
-                        this_chunk[crdcv(tile_x, tile_y)],
-                        this_chunk[crdcv(tile_x + 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x, tile_y)],
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
-                        this_chunk[crdcv(tile_x, tile_y - 1)],
-                        this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
                     ]);
                 }
                 else {
                     // some tiles are up
                     return Some([
-                        chunk_up[crdcv(tile_x - 1, 0)],
-                        chunk_up[crdcv(tile_x, 0)],
-                        chunk_up[crdcv(tile_x + 1, 0)],
+                        chunk_up[find_chunk_index(tile_x - 1, 0)],
+                        chunk_up[find_chunk_index(tile_x, 0)],
+                        chunk_up[find_chunk_index(tile_x + 1, 0)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y)],
-                        this_chunk[crdcv(tile_x, tile_y)],
-                        this_chunk[crdcv(tile_x + 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x, tile_y)],
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
-                        this_chunk[crdcv(tile_x, tile_y - 1)],
-                        this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
                     ]);
                 }
             }
             else {
                 // some tiles are down
                 return Some([
-                    this_chunk[crdcv(tile_x - 1, tile_y + 1)],
-                    this_chunk[crdcv(tile_x, tile_y + 1)],
-                    this_chunk[crdcv(tile_x + 1, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
 
-                    this_chunk[crdcv(tile_x - 1, tile_y)],
-                    this_chunk[crdcv(tile_x, tile_y)],
-                    this_chunk[crdcv(tile_x + 1, tile_y)],
+                    this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                    this_chunk[find_chunk_index(tile_x, tile_y)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                    chunk_down[crdcv(tile_x - 1, CHUNK_HEIGHT - 1)],
-                    chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down[crdcv(tile_x + 1, CHUNK_HEIGHT - 1)]
+                    chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
+                    chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
+                    chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)]
                 ]);
             }
         }
@@ -1382,50 +1403,50 @@ fn get_9fold_layout(
                 if tile_y < CHUNK_HEIGHT - 1 {
                     // some tiles are right
                     return Some([
-                        this_chunk[crdcv(tile_x - 1, tile_y + 1)],
-                        this_chunk[crdcv(tile_x, tile_y + 1)],
-                        chunk_right[crdcv(0, tile_y + 1)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                        chunk_right[find_chunk_index(0, tile_y + 1)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y)],
-                        this_chunk[crdcv(tile_x, tile_y)],
-                        chunk_right[crdcv(0, tile_y)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x, tile_y)],
+                        chunk_right[find_chunk_index(0, tile_y)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
-                        this_chunk[crdcv(tile_x, tile_y - 1)],
-                        chunk_right[crdcv(0, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                        chunk_right[find_chunk_index(0, tile_y - 1)]
                     ]);
                 }
                 else {
                     // some tiles are up and right
                     return Some([
-                        chunk_up[crdcv(tile_x - 1, 0)],
-                        chunk_up[crdcv(tile_x, 0)],
-                        chunk_up_right[crdcv(0, 0)],
+                        chunk_up[find_chunk_index(tile_x - 1, 0)],
+                        chunk_up[find_chunk_index(tile_x, 0)],
+                        chunk_up_right[find_chunk_index(0, 0)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y)],
-                        this_chunk[crdcv(tile_x, tile_y)],
-                        chunk_right[crdcv(0, tile_y)],
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                        this_chunk[find_chunk_index(tile_x, tile_y)],
+                        chunk_right[find_chunk_index(0, tile_y)],
 
-                        this_chunk[crdcv(tile_x - 1, tile_y - 1)],
-                        this_chunk[crdcv(tile_x, tile_y - 1)],
-                        chunk_right[crdcv(0, tile_y - 1)]
+                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
+                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                        chunk_right[find_chunk_index(0, tile_y - 1)]
                     ]);
                 }
             }
             else {
                 // some tiles are down and right
                 return Some([
-                    this_chunk[crdcv(tile_x - 1, tile_y + 1)],
-                    this_chunk[crdcv(tile_x, tile_y + 1)],
-                    chunk_right[crdcv(0, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                    chunk_right[find_chunk_index(0, tile_y + 1)],
 
-                    this_chunk[crdcv(tile_x - 1, tile_y)],
-                    this_chunk[crdcv(tile_x, tile_y)],
-                    chunk_right[crdcv(0, tile_y)],
+                    this_chunk[find_chunk_index(tile_x - 1, tile_y)],
+                    this_chunk[find_chunk_index(tile_x, tile_y)],
+                    chunk_right[find_chunk_index(0, tile_y)],
 
-                    chunk_down[crdcv(tile_x - 1, CHUNK_HEIGHT - 1)],
-                    chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down_right[crdcv(0, CHUNK_HEIGHT - 1)]
+                    chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
+                    chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
+                    chunk_down_right[find_chunk_index(0, CHUNK_HEIGHT - 1)]
                 ]);
             }
         }
@@ -1435,55 +1456,55 @@ fn get_9fold_layout(
             if tile_y < CHUNK_HEIGHT - 1 {
                 // some tiles are left
                 return Some([
-                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y + 1)],
-                    this_chunk[crdcv(tile_x, tile_y + 1)],
-                    this_chunk[crdcv(tile_x + 1, tile_y + 1)],
+                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
 
-                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
-                    this_chunk[crdcv(tile_x, tile_y)],
-                    this_chunk[crdcv(tile_x + 1, tile_y)],
+                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
+                    this_chunk[find_chunk_index(tile_x, tile_y)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y - 1)],
-                    this_chunk[crdcv(tile_x, tile_y - 1)],
-                    this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
+                    this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
                 ]);
             }
             else {
                 // some tiles are up and left
                 return Some([
-                    chunk_up_left[crdcv(CHUNK_WIDTH - 1, 0)],
-                    chunk_up[crdcv(tile_x, 0)],
-                    chunk_up[crdcv(tile_x + 1, 0)],
+                    chunk_up_left[find_chunk_index(CHUNK_WIDTH - 1, 0)],
+                    chunk_up[find_chunk_index(tile_x, 0)],
+                    chunk_up[find_chunk_index(tile_x + 1, 0)],
 
-                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
-                    this_chunk[crdcv(tile_x, tile_y)],
-                    this_chunk[crdcv(tile_x + 1, tile_y)],
+                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
+                    this_chunk[find_chunk_index(tile_x, tile_y)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                    chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y - 1)],
-                    this_chunk[crdcv(tile_x, tile_y - 1)],
-                    this_chunk[crdcv(tile_x + 1, tile_y - 1)]
+                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
+                    this_chunk[find_chunk_index(tile_x, tile_y - 1)],
+                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)]
                 ]);
             }
         }
         else {
             // some tiles are down and left
             return Some([
-                chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y + 1)],
-                this_chunk[crdcv(tile_x, tile_y + 1)],
-                this_chunk[crdcv(tile_x + 1, tile_y + 1)],
+                chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
+                this_chunk[find_chunk_index(tile_x, tile_y + 1)],
+                this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
 
-                chunk_left[crdcv(CHUNK_WIDTH - 1, tile_y)],
-                this_chunk[crdcv(tile_x, tile_y)],
-                this_chunk[crdcv(tile_x + 1, tile_y)],
+                chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
+                this_chunk[find_chunk_index(tile_x, tile_y)],
+                this_chunk[find_chunk_index(tile_x + 1, tile_y)],
 
-                chunk_down_left[crdcv(CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1)],
-                chunk_down[crdcv(tile_x, CHUNK_HEIGHT - 1)],
-                chunk_down[crdcv(tile_x + 1, CHUNK_HEIGHT - 1)]
+                chunk_down_left[find_chunk_index(CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1)],
+                chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
+                chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)]
             ]);
         }
     }
 }
 
-fn crdcv(crdx: usize, crdy: usize) -> usize {
-    crdx + crdy * CHUNK_WIDTH
+fn find_chunk_index(target_x: usize, target_y: usize) -> usize {
+    target_x + target_y * CHUNK_WIDTH
 }
