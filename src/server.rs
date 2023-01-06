@@ -31,13 +31,21 @@ pub fn startup(_arguments: Vec<String>) -> ! {
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-/// Represents one user's profile.
+/// Represents one user's profile with the server
 pub struct Profile {
+    /// This player's username and tag
     pub user: User,
+    /// A list of all world ids for which this player can join
     pub avalable_games: Vec<usize>,
 }
 
-/// Returns all profiles from the disk.
+/// Returns all [Profile]s from the disk.
+/// 
+/// # Panics
+/// This function can panic if there is a faliure reading the directory given by [profile_folder]
+/// 
+/// This function can panic if a file in the above directory has no file extension, cannot be read,
+/// or cannot be deserialized
 pub fn profiles() -> Vec<Profile> {
     let mut saved_users = vec![];
     for file in std::fs::read_dir(profile_folder()).expect("Unable to access profiles.") {
@@ -52,18 +60,32 @@ pub fn profiles() -> Vec<Profile> {
     saved_users
 }
 
-pub fn saves() -> Vec<SaveGame> {
-    let mut saved_games = vec![];
-    for file in std::fs::read_dir(save_folder()).expect("Unable to access saves.") {
-        let wrkabl = file.unwrap().path();
-        if wrkabl.extension().expect("File had no extension.") == "bic" {
-            saved_games.push(
-                bincode::deserialize(&std::fs::read(wrkabl).expect("Unable to read a save file."))
-                    .expect("Encountered a courrupted save file."),
-            );
+/// Returns all [SaveGame]s from the disk.
+/// 
+/// # Errors
+/// This function can return an error if there is a faliure reading the directory given by
+/// [save_folder]
+/// 
+/// This function can return an error if a file in the above directory has no file extension, cannot
+/// be read, or cannot be deserialized
+pub fn get_disk_savegames() -> Result<Vec<SaveGame>, anyhow::Error> {
+    use std::ffi::OsStr;
+
+    // A list that will be returned with all loaded games on completion
+    let mut loaded_saves = vec![];
+    // Read the directory containing save files
+    let directory = std::fs::read_dir(save_folder())?;
+    // For each file (save) in this directory...
+    for pfile in directory {
+        let file = pfile?;
+        // If the file ends with a .bic extension, it's probably a save
+        if file.path().extension() == Some(OsStr::new("bic")) {
+            // Add the deserialized data into our list of loaded games
+            loaded_saves.push(bincode::deserialize(&std::fs::read(file.path())?)?);
         }
     }
-    saved_games
+    // Return everything we've collected!
+    return Ok(loaded_saves);
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]

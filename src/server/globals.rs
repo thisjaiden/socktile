@@ -12,7 +12,7 @@ pub struct Globals {
 
 impl Default for Globals {
     fn default() -> Self {
-        let saves = saves();
+        let saves = get_disk_savegames().expect("Savegames were unable to be loaded.");
         let mut sorted = vec![];
         for i in 0..saves.len() {
             for save in saves.clone() {

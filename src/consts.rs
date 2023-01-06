@@ -30,8 +30,8 @@ pub const EMBED_ASSETS: bool = true;
 #[cfg(target_arch = "wasm32")]
 pub const EMBED_ASSETS: bool = false;
 
-/// The current version tag for netty. If this is different from whoever you're talking to, they're likely
-/// using an incompatible protocol.
+/// The current version tag for netty. If this is different from whoever you're talking to, they're
+/// likely using an incompatible protocol.
 pub const NETTY_VERSION: &str = "closed-alpha-iteration-24";
 /// Port for tcp network connections
 pub const TCP_PORT: u16 = 11111;

@@ -1,5 +1,4 @@
 use num::Integer;
-use rand::seq::SliceRandom;
 use std::any::Any;
 
 pub fn _run_matrix_nxp<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer + Copy>(
@@ -15,7 +14,7 @@ pub fn _run_matrix_nxp<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer
 }
 
 /// Runs a function for every position in a matrix.
-/// The given matrix two dimensional and N by N in size.
+/// The given matrix is two dimensional and `n` in both width and height.
 ///
 /// # Examples
 /// ```
@@ -35,6 +34,14 @@ pub fn run_matrix_nxn<R: Iterator<Item = N> + Clone, F: FnMut(N, N), N: Integer 
     }
 }
 
+/// Generates a list of coordinate pairs, one for each location in a matrix.
+/// The given matrix is two dimensional and `n` in both width and height.
+///
+/// # Examples
+/// ```
+/// use crate::prelude::*;
+/// assert!(get_matrix_nxn(-1..1).contains((-1, 0)));
+/// ```
 pub fn get_matrix_nxn<R: Iterator<Item = N> + Clone, N: Integer + Copy>(n: R) -> Vec<(N, N)> {
     let mut out = vec![];
     for x in n.clone() {
@@ -45,10 +52,18 @@ pub fn get_matrix_nxn<R: Iterator<Item = N> + Clone, N: Integer + Copy>(n: R) ->
     out
 }
 
+use rand::seq::SliceRandom;
+/// Shortcut to `rand::seq::SliceRandom`'s `Vec<T>.choose()`.
+/// 
+/// # Panics
+/// This function panics if the input has no elements. If this is a concern, use
+/// [safe_rand_from_array].
 pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
     array.choose(&mut rand::thread_rng()).unwrap().clone()
 }
 
+/// Shortcut to `rand::seq::SliceRandom`'s `Vec<T>.choose()`. Returns `None` if the input has no
+/// elements to choose from.
 pub fn safe_rand_from_array<T: Any + Clone>(array: Vec<T>) -> Option<T> {
     let a = array.choose(&mut rand::thread_rng());
     if let Some(a) = a {

@@ -54,6 +54,7 @@ fn main() {
         info!("This is an internal build. All software is property of and (c) Jaiden Bernard 2021-2023.");
         info!("Do not share this software without permission from the property owners.");
     }
+    // The following section pertains to game servers, which cannot be run on WASM.
     #[cfg(not(target_arch = "wasm32"))]
     {
         // If starting a server is allowed...
@@ -67,7 +68,7 @@ fn main() {
             // If one of the arguments is `server`...
             if arguments.contains(&String::from("server")) {
                 // Run a server
-                // `server::startup();` returns a never type and should never proceed to launching a normal game.
+                // This returns a never type and should never proceed to launching a normal game
                 info!("Running as a server. Make sure you know what you're doing!");
                 server::startup(arguments);
             }

@@ -7,6 +7,8 @@ pub struct World {
     pub offline_players: Vec<(User, Transform, PlayerData)>,
     /// All of the generated terrain in the world.
     /// (chunk coords, terrain data array)
+    /// Each chunk is a 2d array of size `CHUNK_WIDTH` * `CHUNK_HEIGHT`, and starts in the logical
+    /// top left.
     pub terrain: HashMap<(isize, isize), Vec<usize>>,
     pub objects: Vec<Object>,
     pub generated_objects: Vec<(isize, isize)>,
