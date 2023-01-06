@@ -888,6 +888,7 @@ impl Reality {
         mut chat: ResMut<Chat>,
         disk: Res<Disk>,
         mut queries: ParamSet<(Query<&Tile>, Query<&Object>)>,
+        time: Res<Time>,
     ) {
         let ctrls = disk.control_config();
         if !chat.is_open()
@@ -1024,45 +1025,46 @@ impl Reality {
             });
             let mut had_movement = false;
             let mut new_pos = selfs.player_position;
+            let mul = time.delta_seconds() / (1.0/60.0);
             // move
             if keyboard.pressed(ctrls.move_up) {
-                new_pos.translation.y += 4.0;
+                new_pos.translation.y += 4.0 * mul;
                 if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
                     !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.translation.y -= 4.0;
+                    new_pos.translation.y -= 4.0 * mul;
                 }
             }
             if keyboard.pressed(ctrls.move_down) {
-                new_pos.translation.y -= 4.0;
+                new_pos.translation.y -= 4.0 * mul;
                 if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
                     !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)){
                     had_movement = true;
                 }
                 else {
-                    new_pos.translation.y += 4.0;
+                    new_pos.translation.y += 4.0 * mul;
                 }
             }
             if keyboard.pressed(ctrls.move_left) {
-                new_pos.translation.x -= 4.0;
+                new_pos.translation.x -= 4.0 * mul;
                 if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
                     !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.translation.x += 4.0;
+                    new_pos.translation.x += 4.0 * mul;
                 }
             }
             if keyboard.pressed(ctrls.move_right) {
-                new_pos.translation.x += 4.0;
+                new_pos.translation.x += 4.0 * mul;
                 if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
                     !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
-                    new_pos.translation.x -= 4.0;
+                    new_pos.translation.x -= 4.0 * mul;
                 }
             }
 
