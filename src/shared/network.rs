@@ -69,6 +69,7 @@ pub enum Packet {
     /// (Chunk Location, [Tile ID])
     ChunkData((isize, isize), Vec<usize>),
     /// An update has occurred to a single tile.
+    /// Tile coordinates are world aligned (+x right, +y up) starting in the logical bottom left.
     /// (Chunk Location, Tile Location, New State)
     TileUpdate((isize, isize), (usize, usize), usize),
     /// Sends over all game objects.

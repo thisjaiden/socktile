@@ -225,9 +225,12 @@ impl World {
 
         dupe_objects
     }
+    /// Input tile coordinates are world aligned (+x right, +y up) starting in the logical bottom
+    /// left
     pub fn modify_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
         let mut dta = self.get_or_gen(chunk);
-        dta[tile.0 + ((CHUNK_HEIGHT - tile.1 - 1) * CHUNK_WIDTH)] = state;
+        dta[tile.0 + (tile.1 * CHUNK_WIDTH)] = state;
+        // TODO: mut access for reduced overhead
         self.terrain.insert(chunk, dta);
     }
 }

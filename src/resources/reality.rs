@@ -44,6 +44,8 @@ pub struct Reality {
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
     /// Data for all chunks
+    /// Each chunk is a 2d array of size `CHUNK_WIDTH` * `CHUNK_HEIGHT`, and starts in the logical
+    /// top left
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
     blueprint_tile: (isize, isize),
@@ -72,6 +74,8 @@ impl Reality {
             blueprint_tile: (0, 0),
         }
     }
+    /// Input tile coordinates are world aligned (+x right, +y up) starting in the logical bottom
+    /// left. Automatically flags the chunk to rerender.
     pub fn update_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
         let dta = self.chunk_data.get_mut(&chunk).unwrap();
         dta[tile.0 + ((CHUNK_HEIGHT - tile.1 - 1) * CHUNK_WIDTH)] = state;
@@ -293,19 +297,18 @@ impl Reality {
                     raw_y += 1;
                     let adj_x = raw_x + (CHUNK_WIDTH / 2) as isize;
                     let adj_y = raw_y + (CHUNK_HEIGHT / 2) as isize;
-                    let chunk_x = adj_x / CHUNK_WIDTH as isize;
-                    // TODO: Error on bottom of chunks
-                    let chunk_y = adj_y / CHUNK_HEIGHT as isize;
-                    let loc_x = adj_x % CHUNK_WIDTH as isize;
-                    let loc_y = (CHUNK_HEIGHT as isize - adj_y) % CHUNK_HEIGHT as isize;
+                    let chunk_x = (adj_x as f32 / CHUNK_WIDTH as f32).floor() as isize;
+                    let chunk_y = (adj_y as f32 / CHUNK_HEIGHT as f32).floor() as isize;
+                    let loc_x = ((adj_x.abs() - (CHUNK_WIDTH as isize * chunk_x).abs()) % CHUNK_WIDTH as isize).abs();
+                    let loc_y = ((adj_y.abs() - (CHUNK_HEIGHT as isize * chunk_y).abs()) % CHUNK_HEIGHT as isize).abs();
                     let dta = selfs.chunk_data.get_mut(&(chunk_x, chunk_y)).unwrap();
-                    dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize] -= 1;
-                    let val = dta[(loc_x + ((CHUNK_HEIGHT as isize - loc_y) * CHUNK_WIDTH as isize)) as usize];
+                    dta[(loc_x + (loc_y * CHUNK_WIDTH as isize)) as usize] += 1;
+                    let val = dta[(loc_x + (loc_y * CHUNK_WIDTH as isize)) as usize];
                     let meta_dta = selfs.chunk_status.get_mut(&(chunk_x, chunk_y)).unwrap();
                     meta_dta.stop_rendering = true;
                     netty.send(Packet::TileUpdate(
                         (chunk_x, chunk_y),
-                        (loc_x as usize, (CHUNK_HEIGHT as isize - loc_y) as usize),
+                        (loc_x as usize, loc_y as usize),
                         val,
                     ));
                     // cleanup state
