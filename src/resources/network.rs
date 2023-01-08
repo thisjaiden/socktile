@@ -3,25 +3,39 @@ use netty::client::{Client, ClientConfig};
 use super::{chat::ChatMessage, Reality};
 use crate::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
+use std::sync::{Arc, Mutex};
+
 #[derive(Resource)]
 pub struct Netty {
+    #[cfg(not(target_arch = "wasm32"))]
     n: Client<Packet>,
+    #[cfg(target_arch = "wasm32")]
+    n: Arc<Mutex<Client<Packet>>>,
     #[cfg(target_arch = "wasm32")]
     buffer: Vec<Packet>,
 }
 
 impl Netty {
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn new(n: Client<Packet>) -> Netty {
         Netty {
+            n
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    pub fn new(n: Arc<Mutex<Client<Packet>>>) -> Netty {
+        Netty {
             n,
-            #[cfg(target_arch = "wasm32")]
-            buffer: vec![],
+            buffer: vec![]
         }
     }
     #[cfg(target_arch = "wasm32")]
     pub fn send(&mut self, p: Packet) {
+        let mut ax = self.n.lock().unwrap();
         // TODO: this is a particularally wasteful clone. Don't care!
-        let success = self.n.send(p.clone()).is_ok();
+        let success = ax.send(p.clone()).is_ok();
+        drop(ax);
         if !success {
             self.buffer.push(p);
         }
@@ -42,6 +56,7 @@ impl Netty {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn init() -> Option<Netty> {
     info!("Netty initalizing");
 
@@ -62,6 +77,22 @@ fn init() -> Option<Netty> {
         warn!("Unable to construct Netty.");
         None
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn init() -> Option<Netty> {
+    info!("Netty initalizing");
+
+    let client = Client::launch(ClientConfig {
+        address: GGS,
+        tcp_port: TCP_PORT,
+        ws_port: WS_PORT,
+        connection_timeout: TIMEOUT_DURATION,
+        ..default()
+    });
+    let mut n = Netty::new(client);
+    n.send(Packet::NettyVersion(String::from(NETTY_VERSION)));
+    Some(n)
 }
 
 pub fn system_startup_checks(
@@ -95,7 +126,17 @@ pub fn system_step(
 ) {
     if let Some(mut netty) = netty {
         netty.update();
-        let pkts = netty.n.get_packets();
+        let pkts;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            pkts = netty.n.get_packets();
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let mut ax = netty.n.lock().unwrap();
+            pkts = ax.get_packets();
+            drop(ax);
+        }
         for packet in pkts {
             match packet {
                 Packet::CreatedUser(user) => {
