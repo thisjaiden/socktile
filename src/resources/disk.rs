@@ -13,11 +13,43 @@ impl Disk {
     pub fn init() -> Disk {
         #[cfg(target_arch = "wasm32")]
         {
+            let p_window_config = wasm_cookies::get("windowconfig");
+            let window_config;
+            if let Some(Ok(wc)) = p_window_config {
+                window_config = serde_json::from_str(&wc).unwrap_or_else(|_| { return WindowConfig::default() });
+            }
+            else {
+                window_config = WindowConfig::default()
+            }
+            let p_control_config = wasm_cookies::get("controlconfig");
+            let control_config;
+            if let Some(Ok(wc)) = p_control_config {
+                control_config = serde_json::from_str(&wc).unwrap_or_else(|_| { return ControlConfig::default() });
+            }
+            else {
+                control_config = ControlConfig::default()
+            }
+            let p_audio_config = wasm_cookies::get("audioconfig");
+            let audio_config;
+            if let Some(Ok(wc)) = p_audio_config {
+                audio_config = serde_json::from_str(&wc).unwrap_or_else(|_| { return AudioConfig::default() });
+            }
+            else {
+                audio_config = AudioConfig::default()
+            }
+            let p_user = wasm_cookies::get("user");
+            let user;
+            if let Some(Ok(usr)) = p_user {
+                user = serde_json::from_str(&usr).unwrap();
+            }
+            else {
+                user = None;
+            }
             return Disk {
-                window_config: WindowConfig::default(),
-                control_config: ControlConfig::default(),
-                audio_config: AudioConfig::default(),
-                user: None,
+                window_config,
+                control_config,
+                audio_config,
+                user,
             };
         }
         #[cfg(not(target_arch = "wasm32"))]
@@ -145,7 +177,13 @@ impl Disk {
     pub fn update_user(&mut self, new: User) -> bool {
         #[cfg(target_arch = "wasm32")]
         {
-            info!("TODO: users are unsaved on wasm");
+            let mut warm_cookies = wasm_cookies::CookieOptions::default()
+                .expires_after(std::time::Duration::from_secs(60 * 24 * 30 * 12 * 5));
+            wasm_cookies::set(
+                "user",
+                &serde_json::to_string(&new).unwrap(),
+                &warm_cookies
+            );
             self.user = Some(new);
             true
         }
