@@ -49,5 +49,10 @@
         "join_world": {
             "cancel": "Back"
         }
+    },
+    "npc": {
+        "dummy_test": {
+            "test_interaction": "This is some dialouge... Meant to wrap this text box. I hate you."
+        }
     }
 }

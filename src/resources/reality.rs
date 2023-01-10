@@ -49,6 +49,7 @@ pub struct Reality {
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
     blueprint_tile: (isize, isize),
+    active_interaction: bool,
 }
 
 impl Reality {
@@ -72,6 +73,7 @@ impl Reality {
             chunk_data: default(),
             chunk_status: default(),
             blueprint_tile: (0, 0),
+            active_interaction: false
         }
     }
     /// Input tile coordinates are world aligned (+x right, +y up) starting in the logical bottom
@@ -879,6 +881,54 @@ impl Reality {
                 selfs.pause_menu = MenuState::Closed;
                 uiman.reset_ui();
             }
+        }
+    }
+    pub fn system_npc_interaction(
+        mut commands: Commands,
+        mut selfs: ResMut<Reality>,
+        disk: Res<Disk>,
+        keyboard: Res<Input<KeyCode>>,
+        core: Res<CoreAssets>,
+        fonts: Res<FontAssets>,
+        lang_serve: Res<Assets<LanguageKeys>>,
+        mut netty: ResMut<Netty>,
+        mut all_objects: Query<(&mut Object, &Transform)>,
+    ) {
+        if keyboard.just_pressed(disk.control_config().interact) && !selfs.active_interaction {
+            all_objects.for_each_mut(|(object, location)| match object.rep.clone() {
+                ObjectType::Npc(mut npc) => {
+                    if distance(selfs.player_position, *location) < NPC_INTERACTION_DISTANCE {
+                        let lang = lang_serve.get(&core.lang).unwrap();
+                        let dialouge = npc.start_player_conversation(disk.user().unwrap(), lang);
+                        commands.spawn((
+                            Text2dBundle {
+                                text: Text {
+                                    sections: vec![TextSection {
+                                        value: dialouge[0].clone(),
+                                        style: TextStyle {
+                                            font: fonts.apple_tea.clone(),
+                                            font_size: 32.0,
+                                            color: Color::BLACK
+                                        }
+                                    }],
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Center,
+                                        horizontal: HorizontalAlign::Left
+                                    }
+                                },
+                                transform: Transform::from_xyz(-750.0, -350.0, UI_TEXT),
+                                ..default()
+                            },
+                            UILocked {}
+                        ));
+                        netty.send(Packet::UpdateObject(object.clone()));
+                        // Don't start multiple NPC interactions!
+                        selfs.active_interaction = true;
+                        return;
+                    }
+                }
+                _ => {} // don't care!
+            });
         }
     }
     pub fn system_player_controls(

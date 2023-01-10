@@ -1,6 +1,6 @@
 `socktile`
 ===
-An unfinished and in-development game.
+An unfinished game.
 
 Running
 ---
@@ -11,6 +11,15 @@ Building
 Make sure you have [Rust](https://rust-lang.org) installed.  
 Clone the project, and run `cargo build --release` in the root directory. (Builds without the `--release` flag are extremely slow.)  
 You can run a local gameserver by running the output executable with `server` as an argument.
+
+Quick Builds
+---
+`build_quick_test.bat` / `build_quck_test.sh` are provided to quickly run a local game and server. `build_wasm_test.sh` is avalable to try experimental WASM support, which runs a local game on http://localhost:8080. There is no Windows script for this test.
+
+Code Layout & Docs
+---
+- [JSON Variants](docs/json.md)
+- [Asset Layout](docs/asset_layout.md)
 
 License
 ---

@@ -205,6 +205,7 @@ fn main() {
         SystemSet::on_update(GameState::Play)
             .with_system(resources::Reality::system_spawn_objects)
             .with_system(resources::Reality::system_pause_menu.before("ui"))
+            .with_system(resources::Reality::system_npc_interaction)
             .with_system(resources::Reality::system_player_loader)
             .with_system(resources::Reality::system_player_unloader)
             .with_system(resources::Reality::system_player_controls.before("ui"))
