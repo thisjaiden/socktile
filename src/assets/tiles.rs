@@ -23,7 +23,7 @@ impl AssetLoader for TileTypeConfigLoader {
             let tile_type_config: TileTypeConfig = serde_json::from_slice(bytes)?;
             info!("{} terrain states loaded", tile_type_config.states.len());
             if DEV_BUILD {
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(not(any(target_arch = "wasm32", target_os = "ios")))]
                 {
                     info!("Creating injectable.json based on states");
                     let mut contents = String::from("\"intGridValues\":[");

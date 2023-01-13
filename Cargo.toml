@@ -2,6 +2,10 @@
 name = "socktile"
 version = "1.0.0-closed-alpha-00"
 edition = "2021"
+description = "I don't understand why this is required for iOS"
+
+[package.metadata.bundle]
+identifier = "patcatgames.socktile"
 
 [dependencies]
 bincode = "1.3.3"
