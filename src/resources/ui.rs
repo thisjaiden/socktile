@@ -483,6 +483,7 @@ pub fn ui_disconnect_game(
             With<HotbarMarker>,
             With<Object>,
             With<AnimatedSprite>,
+            With<DialougeText>,
         )>,
     >,
 ) {

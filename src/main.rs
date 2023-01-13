@@ -204,18 +204,20 @@ fn main() {
     .add_system_set(
         SystemSet::on_update(GameState::Play)
             .with_system(resources::Reality::system_spawn_objects)
-            .with_system(resources::Reality::system_pause_menu.before("ui"))
             .with_system(resources::Reality::system_npc_interaction)
             .with_system(resources::Reality::system_player_loader)
             .with_system(resources::Reality::system_player_unloader)
-            .with_system(resources::Reality::system_player_controls.before("ui"))
+            .with_system(resources::Reality::system_player_locator.label("player"))
             .with_system(
                 resources::Reality::system_camera_updater
                     .label("ui")
                     .after("player")
-                    .after("cursor"),
+                    .after("cursor")
+                    .at_end(),
             )
-            .with_system(resources::Reality::system_player_locator.label("player"))
+            .with_system(resources::Reality::system_pause_menu.before("ui"))
+            .with_system(resources::Reality::system_center_dialouge_text.before("ui"))
+            .with_system(resources::Reality::system_player_controls.before("ui").before("player"))
             .with_system(resources::Reality::system_pause_renderer.before("ui"))
             .with_system(resources::Reality::system_position_hotbar.before("ui"))
             .with_system(resources::Reality::system_scroll_hotbar)

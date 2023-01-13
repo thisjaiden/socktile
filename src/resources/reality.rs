@@ -8,6 +8,7 @@ use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
     render::camera::Camera,
     utils::HashMap,
+    text::Text2dBounds,
 };
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
@@ -907,7 +908,7 @@ impl Reality {
                                         value: dialouge[0].clone(),
                                         style: TextStyle {
                                             font: fonts.apple_tea.clone(),
-                                            font_size: 32.0,
+                                            font_size: 64.0,
                                             color: Color::BLACK
                                         }
                                     }],
@@ -916,9 +917,13 @@ impl Reality {
                                         horizontal: HorizontalAlign::Left
                                     }
                                 },
-                                transform: Transform::from_xyz(-750.0, -350.0, UI_TEXT),
+                                text_2d_bounds: Text2dBounds {
+                                    size: Vec2 { x: 1500.0, y: 300.0 }
+                                },
+                                transform: Transform::from_xyz(-750.0, -325.0, UI_TEXT),
                                 ..default()
                             },
+                            DialougeText {},
                             UILocked {}
                         ));
                         netty.send(Packet::UpdateObject(object.clone()));
@@ -930,6 +935,13 @@ impl Reality {
                 _ => {} // don't care!
             });
         }
+    }
+    pub fn system_center_dialouge_text(
+        mut query: Query<&mut Transform, With<DialougeText>>
+    ) {
+        query.for_each_mut(|mut t| {
+            t.translation = Vec3::from_array([-750.0, -325.0, UI_TEXT]);
+        });
     }
     pub fn system_player_controls(
         mut selfs: ResMut<Reality>,
@@ -950,6 +962,9 @@ impl Reality {
         }
         if chat.is_open() && keyboard.just_pressed(ctrls.close_menu) {
             chat.escape_close();
+            return;
+        }
+        if selfs.active_interaction {
             return;
         }
         if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {

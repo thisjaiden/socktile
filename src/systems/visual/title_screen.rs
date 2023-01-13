@@ -74,34 +74,43 @@ pub fn title_screen(
             },
         ),
     ));
-    // Quit game text
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection {
-                    value: lang.get("en_us.core.title_screen.quit"),
-                    style: TextStyle {
-                        font: font_assets.apple_tea.clone(),
-                        font_size: 64.0,
-                        color: Color::BLACK,
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Quit game text
+        commands.spawn((
+            Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: lang.get("en_us.core.title_screen.quit"),
+                        style: TextStyle {
+                            font: font_assets.apple_tea.clone(),
+                            font_size: 64.0,
+                            color: Color::BLACK,
+                        },
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center,
                     },
-                }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
                 },
+                ..default()
             },
+            RemoveOnStateChange {},
+            Transform::from_xyz(0.0, -3000.0, UI_TEXT).ease_to(
+                Transform::from_xyz(-512.0, -256.0, UI_TEXT),
+                EaseFunction::QuadraticInOut,
+                bevy_easings::EasingType::Once {
+                    duration: Duration::from_millis(1000),
+                },
+            ),
+        ));
+        ui.add_ui(UIClickable {
+            action: UIClickAction::CloseProgram,
+            location: (-710.0, -210.0),
+            size: (410.0, 100.0),
             ..default()
-        },
-        RemoveOnStateChange {},
-        Transform::from_xyz(0.0, -3000.0, UI_TEXT).ease_to(
-            Transform::from_xyz(-512.0, -256.0, UI_TEXT),
-            EaseFunction::QuadraticInOut,
-            bevy_easings::EasingType::Once {
-                duration: Duration::from_millis(1000),
-            },
-        ),
-    ));
+        });
+    }
     // Settings text
     commands.spawn((
         Text2dBundle {
@@ -183,12 +192,6 @@ pub fn title_screen(
         TitleScreenUser {},
         RemoveOnStateChange {},
     ));
-    ui.add_ui(UIClickable {
-        action: UIClickAction::CloseProgram,
-        location: (-710.0, -210.0),
-        size: (410.0, 100.0),
-        ..default()
-    });
     ui.add_ui(UIClickable {
         action: UIClickAction::OpenSettings,
         location: (330.0, -210.0),

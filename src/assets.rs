@@ -93,7 +93,7 @@ pub struct ItemAssets {
     // opalescent axe
     #[asset(path = "item/placeholder.png")]
     pub makeshift_fishing_rod: Handle<Image>,
-    #[asset(path = "item/placeholder.png")]
+    #[asset(path = "item/blueprint.png")]
     pub blueprint: Handle<Image>,
     #[asset(path = "item/wood.png")]
     pub wood: Handle<Image>,

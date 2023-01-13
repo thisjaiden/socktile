@@ -20,6 +20,9 @@ pub struct TitleScreenUser;
 pub struct UILocked;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+pub struct DialougeText;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct RemoveOnStateChange;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Component)]
