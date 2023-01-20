@@ -479,13 +479,21 @@ impl Reality {
                     let mut sub = String::new();
                     let mut tt;
                     if unique_tiles.len() > 2 {
-                        error!("Invalid terrain map! (>2 TPTSF)");
-                        error!(
-                            "Chunk ({}, {}), Tile ({}, {})",
-                            chunk_location.0, chunk_location.1, tile_x, tile_y
-                        );
-                        continue;
-                        //panic!();
+                        if *layout.iter().max().unwrap() == layout[4] {
+                            // We're good! This is the most dominant tile, so we can ignore all
+                            // other tiles.
+                            main = representations[layout[4]].clone().name;
+                            sub = representations[layout[4]].clone().name;
+                            tt = TransitionType::Nothing;
+                        }
+                        else {
+                            error!("Invalid terrain map! (>2 TPTSF)");
+                            error!(
+                                "Chunk ({}, {}), Tile ({}, {})",
+                                chunk_location.0, chunk_location.1, tile_x, tile_y
+                            );
+                            continue;
+                        }
                     }
                     else if unique_tiles.len() == 1 {
                         main = unique_tiles[0].clone();

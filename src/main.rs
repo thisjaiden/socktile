@@ -227,12 +227,10 @@ fn main() {
             .with_system(resources::Reality::system_update_hotbar)
             .with_system(resources::Reality::system_hitbox_debug_lines)
             .with_system(resources::Reality::system_player_debug_lines)
-            .with_system(
-                resources::Reality::system_chunk_derenderer
-                    .after("calls unrender")
-                    .before("renders chunks"),
-            )
-            .with_system(resources::Reality::system_render_waiting_chunks.label("renders chunks"))
+            .with_system(resources::Reality::system_action_blueprint.label("a").before("b"))
+            .with_system(resources::Reality::system_chunk_derenderer.label("b").before("c"))
+            .with_system(resources::Reality::system_mark_chunks.label("c").before("d"))
+            .with_system(resources::Reality::system_render_waiting_chunks.label("d").at_end())
             .with_system(resources::Reality::system_action_none)
             .with_system(resources::Reality::system_action_chop)
             .with_system(
@@ -240,7 +238,6 @@ fn main() {
                     .after("player")
                     .before("ui"),
             )
-            .with_system(resources::Reality::system_action_blueprint.label("calls unrender"))
             .with_system(resources::Reality::system_start_npc_popups)
             .with_system(resources::Reality::system_shrink_npc_popups)
             .with_system(resources::Animator::system_player_animator)
@@ -252,7 +249,6 @@ fn main() {
             .with_system(resources::Chat::system_send_chat)
             .with_system(resources::ui::ui_forward)
             .with_system(resources::ui::ui_disconnect_game)
-            .with_system(resources::Reality::system_mark_chunks)
             .with_system(systems::visual::animate_sprites),
     )
     .add_system_set(
