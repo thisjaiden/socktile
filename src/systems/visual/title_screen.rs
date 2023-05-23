@@ -161,7 +161,7 @@ pub fn title_screen(
     ));
     // player username in bottom left
     commands.spawn((
-        Text2dBundle {
+        TextBundle {
             text: Text {
                 sections: vec![TextSection {
                     value: String::new(),
@@ -174,7 +174,15 @@ pub fn title_screen(
                 alignment: TextAlignment::Left,
                 linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
-            transform: Transform::from_xyz(-(1920.0 / 2.0) + 8.0, -(1080.0 / 2.0) + 32.0, UI_TEXT),
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    left: Val::Px(8.0),
+                    bottom: Val::Px(8.0),
+                    ..default()
+                },
+                ..default()
+            },
             ..default()
         },
         TitleScreenUser {},
