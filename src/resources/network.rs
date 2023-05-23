@@ -97,7 +97,7 @@ fn init() -> Option<Netty> {
 
 pub fn system_startup_checks(
     mut commands: Commands,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     disk: Res<Disk>,
 ) {
     let pot_client = init();
@@ -105,17 +105,17 @@ pub fn system_startup_checks(
         if disk.user().is_some() {
             info!("Logging in user");
             client.send(Packet::UserPresence(disk.user().unwrap()));
-            state.overwrite_set(GameState::TitleScreen).unwrap();
+            state.set(GameState::TitleScreen);
         }
         else {
             info!("Opening user creation screen");
-            state.overwrite_set(GameState::MakeUser).unwrap();
+            state.set(GameState::MakeUser);
         }
         commands.insert_resource(client);
     }
     else {
         warn!("No network connection");
-        state.overwrite_set(GameState::OfflineTitle).unwrap();
+        state.set(GameState::OfflineTitle);
     }
 }
 

@@ -8,7 +8,7 @@ use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
     render::camera::Camera,
     utils::HashMap,
-    text::Text2dBounds,
+    text::{Text2dBounds, TextAlignment},
 };
 use bevy_prototype_debug_lines::DebugLines;
 use uuid::Uuid;
@@ -920,10 +920,8 @@ impl Reality {
                                             color: Color::BLACK
                                         }
                                     }],
-                                    alignment: TextAlignment {
-                                        vertical: VerticalAlign::Center,
-                                        horizontal: HorizontalAlign::Left
-                                    }
+                                    alignment: TextAlignment::Left,
+                                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                                 },
                                 text_2d_bounds: Text2dBounds {
                                     size: Vec2 { x: 1500.0, y: 300.0 }
@@ -1199,10 +1197,8 @@ impl Reality {
                                     },
                                 },
                             ],
-                            alignment: TextAlignment {
-                                vertical: VerticalAlign::Center,
-                                horizontal: HorizontalAlign::Center,
-                            },
+                            alignment: TextAlignment::Center,
+                            linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                         },
                         transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                         ..Default::default()
@@ -1417,10 +1413,8 @@ impl Reality {
                                     color: Color::BLACK,
                                 },
                             }],
-                            alignment: TextAlignment {
-                                vertical: VerticalAlign::Center,
-                                horizontal: HorizontalAlign::Left,
-                            },
+                            alignment: TextAlignment::Left,
+                            linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                         },
                         transform: Transform::from_xyz(
                             0.0,

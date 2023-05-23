@@ -21,7 +21,7 @@ mod utils;
 mod window_setup;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, States)]
 pub enum GameState {
     /// Loads logo from disk and continues to `Load`
     PreLoadLoad,
@@ -43,6 +43,12 @@ pub enum GameState {
     Settings,
     /// Gameplay state
     Play,
+}
+
+impl Default for GameState {
+    fn default() -> Self {
+        Self::PreLoadLoad
+    }
 }
 
 fn main() {
@@ -91,180 +97,172 @@ fn main() {
     }
 
     // Add assets, plugins and systems to our app, then run it
-    app.add_loading_state(
-        LoadingState::new(GameState::Load)
-            .with_collection::<assets::CoreAssets>()
-            .with_collection::<assets::FontAssets>()
-            .with_collection::<assets::AnimatorAssets>()
-            .with_collection::<assets::UIAssets>()
-            .with_collection::<assets::ItemAssets>()
-            .with_collection::<assets::ObjectAssets>()
-            .with_collection::<assets::NPCAssets>(),
-    )
-    .add_plugin(ProgressPlugin::new(GameState::Load).continue_to(GameState::NetworkCheck))
-    .insert_resource(ClearColor(Color::WHITE))
-    .add_plugin(modular_assets::ModularAssetsPlugin)
-    .add_plugin(bevy_kira_audio::AudioPlugin)
-    .add_plugin(bevy_easings::EasingsPlugin)
-    .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
-    .add_state(GameState::PreLoadLoad)
-    .add_system_set(SystemSet::on_enter(GameState::PreLoadLoad).with_system(systems::visual::logo))
-    .add_system_set(
-        SystemSet::on_enter(GameState::Load)
-            .with_system(window_setup::window_setup)
-            .with_system(systems::audio::audio_setup),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::Load).with_system(systems::visual::loading_prog),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::NetworkCheck)
-            .with_system(resources::network::system_startup_checks)
-            .with_system(systems::cursor::spawn),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::TitleScreen)
-            .with_system(systems::visual::title_screen.label("any"))
-            .with_system(systems::audio::title_screen_loop.label("any"))
-            .with_system(systems::visual::clear_old.before("any")),
-    )
-    .add_system_set(
-        SystemSet::on_resume(GameState::TitleScreen)
-            .with_system(systems::visual::clear_settings)
-            .with_system(systems::visual::title_screen),
-    )
-    .add_system_set(
-        SystemSet::on_resume(GameState::Play)
-            .with_system(resources::ui::ui_resume_game_settings)
-            .with_system(systems::visual::clear_settings),
-    )
-    .add_system_set(SystemSet::on_enter(GameState::OfflineTitle))
-    .add_system_set(
-        SystemSet::on_enter(GameState::MakeUser)
-            .with_system(systems::visual::make_user.label("any"))
-            .with_system(systems::visual::clear_old.before("any")),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::MakeUser).with_system(systems::text_box::user_creation),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::Settings)
-            .with_system(systems::visual::settings_video)
-            .with_system(resources::ui::ui_settings_camera),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::Settings)
-            .with_system(resources::ui::ui_settings_tab)
-            .with_system(resources::ui::ui_toggle_fullscreen)
-            .with_system(resources::ui::ui_increase_scaling)
-            .with_system(resources::ui::ui_decrease_scaling)
-            .with_system(resources::ui::ui_return_titlescreen)
-            .with_system(resources::ui::ui_settings_text_updater),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::MakeGame)
-            .with_system(systems::visual::clear_old.before("any"))
-            .with_system(systems::text_box::game_creation_once.label("any"))
-            .with_system(systems::visual::create_world.label("any")),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::MakeGame)
-            .with_system(systems::text_box::game_creation)
-            .with_system(resources::ui::ui_return_titlescreen),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::ServerList)
-            .with_system(resources::network::system_server_list.label("any"))
-            .with_system(systems::visual::join_world.label("any"))
-            .with_system(systems::visual::clear_old.before("any")),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::ServerList)
-            .with_system(resources::Reality::system_server_list_renderer)
-            .with_system(resources::ui::ui_game)
-            .with_system(resources::ui::ui_return_titlescreen),
-    )
-    .add_system(window_setup::window_update)
-    .add_system(systems::cursor::cursor.label("cursor"))
-    .add_system(systems::text_box::text_input)
-    .add_system(resources::network::system_step)
-    .add_system(resources::ui::ui_open_settings)
-    .add_system(resources::ui::ui_manager.after("cursor").before("player"))
-    .add_system(resources::ui::ui_quick_exit)
-    .add_system(resources::ui::ui_close_pause_menu)
-    .add_system(resources::ui::ui_invite_menu)
-    .add_system(resources::ui::ui_close_settings)
-    .add_system(resources::ui::ui_debug_lines)
-    .insert_resource(resources::Reality::init())
-    .insert_resource(resources::Animator::init())
-    .insert_resource(resources::TextBox::init())
-    .insert_resource(resources::ui::UIManager::init())
-    .insert_resource(resources::Disk::init())
-    .insert_resource(resources::Chat::init())
-    .add_system_set(
-        SystemSet::on_update(GameState::Play)
-            .with_system(resources::Reality::system_spawn_objects)
-            .with_system(resources::Reality::system_npc_interaction)
-            .with_system(resources::Reality::system_player_loader)
-            .with_system(resources::Reality::system_player_unloader)
-            .with_system(resources::Reality::system_player_locator.label("player"))
-            .with_system(
-                resources::Reality::system_camera_updater
-                    .label("ui")
-                    .after("player")
-                    .after("cursor")
-                    .at_end(),
-            )
-            .with_system(resources::Reality::system_pause_menu.before("ui"))
-            .with_system(resources::Reality::system_center_dialouge_text.before("ui"))
-            .with_system(resources::Reality::system_player_controls.before("ui").before("player"))
-            .with_system(resources::Reality::system_pause_renderer.before("ui"))
-            .with_system(resources::Reality::system_position_hotbar.before("ui"))
-            .with_system(resources::Reality::system_scroll_hotbar)
-            .with_system(resources::Reality::system_pause_invite)
-            .with_system(resources::Reality::system_update_objects)
-            .with_system(resources::Reality::system_remove_objects)
-            .with_system(resources::Reality::system_update_hotbar)
-            .with_system(resources::Reality::system_hitbox_debug_lines)
-            .with_system(resources::Reality::system_player_debug_lines)
-            .with_system(resources::Reality::system_action_blueprint.label("a").before("b"))
-            .with_system(resources::Reality::system_chunk_derenderer.label("b").before("c"))
-            .with_system(resources::Reality::system_mark_chunks.label("c").before("d"))
-            .with_system(resources::Reality::system_render_waiting_chunks.label("d").at_end())
-            .with_system(resources::Reality::system_action_none)
-            .with_system(resources::Reality::system_action_chop)
-            .with_system(
-                resources::Reality::system_display_blueprint
-                    .after("player")
-                    .before("ui"),
-            )
-            .with_system(resources::Reality::system_start_npc_popups)
-            .with_system(resources::Reality::system_shrink_npc_popups)
-            .with_system(resources::Animator::system_player_animator)
-            .with_system(resources::Animator::system_player_initiator)
-            .with_system(resources::Chat::system_display_chat)
-            .with_system(resources::Chat::system_pull_messages)
-            .with_system(resources::Chat::system_open_chat)
-            .with_system(resources::Chat::system_type_chat)
-            .with_system(resources::Chat::system_send_chat)
-            .with_system(resources::ui::ui_forward)
-            .with_system(resources::ui::ui_disconnect_game)
-            .with_system(systems::visual::animate_sprites),
-    )
-    .add_system_set(
-        SystemSet::on_enter(GameState::Play)
-            .with_system(resources::Reality::system_spawn_hotbar.label("any"))
-            .with_system(resources::Chat::system_init.label("any"))
-            .with_system(systems::visual::clear_old.before("any")),
-    )
-    .add_system_set(
-        SystemSet::on_update(GameState::TitleScreen)
-            .with_system(systems::visual::update_title_screen_user)
-            .with_system(systems::visual::update_title_screen_camera)
-            .with_system(resources::ui::ui_return_create_world)
-            .with_system(resources::ui::ui_view_worlds),
-    )
-    .run();
+    app
+        // The initial state is pulled from `GameState::default()`
+        .add_state::<GameState>()
+        // Add a loading state for assets
+        .add_loading_state(LoadingState::new(GameState::Load))
+        .add_collection_to_loading_state::<_, assets::CoreAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::FontAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::AnimatorAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::UIAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::ItemAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::ObjectAssets>(GameState::Load)
+        .add_collection_to_loading_state::<_, assets::NPCAssets>(GameState::Load)
+        .add_plugin(ProgressPlugin::new(GameState::Load).continue_to(GameState::NetworkCheck))
+        // Unrendered background is white
+        .insert_resource(ClearColor(Color::WHITE))
+        .add_plugin(modular_assets::ModularAssetsPlugin)
+        .add_plugin(bevy_kira_audio::AudioPlugin)
+        .add_plugin(bevy_easings::EasingsPlugin)
+        .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
+        // Spawn logo and loading bar
+        .add_system(systems::visual::logo.on_startup())
+        // Load the window settings and audio devices when loading assets
+        .add_systems((
+            window_setup::window_setup,
+            systems::audio::audio_setup,
+        ).in_schedule(OnEnter(GameState::Load)))
+        // Display the progress of loading assets
+        .add_system(systems::visual::loading_prog.run_if(
+            in_state(GameState::Load)
+        ))
+        // Spawn the cursor and attempt to connect to the GGS
+        .add_systems((
+            resources::network::system_startup_checks,
+            systems::cursor::spawn,
+        ).in_schedule(OnEnter(GameState::NetworkCheck)))
+        // [ORDERED] Spawn the titlescreen textures/text and clear any old stuff
+        .add_systems((
+            systems::visual::clear_old,
+            systems::visual::title_screen,
+            systems::audio::title_screen_loop,
+        ).chain().in_schedule(OnEnter(GameState::TitleScreen)))
+        // [ORDERED] Spawn the user creation textures/text and clear any old stuff
+        .add_systems((
+            systems::visual::clear_old,
+            systems::visual::make_user,
+        ).chain().in_schedule(OnEnter(GameState::MakeUser)))
+        // Update user creation text and UI
+        .add_system(systems::text_box::user_creation.run_if(
+            in_state(GameState::MakeUser)
+        ))
+        // Open the settings menu
+        .add_systems((
+            systems::visual::settings_video,
+            resources::ui::ui_settings_camera,
+        ).in_schedule(OnEnter(GameState::Settings)))
+        // Update the settings menu UI
+        .add_systems((
+            resources::ui::ui_settings_tab,
+            resources::ui::ui_toggle_fullscreen,
+            resources::ui::ui_increase_scaling,
+            resources::ui::ui_decrease_scaling,
+            resources::ui::ui_return_titlescreen,
+            resources::ui::ui_settings_text_updater,
+        ).in_set(OnUpdate(GameState::Settings)))
+        .add_systems((
+            systems::visual::clear_old,
+            systems::visual::create_world,
+            systems::text_box::game_creation_once,
+        ).chain().in_schedule(OnEnter(GameState::MakeGame)))
+        .add_systems((
+            systems::text_box::game_creation,
+            resources::ui::ui_return_titlescreen,
+        ).in_set(OnUpdate(GameState::MakeGame)))
+        .add_systems((
+            systems::visual::clear_old,
+            systems::visual::join_world,
+            resources::network::system_server_list,
+        ).chain().in_schedule(OnEnter(GameState::ServerList)))
+        .add_systems((
+            resources::Reality::system_server_list_renderer,
+            resources::ui::ui_game,
+            resources::ui::ui_return_titlescreen,
+        ).in_set(OnUpdate(GameState::ServerList)))
+        .add_systems((
+            systems::visual::clear_old,
+            resources::Reality::system_spawn_hotbar,
+            resources::Chat::system_init,
+        ).chain().in_schedule(OnEnter(GameState::Play)))
+        .add_systems((
+            systems::visual::update_title_screen_user,
+            systems::visual::update_title_screen_camera,
+            resources::ui::ui_return_create_world,
+            resources::ui::ui_view_worlds,
+        ).in_set(OnUpdate(GameState::TitleScreen)))
+        /* TODO: RE-ADD
+        .add_system_set(
+            SystemSet::on_resume(GameState::Play)
+                .with_system(resources::ui::ui_resume_game_settings)
+                .with_system(systems::visual::clear_settings),
+        )
+        */
+        .add_systems((
+            systems::cursor::cursor,
+            resources::ui::ui_manager,
+        ).chain())
+        .add_system(window_setup::window_update)
+        .add_system(systems::text_box::text_input)
+        .add_system(resources::network::system_step)
+        .add_system(resources::ui::ui_open_settings)
+        .add_system(resources::ui::ui_quick_exit)
+        .add_system(resources::ui::ui_close_pause_menu)
+        .add_system(resources::ui::ui_invite_menu)
+        .add_system(resources::ui::ui_close_settings)
+        .add_system(resources::ui::ui_debug_lines)
+        .insert_resource(resources::Reality::init())
+        .insert_resource(resources::Animator::init())
+        .insert_resource(resources::TextBox::init())
+        .insert_resource(resources::ui::UIManager::init())
+        .insert_resource(resources::Disk::init())
+        .insert_resource(resources::Chat::init())
+        .add_systems((
+            resources::Reality::system_spawn_objects,
+            resources::Reality::system_npc_interaction,
+            resources::Reality::system_player_loader,
+            resources::Reality::system_player_unloader,
+            resources::Reality::system_scroll_hotbar,
+            resources::Reality::system_pause_invite,
+            resources::Reality::system_update_objects,
+            resources::Reality::system_remove_objects,
+            resources::Reality::system_update_hotbar,
+            resources::Reality::system_hitbox_debug_lines,
+            resources::Reality::system_player_debug_lines,
+            resources::Reality::system_action_none,
+            resources::Reality::system_action_chop,
+            resources::Reality::system_start_npc_popups,
+            resources::Reality::system_shrink_npc_popups,
+        ).in_set(OnUpdate(GameState::Play)))
+        // TODO: FIXME: numerical limit to systems in one .add_systems call???
+        .add_systems((
+            resources::Animator::system_player_animator,
+            resources::Animator::system_player_initiator,
+            resources::Chat::system_display_chat,
+            resources::Chat::system_pull_messages,
+            resources::Chat::system_open_chat,
+            resources::Chat::system_type_chat,
+            resources::Chat::system_send_chat,
+            resources::ui::ui_forward,
+            resources::ui::ui_disconnect_game,
+            systems::visual::animate_sprites,
+        ).in_set(OnUpdate(GameState::Play)))
+        .add_systems((
+            resources::Reality::system_action_blueprint,
+            resources::Reality::system_chunk_derenderer,
+            resources::Reality::system_mark_chunks,
+            resources::Reality::system_render_waiting_chunks,
+            // ...
+            resources::Reality::system_pause_menu,
+            resources::Reality::system_center_dialouge_text,
+            resources::Reality::system_player_controls,
+            resources::Reality::system_pause_renderer,
+            resources::Reality::system_position_hotbar,
+            resources::Reality::system_player_locator,
+            resources::Reality::system_display_blueprint,
+            resources::Reality::system_camera_updater,
+        ).chain().in_set(OnUpdate(GameState::Play)))
+        .run();
 }
 
 fn log_setup() {

@@ -56,10 +56,8 @@ pub fn settings_video(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -85,10 +83,8 @@ pub fn settings_video(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -107,10 +103,8 @@ pub fn settings_video(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -136,10 +130,8 @@ pub fn settings_video(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Left,
-                    },
+                    alignment: TextAlignment::Left,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT + 105.0),
                 ..default()
@@ -172,10 +164,8 @@ pub fn settings_video(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Top,
-                        horizontal: HorizontalAlign::Left,
-                    },
+                    alignment: TextAlignment::Left,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, 0.0, UI_TEXT + 105.0),
                 ..default()

@@ -29,10 +29,8 @@ pub fn create_world(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(-500.0, -300.0, UI_TEXT),
             ..default()
@@ -57,10 +55,8 @@ pub fn create_world(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Left,
-                },
+                alignment: TextAlignment::Left,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(100.0, -300.0, UI_TEXT),
             ..default()
@@ -86,10 +82,8 @@ pub fn create_world(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 300.0, UI_TEXT),
             ..default()

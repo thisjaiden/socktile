@@ -40,14 +40,18 @@ pub fn user_creation(
     mut tb: ResMut<crate::resources::TextBox>,
     mut tb_q: Query<&mut Text, With<TextBox>>,
     mut netty: ResMut<Netty>,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut disk: ResMut<Disk>,
     unloads: Query<Entity, With<RemoveOnStateChange>>,
     core: Res<CoreAssets>,
     lang_serve: Res<Assets<LanguageKeys>>,
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
-    let mut text = tb_q.single_mut();
+    let text = tb_q.get_single_mut();
+    if text.is_err() {
+        return;
+    }
+    let mut text = text.unwrap();
     text.sections[0].value = tb.grab_buffer() + "";
     if tb.grab_buffer().contains('#') {
         text.sections[0].style.color = Color::RED;
@@ -105,7 +109,7 @@ pub fn user_creation(
             unloads.for_each(|e| {
                 commands.entity(e).despawn();
             });
-            state.replace(GameState::TitleScreen).unwrap();
+            state.set(GameState::TitleScreen);
         }
     }
 }
@@ -116,7 +120,7 @@ pub fn game_creation(
     mut tb_q: Query<(Entity, &mut Text), With<TextBox>>,
     uiman: Res<UIManager>,
     mut netty: ResMut<Netty>,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     disk: Res<Disk>,
     materials: Res<AnimatorAssets>,
 ) {
@@ -133,7 +137,7 @@ pub fn game_creation(
             mode = String::from(mode.trim_end_matches('\n'));
             netty.send(Packet::CreateWorld(mode));
             tb.clear_buffer();
-            state.replace(GameState::Play).unwrap();
+            state.set(GameState::Play);
             commands.entity(entity).despawn_recursive();
             commands.spawn((
                 SpriteBundle {
@@ -159,10 +163,8 @@ pub fn game_creation_once(mut commands: Commands, font_assets: Res<FontAssets>) 
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()

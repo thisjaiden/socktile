@@ -36,6 +36,7 @@ pub fn clear_old(
     mut ui: ResMut<UIManager>,
     query: Query<Entity, With<RemoveOnStateChange>>,
 ) {
+    info!("Clearing `RemoveOnStateChange` entities...");
     // Despawn entities tagged with `RemoveOnStateChange`
     query.for_each(|e| {
         commands.entity(e).despawn();
@@ -46,7 +47,7 @@ pub fn clear_old(
 
 pub fn logo(
     mut commands: Commands,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     server: Res<AssetServer>,
@@ -80,10 +81,8 @@ pub fn logo(
                         },
                     },
                 ],
-                alignment: TextAlignment {
-                    horizontal: HorizontalAlign::Center,
-                    vertical: VerticalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -122,7 +121,7 @@ pub fn logo(
         LoadingScreenProgress {},
         RemoveOnStateChange {},
     ));
-    state.overwrite_set(GameState::Load).unwrap();
+    state.set(GameState::Load);
 }
 
 #[derive(Clone, Copy, Component)]

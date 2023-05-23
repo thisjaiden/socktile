@@ -227,7 +227,7 @@ pub fn ui_manager(
 pub fn ui_game(
     mut commands: Commands,
     target_materials: Option<Res<AnimatorAssets>>,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut netty: ResMut<Netty>,
     mut man: ResMut<UIManager>,
     disk: Res<Disk>,
@@ -239,7 +239,7 @@ pub fn ui_game(
         if let Some(game_id) = man.join_game() {
             let samples = audio_serve.get(&core.audio).unwrap();
             audio.play(samples.get("click"));
-            state.replace(GameState::Play).unwrap();
+            state.set(GameState::Play);
             commands.spawn((
                 SpriteBundle {
                     texture: materials.not_animated.clone(),
@@ -290,10 +290,8 @@ pub fn ui_invite_menu(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Center,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, 100.0, UI_TEXT),
                 ..Default::default()
@@ -322,10 +320,8 @@ pub fn ui_invite_menu(
                             },
                         },
                     ],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Center,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                 ..Default::default()
@@ -422,7 +418,7 @@ pub fn ui_settings_text_updater(
 pub fn ui_close_settings(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     query: Query<Entity, With<RemoveOnStateChange>>,
 ) {
     if man.queued_action == Some(UIClickAction::CloseSettings) {
@@ -430,7 +426,8 @@ pub fn ui_close_settings(
             commands.entity(e).despawn();
         });
         man.reset_ui();
-        state.pop().unwrap();
+        // TODO: FIXME: THIS IS BROKEN!!
+        //state.pop().unwrap();
     }
 }
 
@@ -469,7 +466,7 @@ pub fn ui_disconnect_game(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
     mut netty: ResMut<Netty>,
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut reality: ResMut<Reality>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
@@ -500,12 +497,12 @@ pub fn ui_disconnect_game(
         // Fully reset because making things not conflict is hard :P
         reality.reset();
         // Switch to titlescreen
-        state.overwrite_set(GameState::TitleScreen).unwrap();
+        state.set(GameState::TitleScreen);
     }
 }
 
 pub fn ui_return_create_world(
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
@@ -515,12 +512,12 @@ pub fn ui_return_create_world(
         let samples = audio_serve.get(&core.audio).unwrap();
         audio.play(samples.get("click"));
         man.reset_ui();
-        state.replace(GameState::MakeGame).unwrap();
+        state.set(GameState::MakeGame);
     }
 }
 
 pub fn ui_view_worlds(
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
@@ -530,12 +527,12 @@ pub fn ui_view_worlds(
         let samples = audio_serve.get(&core.audio).unwrap();
         audio.play(samples.get("click"));
         man.reset_ui();
-        state.replace(GameState::ServerList).unwrap();
+        state.set(GameState::ServerList);
     }
 }
 
 pub fn ui_return_titlescreen(
-    mut state: ResMut<State<GameState>>,
+    mut state: ResMut<NextState<GameState>>,
     mut man: ResMut<UIManager>,
     audio: Res<Audio>,
     core: Res<CoreAssets>,
@@ -545,13 +542,13 @@ pub fn ui_return_titlescreen(
         let samples = audio_serve.get(&core.audio).unwrap();
         audio.play(samples.get("click"));
         man.reset_ui();
-        state.push(GameState::TitleScreen).unwrap();
+        state.set(GameState::TitleScreen);
     }
 }
 
-pub fn ui_open_settings(mut state: ResMut<State<GameState>>, mut man: ResMut<UIManager>) {
+pub fn ui_open_settings(mut state: ResMut<NextState<GameState>>, mut man: ResMut<UIManager>) {
     if man.queued_action == Some(UIClickAction::OpenSettings) {
         man.reset_ui();
-        state.push(GameState::Settings).unwrap();
+        state.set(GameState::Settings);
     }
 }

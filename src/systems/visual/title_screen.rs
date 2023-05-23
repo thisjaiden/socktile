@@ -30,10 +30,8 @@ pub fn title_screen(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -58,10 +56,8 @@ pub fn title_screen(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -88,10 +84,8 @@ pub fn title_screen(
                             color: Color::BLACK,
                         },
                     }],
-                    alignment: TextAlignment {
-                        vertical: VerticalAlign::Center,
-                        horizontal: HorizontalAlign::Center,
-                    },
+                    alignment: TextAlignment::Center,
+                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                 },
                 ..default()
             },
@@ -123,10 +117,8 @@ pub fn title_screen(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -151,10 +143,8 @@ pub fn title_screen(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
+                alignment: TextAlignment::Center,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 128.0, UI_TEXT),
             ..default()
@@ -181,10 +171,8 @@ pub fn title_screen(
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Left,
-                },
+                alignment: TextAlignment::Left,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(-(1920.0 / 2.0) + 8.0, -(1080.0 / 2.0) + 32.0, UI_TEXT),
             ..default()

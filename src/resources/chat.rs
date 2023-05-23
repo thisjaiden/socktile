@@ -93,10 +93,8 @@ impl Chat {
                                 color: Color::BLACK,
                             },
                         }],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Left,
-                        },
+                        alignment: TextAlignment::Left,
+                        linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
                     },
                     transform: Transform::from_xyz(
                         -(1920.0 / 2.0),

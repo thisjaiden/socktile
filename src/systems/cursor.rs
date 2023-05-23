@@ -1,17 +1,25 @@
 use crate::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_prototype_debug_lines::DebugLines;
 
 pub fn cursor(
-    windows: Res<Windows>,
-    mut query: Query<&mut Transform, With<CursorMarker>>,
+    mut queries: ParamSet<(
+        Query<&Window, With<PrimaryWindow>>,
+        Query<&mut Transform, With<CursorMarker>>
+    )>,
     mut lines: ResMut<DebugLines>,
 ) {
-    for mut transform in query.iter_mut() {
-        let p_window = windows.get_primary().unwrap();
-        let cursor_pos = p_window.cursor_position();
+    let q0 = queries.p0();
+    let p_window = q0.get_single().unwrap();
+    let cursor_pos = p_window.cursor_position();
+    let p_win_wid = p_window.width();
+    let p_win_hei = p_window.height();
+    drop(p_window);
+    drop(q0);
+    for mut transform in queries.p1().iter_mut() {
         if let Some(position) = cursor_pos {
-            transform.translation.x = position.x - (p_window.width() / 2.0);
-            transform.translation.y = position.y - (p_window.height() / 2.0);
+            transform.translation.x = position.x - (p_win_wid / 2.0);
+            transform.translation.y = position.y - (p_win_hei / 2.0);
             transform.translation.z = CURSOR;
             if UI_DEBUG {
                 let line_pos = Vec3::new(
@@ -45,10 +53,8 @@ pub fn spawn(mut commands: Commands, fonts: Res<FontAssets>) {
                         color: Color::BLACK,
                     },
                 }],
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Bottom,
-                    horizontal: HorizontalAlign::Right,
-                },
+                alignment: TextAlignment::Right,
+                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
