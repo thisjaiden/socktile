@@ -30,7 +30,7 @@ pub fn join_world(
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(-600.0, -400.0, UI_TEXT),
             ..default()

@@ -164,7 +164,7 @@ pub fn game_creation_once(mut commands: Commands, font_assets: Res<FontAssets>) 
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()

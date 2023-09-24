@@ -1,11 +1,11 @@
 use crate::prelude::*;
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
-    reflect::TypeUuid,
+    reflect::{TypeUuid, TypePath},
     utils::{BoxedFuture, HashMap},
 };
 
-#[derive(Deserialize, TypeUuid)]
+#[derive(Deserialize, TypeUuid, TypePath)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306e"]
 pub struct TileTypeConfig {
     pub states: Vec<TerrainState>,
@@ -63,7 +63,7 @@ pub struct TerrainState {
     run_sound: String,
 }
 
-#[derive(TypeUuid)]
+#[derive(TypeUuid, TypePath)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306f"]
 pub struct TileTransitionMasterConfig {
     pub transitions: HashMap<[String; 2], Handle<TileTransitionConfig>>,
@@ -115,7 +115,7 @@ struct TerrainTransition {
     meta_location: String,
 }
 
-#[derive(TypeUuid, Clone)]
+#[derive(TypeUuid, Clone, TypePath)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc3070"]
 pub struct TileTransitionConfig {
     pub images: Vec<ImageDefinition>,

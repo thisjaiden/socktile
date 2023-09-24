@@ -54,7 +54,7 @@ pub fn spawn(mut commands: Commands, fonts: Res<FontAssets>) {
                     },
                 }],
                 alignment: TextAlignment::Right,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()

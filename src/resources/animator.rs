@@ -47,13 +47,13 @@ impl Animator {
     pub fn system_player_animator(
         mut selfs: ResMut<Animator>,
         materials: Res<AnimatorAssets>,
-        mut players: Query<(&mut Handle<Image>, &mut Transform, &mut User)>,
+        mut players: Query<(&mut Handle<Image>, &mut Transform, &User)>,
     ) {
         // Animation for every player
         players.for_each_mut(|(mut tex, mut loc, mark)| {
             // Flip animation
-            if selfs.last_dir_left.contains_key(&mark) {
-                if *selfs.last_dir_left.get(&mark).unwrap() {
+            if selfs.last_dir_left.contains_key(mark) {
+                if *selfs.last_dir_left.get(mark).unwrap() {
                     if loc.scale.x > -1.0 {
                         loc.scale.x -= 0.1;
                     }
@@ -63,9 +63,9 @@ impl Animator {
                 }
             }
             // Saftey check: If the player has existed for 2 frames
-            if selfs.player_prev_pos.contains_key(&mark) {
+            if selfs.player_prev_pos.contains_key(mark) {
                 // Get a copy of the player's position last frame
-                let previous_translation = selfs.player_prev_pos.get(&mark).unwrap().translation;
+                let previous_translation = selfs.player_prev_pos.get(mark).unwrap().translation;
 
                 // If the player has moved left or right, mark the flip animation to trigger for that direction
                 if loc.translation.x > previous_translation.x {
@@ -78,7 +78,7 @@ impl Animator {
                     // If the player hasn't moved, play the idle animation.
 
                     // Grab current animation state value.
-                    let state = *selfs.idle_animation_state.get(&mark).unwrap();
+                    let state = *selfs.idle_animation_state.get(mark).unwrap();
 
                     // Determine new animation state value.
                     let new_state = if state > 100 { 1 } else { state + 1 };

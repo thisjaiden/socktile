@@ -26,7 +26,7 @@ pub fn make_user(mut commands: Commands, font_assets: Res<FontAssets>, core: Res
                     ;2 // we make two text components to show errors below if applicable
                 ],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
             ..Default::default()

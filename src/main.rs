@@ -109,88 +109,89 @@ fn main() {
         .add_collection_to_loading_state::<_, assets::ItemAssets>(GameState::Load)
         .add_collection_to_loading_state::<_, assets::ObjectAssets>(GameState::Load)
         .add_collection_to_loading_state::<_, assets::NPCAssets>(GameState::Load)
-        .add_plugin(ProgressPlugin::new(GameState::Load).continue_to(GameState::NetworkCheck))
+        .add_plugins((
+            ProgressPlugin::new(GameState::Load).continue_to(GameState::NetworkCheck),
+            modular_assets::ModularAssetsPlugin,
+            bevy_kira_audio::AudioPlugin,
+            bevy_easings::EasingsPlugin,
+            bevy_prototype_debug_lines::DebugLinesPlugin::default(),
+        ))
         // Unrendered background is white
         .insert_resource(ClearColor(Color::WHITE))
-        .add_plugin(modular_assets::ModularAssetsPlugin)
-        .add_plugin(bevy_kira_audio::AudioPlugin)
-        .add_plugin(bevy_easings::EasingsPlugin)
-        .add_plugin(bevy_prototype_debug_lines::DebugLinesPlugin::default())
         // Spawn logo and loading bar
-        .add_system(systems::visual::logo.on_startup())
+        .add_systems(Startup, systems::visual::logo)
         // Load the window settings and audio devices when loading assets
-        .add_systems((
+        .add_systems(OnEnter(GameState::Load), (
             window_setup::window_setup,
             systems::audio::audio_setup,
-        ).in_schedule(OnEnter(GameState::Load)))
-        // Display the progress of loading assets
-        .add_system(systems::visual::loading_prog.run_if(
-            in_state(GameState::Load)
         ))
+        // Display the progress of loading assets
+        .add_systems(Update, systems::visual::loading_prog
+            .run_if(in_state(GameState::Load)))
         // Spawn the cursor and attempt to connect to the GGS
-        .add_systems((
+        .add_systems(OnEnter(GameState::NetworkCheck), (
             resources::network::system_startup_checks,
             systems::cursor::spawn,
-        ).in_schedule(OnEnter(GameState::NetworkCheck)))
+        ))
         // [ORDERED] Spawn the titlescreen textures/text and clear any old stuff
-        .add_systems((
+        .add_systems(OnEnter(GameState::TitleScreen), (
             systems::visual::clear_old,
             systems::visual::title_screen,
             systems::audio::title_screen_loop,
-        ).chain().in_schedule(OnEnter(GameState::TitleScreen)))
+        ).chain())
         // [ORDERED] Spawn the user creation textures/text and clear any old stuff
-        .add_systems((
+        .add_systems(OnEnter(GameState::MakeUser), (
             systems::visual::clear_old,
             systems::visual::make_user,
-        ).chain().in_schedule(OnEnter(GameState::MakeUser)))
+        ).chain())
         // Update user creation text and UI
-        .add_system(systems::text_box::user_creation.run_if(
-            in_state(GameState::MakeUser)
-        ))
+        .add_systems(Update, (
+            systems::text_box::user_creation
+        ).run_if(in_state(GameState::MakeUser)))
         // Open the settings menu
-        .add_systems((
+        .add_systems(OnEnter(GameState::Settings), (
             systems::visual::settings_video,
             resources::ui::ui_settings_camera,
-        ).in_schedule(OnEnter(GameState::Settings)))
+        ))
         // Update the settings menu UI
-        .add_systems((
+        .add_systems(Update, (
             resources::ui::ui_settings_tab,
             resources::ui::ui_toggle_fullscreen,
             resources::ui::ui_increase_scaling,
             resources::ui::ui_decrease_scaling,
             resources::ui::ui_return_titlescreen,
             resources::ui::ui_settings_text_updater,
-        ).in_set(OnUpdate(GameState::Settings)))
-        .add_systems((
+        ).run_if(in_state(GameState::Settings)))
+        .add_systems(OnEnter(GameState::MakeGame), (
             systems::visual::clear_old,
             systems::visual::create_world,
             systems::text_box::game_creation_once,
-        ).chain().in_schedule(OnEnter(GameState::MakeGame)))
-        .add_systems((
+        ).chain())
+        .add_systems(Update, (
             systems::text_box::game_creation,
             resources::ui::ui_return_titlescreen,
-        ).in_set(OnUpdate(GameState::MakeGame)))
-        .add_systems((
+        ).run_if(in_state(GameState::MakeGame)))
+        .add_systems(OnEnter(GameState::ServerList), (
             systems::visual::clear_old,
             systems::visual::join_world,
             resources::network::system_server_list,
-        ).chain().in_schedule(OnEnter(GameState::ServerList)))
-        .add_systems((
+        ).chain())
+        .add_systems(Update, (
             resources::Reality::system_server_list_renderer,
             resources::ui::ui_game,
             resources::ui::ui_return_titlescreen,
-        ).in_set(OnUpdate(GameState::ServerList)))
-        .add_systems((
+        ).run_if(in_state(GameState::ServerList)))
+        .add_systems(OnEnter(GameState::Play), (
             systems::visual::clear_old,
             resources::Reality::system_spawn_hotbar,
             resources::Chat::system_init,
-        ).chain().in_schedule(OnEnter(GameState::Play)))
-        .add_systems((
+        ).chain())
+        .add_systems(Update, (
             systems::visual::update_title_screen_user,
             systems::visual::update_title_screen_camera,
             resources::ui::ui_return_create_world,
             resources::ui::ui_view_worlds,
-        ).in_set(OnUpdate(GameState::TitleScreen)))
+        ).run_if(in_state(GameState::TitleScreen)))
         /* TODO: RE-ADD
         .add_system_set(
             SystemSet::on_resume(GameState::Play)
@@ -198,26 +199,28 @@ fn main() {
                 .with_system(systems::visual::clear_settings),
         )
         */
-        .add_systems((
+        .add_systems(Update, (
             systems::cursor::cursor,
             resources::ui::ui_manager,
         ).chain())
-        .add_system(window_setup::window_update)
-        .add_system(systems::text_box::text_input)
-        .add_system(resources::network::system_step)
-        .add_system(resources::ui::ui_open_settings)
-        .add_system(resources::ui::ui_quick_exit)
-        .add_system(resources::ui::ui_close_pause_menu)
-        .add_system(resources::ui::ui_invite_menu)
-        .add_system(resources::ui::ui_close_settings)
-        .add_system(resources::ui::ui_debug_lines)
+        .add_systems(Update, (
+            window_setup::window_update,
+            systems::text_box::text_input,
+            resources::network::system_step,
+            resources::ui::ui_open_settings,
+            resources::ui::ui_quick_exit,
+            resources::ui::ui_close_pause_menu,
+            resources::ui::ui_invite_menu,
+            resources::ui::ui_close_settings,
+            resources::ui::ui_debug_lines,
+        ))
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())
         .insert_resource(resources::ui::UIManager::init())
         .insert_resource(resources::Disk::init())
         .insert_resource(resources::Chat::init())
-        .add_systems((
+        .add_systems(Update, (
             resources::Reality::system_spawn_objects,
             resources::Reality::system_npc_interaction,
             resources::Reality::system_player_loader,
@@ -233,21 +236,23 @@ fn main() {
             resources::Reality::system_action_chop,
             resources::Reality::system_start_npc_popups,
             resources::Reality::system_shrink_npc_popups,
-        ).in_set(OnUpdate(GameState::Play)))
-        // TODO: FIXME: numerical limit to systems in one .add_systems call???
-        .add_systems((
             resources::Animator::system_player_animator,
             resources::Animator::system_player_initiator,
             resources::Chat::system_display_chat,
             resources::Chat::system_pull_messages,
             resources::Chat::system_open_chat,
+            
+        ).run_if(in_state(GameState::Play)))
+        // TODO: FIXME: numerical limit of 20 systems in one .add_systems call
+        // keep an eye on if bevy increases/fixes this. Used to be 15!
+        .add_systems(Update, (
             resources::Chat::system_type_chat,
             resources::Chat::system_send_chat,
             resources::ui::ui_forward,
             resources::ui::ui_disconnect_game,
             systems::visual::animate_sprites,
-        ).in_set(OnUpdate(GameState::Play)))
-        .add_systems((
+        ).run_if(in_state(GameState::Play)))
+        .add_systems(Update, (
             resources::Reality::system_action_blueprint,
             resources::Reality::system_chunk_derenderer,
             resources::Reality::system_mark_chunks,
@@ -261,7 +266,7 @@ fn main() {
             resources::Reality::system_player_locator,
             resources::Reality::system_display_blueprint,
             resources::Reality::system_camera_updater,
-        ).chain().in_set(OnUpdate(GameState::Play)))
+        ).chain().run_if(in_state(GameState::Play)))
         .run();
 }
 

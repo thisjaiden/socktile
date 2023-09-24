@@ -82,7 +82,7 @@ pub fn logo(
                     },
                 ],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },

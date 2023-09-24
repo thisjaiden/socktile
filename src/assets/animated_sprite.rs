@@ -4,11 +4,11 @@ use crate::prelude::*;
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
     ecs::system::EntityCommands,
-    reflect::TypeUuid,
+    reflect::{TypeUuid, TypePath},
     utils::BoxedFuture,
 };
 
-#[derive(TypeUuid, Deserialize, Component, Clone)]
+#[derive(TypeUuid, Deserialize, Component, Clone, TypePath)]
 #[uuid = "0789aad4-6f48-4721-a492-704cdf0f303a"]
 pub struct AnimatedSprite {
     #[serde(skip)]

@@ -921,7 +921,7 @@ impl Reality {
                                         }
                                     }],
                                     alignment: TextAlignment::Left,
-                                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                                 },
                                 text_2d_bounds: Text2dBounds {
                                     size: Vec2 { x: 1500.0, y: 300.0 }
@@ -1198,7 +1198,7 @@ impl Reality {
                                 },
                             ],
                             alignment: TextAlignment::Center,
-                            linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                            linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                         },
                         transform: Transform::from_xyz(0.0, 0.0, UI_TEXT),
                         ..Default::default()
@@ -1386,8 +1386,8 @@ impl Reality {
                 l.translation.x = selfs.player_position.translation.x as f32;
                 l.translation.y = selfs.player_position.translation.y as f32;
             }
-            if selfs.players_to_move.contains_key(&m) {
-                let which = selfs.players_to_move.get(&m).unwrap();
+            if selfs.players_to_move.contains_key(m) {
+                let which = selfs.players_to_move.get(m).unwrap();
                 l.translation.x = which.translation.x as f32;
                 l.translation.y = which.translation.y as f32;
             }
@@ -1414,7 +1414,7 @@ impl Reality {
                                 },
                             }],
                             alignment: TextAlignment::Left,
-                            linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                            linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                         },
                         transform: Transform::from_xyz(
                             0.0,

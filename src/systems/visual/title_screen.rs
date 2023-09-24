@@ -31,7 +31,7 @@ pub fn title_screen(
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -57,7 +57,7 @@ pub fn title_screen(
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -85,7 +85,7 @@ pub fn title_screen(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 ..default()
             },
@@ -118,7 +118,7 @@ pub fn title_screen(
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             ..default()
         },
@@ -144,7 +144,7 @@ pub fn title_screen(
                     },
                 }],
                 alignment: TextAlignment::Center,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 128.0, UI_TEXT),
             ..default()
@@ -172,15 +172,12 @@ pub fn title_screen(
                     },
                 }],
                 alignment: TextAlignment::Left,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             style: Style {
                 position_type: PositionType::Absolute,
-                position: UiRect {
-                    left: Val::Px(8.0),
-                    bottom: Val::Px(8.0),
-                    ..default()
-                },
+                left: Val::Px(8.0),
+                bottom: Val::Px(8.0),
                 ..default()
             },
             ..default()

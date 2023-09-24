@@ -57,7 +57,7 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -84,7 +84,7 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -104,7 +104,7 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, -38.0, UI_TEXT + 105.0),
                 ..default()
@@ -131,7 +131,7 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Left,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT + 105.0),
                 ..default()
@@ -165,7 +165,7 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Left,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, 0.0, UI_TEXT + 105.0),
                 ..default()
