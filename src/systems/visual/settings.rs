@@ -36,6 +36,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 0 },
+            RemoveOnStateChange,
         ));
         // Decrease scaling button/text
         man.add_ui(UIClickable {
@@ -63,6 +64,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 3 },
+            RemoveOnStateChange,
         ));
         // Increase scaling button/text
         man.add_ui(UIClickable {
@@ -90,6 +92,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 2 },
+            RemoveOnStateChange,
         ));
         // Show scaling amount text
         commands.spawn((
@@ -110,6 +113,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 4 },
+            RemoveOnStateChange,
         ));
         // Leave button/text
         man.add_ui(UIClickable {
@@ -137,6 +141,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 0 },
+            RemoveOnStateChange,
         ));
         // Fullscreen button/text
         man.add_ui(UIClickable {
@@ -171,6 +176,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 1 },
+            RemoveOnStateChange,
         ));
     }
 }
