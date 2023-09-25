@@ -21,7 +21,7 @@ mod utils;
 mod window_setup;
 
 /// Represents the state the game is currently in. Used to keep track of what systems to run.
-#[derive(Debug, Clone, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum GameState {
     /// Loads logo from disk and continues to `Load`
     PreLoadLoad,
@@ -192,13 +192,11 @@ fn main() {
             resources::ui::ui_return_create_world,
             resources::ui::ui_view_worlds,
         ).run_if(in_state(GameState::TitleScreen)))
-        /* TODO: RE-ADD
-        .add_system_set(
-            SystemSet::on_resume(GameState::Play)
-                .with_system(resources::ui::ui_resume_game_settings)
-                .with_system(systems::visual::clear_settings),
-        )
-        */
+        .add_systems(Update, (
+            resources::ui::ui_resume_game_settings,
+            systems::visual::clear_settings
+            ).run_if(state_changed::<GameState>())
+            .run_if(in_state(GameState::Play)))
         .add_systems(Update, (
             systems::cursor::cursor,
             resources::ui::ui_manager,
@@ -214,12 +212,18 @@ fn main() {
             resources::ui::ui_close_settings,
             resources::ui::ui_debug_lines,
         ))
+        .add_systems(Update, (
+            resources::last_state::system_update_last_state
+                .run_if(state_changed::<GameState>()),
+            resources::last_state::system_update_last_state_live
+        ).chain())
         .insert_resource(resources::Reality::init())
         .insert_resource(resources::Animator::init())
         .insert_resource(resources::TextBox::init())
         .insert_resource(resources::ui::UIManager::init())
         .insert_resource(resources::Disk::init())
         .insert_resource(resources::Chat::init())
+        .insert_resource(resources::LastState::init())
         .add_systems(Update, (
             resources::Reality::system_spawn_objects,
             resources::Reality::system_npc_interaction,

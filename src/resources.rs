@@ -11,3 +11,5 @@ pub use disk::Disk;
 mod chat;
 pub use chat::Chat;
 pub use chat::ChatMessage;
+pub mod last_state;
+pub use last_state::LastState;

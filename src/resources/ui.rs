@@ -3,7 +3,7 @@ use bevy::app::AppExit;
 use bevy_kira_audio::{Audio, AudioControl};
 use bevy_prototype_debug_lines::DebugLines;
 
-use super::{Reality, TextBox};
+use super::{Reality, TextBox, LastState};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum SettingsPage {
@@ -419,6 +419,7 @@ pub fn ui_close_settings(
     mut commands: Commands,
     mut man: ResMut<UIManager>,
     mut state: ResMut<NextState<GameState>>,
+    last_state: Res<LastState>,
     query: Query<Entity, With<RemoveOnStateChange>>,
 ) {
     if man.queued_action == Some(UIClickAction::CloseSettings) {
@@ -426,8 +427,7 @@ pub fn ui_close_settings(
             commands.entity(e).despawn();
         });
         man.reset_ui();
-        // TODO: FIXME: THIS IS BROKEN!!
-        //state.pop().unwrap();
+        state.set(last_state.get());
     }
 }
 
