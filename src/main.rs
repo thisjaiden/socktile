@@ -20,7 +20,8 @@ mod systems;
 mod utils;
 mod window_setup;
 
-/// Represents the state the game is currently in. Used to keep track of what systems to run.
+/// Represents the state the game is currently in. Used to decide which systems
+/// to run.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum GameState {
     /// Loads logo from disk and continues to `Load`
@@ -52,7 +53,8 @@ impl Default for GameState {
 }
 
 fn main() {
-    // Set up the logger. We do this without bevy because the server doesn't set up a bevy app.
+    // Set up the logger. We do this without bevy because the server doesn't set
+    // up a bevy app.
     log_setup();
 
     // Warn about distribution of internal builds
@@ -73,8 +75,8 @@ fn main() {
             let arguments: Vec<String> = args.collect();
             // If one of the arguments is `server`...
             if arguments.contains(&String::from("server")) {
-                // Run a server
-                // This returns a never type and should never proceed to launching a normal game
+                // Run a server.This returns a never type and should never 
+                // proceed to launching a normal game
                 info!("Running as a server. Make sure you know what you're doing!");
                 server::startup(arguments);
             }
@@ -274,6 +276,7 @@ fn main() {
         .run();
 }
 
+/// Sets up logging using `tracing` to support both desktop and WASM platforms.
 fn log_setup() {
     #[cfg(not(target_arch = "wasm32"))]
     {

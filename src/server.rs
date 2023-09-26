@@ -42,10 +42,11 @@ pub struct Profile {
 /// Returns all [Profile]s from the disk.
 /// 
 /// # Panics
-/// This function can panic if there is a faliure reading the directory given by [profile_folder]
+/// This function can panic if there is a faliure reading the directory given by
+/// `profile_folder`.
 /// 
-/// This function can panic if a file in the above directory has no file extension, cannot be read,
-/// or cannot be deserialized
+/// This function can panic if a file in the above directory has no file
+/// extension, cannot be read, or cannot be deserialized.
 pub fn profiles() -> Vec<Profile> {
     let mut saved_users = vec![];
     for file in std::fs::read_dir(profile_folder()).expect("Unable to access profiles.") {
@@ -63,11 +64,11 @@ pub fn profiles() -> Vec<Profile> {
 /// Returns all [SaveGame]s from the disk.
 /// 
 /// # Errors
-/// This function can return an error if there is a faliure reading the directory given by
-/// [save_folder]
+/// This function can return an error if there is a faliure reading the
+/// directory given by `save_folder`.
 /// 
-/// This function can return an error if a file in the above directory has no file extension, cannot
-/// be read, or cannot be deserialized
+/// This function can return an error if a file in the above directory has no
+/// file extension, cannot be read, or cannot be deserialized.
 pub fn get_disk_savegames() -> Result<Vec<SaveGame>, anyhow::Error> {
     use std::ffi::OsStr;
 

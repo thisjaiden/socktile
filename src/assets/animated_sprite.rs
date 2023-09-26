@@ -10,6 +10,7 @@ use bevy::{
 
 #[derive(TypeUuid, Deserialize, Component, Clone, TypePath)]
 #[uuid = "0789aad4-6f48-4721-a492-704cdf0f303a"]
+/// Represents a sprite that has associated animation data.
 pub struct AnimatedSprite {
     #[serde(skip)]
     #[serde(default)]
@@ -78,10 +79,15 @@ impl AnimatedSprite {
 }
 
 #[derive(Deserialize, PartialEq, Eq, Clone, Copy)]
+/// Represents what should happen when the animation reaches the end of playing.
 pub enum EndBehavior {
+    /// Freezes the sprite on the final frame of animation.
     Stall,
+    /// Makes the sprite fully transparent.
     Blank,
+    /// Repeats the animation from the beginning.
     Repeat,
+    /// Despawns the entity with animation from the world.
     Despawn,
 }
 

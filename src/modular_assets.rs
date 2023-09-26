@@ -1,10 +1,9 @@
-use crate::prelude::{
-    animated_sprite::AnimatedSpriteLoader,
-    tiles::{
-        TileTransitionConfig, TileTransitionConfigLoader, TileTransitionMasterConfig,
-        TileTransitionMasterConfigLoader, TileTypeConfig, TileTypeConfigLoader, Variant,
-    },
-    *,
+use crate::prelude::*;
+use crate::animated_sprite::AnimatedSpriteLoader;
+use crate::tiles::{
+    TileTransitionConfig, TileTransitionConfigLoader,
+    TileTransitionMasterConfig, TileTransitionMasterConfigLoader,
+    TileTypeConfig, TileTypeConfigLoader, Variant
 };
 
 use crate::audio::AudioSamplesLoader;

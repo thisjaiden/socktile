@@ -1,5 +1,4 @@
-Asset Layout
-===
+# Asset Layout
 
 | Directory / Location | Used By | Details |
 | -------------------- | ------- | ------- |

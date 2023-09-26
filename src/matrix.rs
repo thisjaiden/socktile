@@ -62,8 +62,8 @@ pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
     array.choose(&mut rand::thread_rng()).unwrap().clone()
 }
 
-/// Shortcut to `rand::seq::SliceRandom`'s `Vec<T>.choose()`. Returns `None` if the input has no
-/// elements to choose from.
+/// Shortcut to `rand::seq::SliceRandom`'s `Vec<T>.choose()`. Returns `None` if
+/// the input has no elements to choose from.
 pub fn safe_rand_from_array<T: Any + Clone>(array: Vec<T>) -> Option<T> {
     let a = array.choose(&mut rand::thread_rng());
     if let Some(a) = a {

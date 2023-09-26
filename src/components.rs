@@ -1,19 +1,21 @@
 use crate::prelude::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-/// A Text2dBundle with TextBox inserted will display the contents of the TextBox resource.
+/// A [Text2dBundle] with [TextBox] inserted will display the contents of the
+/// [crate::resources::TextBox] resource.
 pub struct TextBox;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-/// An Entity with both a Transform and a CursorMarker will be moved to the cursor's location.
+/// An Entity with both a Transform and a CursorMarker will be moved to the
+/// cursor's location. Only one of these should exist at a time.
 pub struct CursorMarker;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
 pub struct BlueprintSelector;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
-/// Indicates a Text object that is used to show the user's username on the titlescreen in the
-/// bottom left.
+/// Indicates a [Text2dBundle] object that is used to show the user's username
+/// on the titlescreen in the bottom left.
 pub struct TitleScreenUser;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]

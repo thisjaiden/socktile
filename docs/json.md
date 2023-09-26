@@ -1,15 +1,15 @@
-Why are there json files with weird file extensions?
----
+# Alternate JSON Files
 
-Bevy decides on the type of an asset partially based on its file extension. Unfortunately this doesn't support extensions like `*.audio.json` so instead each config type using json files has a letter prefixed to it.
+## Why are there JSON files with weird file extensions?
 
-When will this be fixed?
----
+Bevy decides on the type of an asset partially based on its file extension. Unfortunately this doesn't support extensions like `*.audio.json` so instead each config type using JSON files has a letter prefixed to it.
+
+## When will this be fixed?
+
 See [bevy#367](https://github.com/bevyengine/bevy/issues/367).  
 Maybe soon, maybe in a long time, maybe never.
 
-What are the extensions used?
----
+## What are the extensions used?
 
 | Config Type                 | Extension |
 | --------------------------- | --------- |

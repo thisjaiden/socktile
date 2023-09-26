@@ -13,7 +13,7 @@ jobs:
   build-nix:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Update deps
       run: sudo apt-get update
     - name: Install libasound2
@@ -29,27 +29,23 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3
       with:
         path: target/debug/socktile
         name: nix_build
         retention-days: 3
   build-macos:
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Install zld
       run: brew install michaeleisel/zld/zld
     - name: Build
       run: cargo build
     - name: Install Clippy
       run: rustup component add clippy
-    - name: Check
-      uses: actions-rs/clippy-check@v1.0.7
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3
       with:
         path: target/debug/socktile
         name: macos_build
@@ -57,17 +53,13 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Build
       run: cargo build
     - name: Install Clippy
       run: rustup component add clippy
-    - name: Check
-      uses: actions-rs/clippy-check@v1.0.7
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3
       with:
         path: target/debug/socktile.exe
         name: windows_build

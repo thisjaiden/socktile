@@ -45,8 +45,8 @@ pub struct Reality {
     /// Should do an action if the player's selected item supports one
     waiting_for_action: bool,
     /// Data for all chunks
-    /// Each chunk is a 2d array of size `CHUNK_WIDTH` * `CHUNK_HEIGHT`, and starts in the logical
-    /// top left
+    /// Each chunk is a 2d array of size `CHUNK_WIDTH` * `CHUNK_HEIGHT`, and
+    /// starts in the logical top left
     chunk_data: HashMap<(isize, isize), Vec<usize>>,
     chunk_status: HashMap<(isize, isize), ChunkStatus>,
     blueprint_tile: (isize, isize),
@@ -77,8 +77,8 @@ impl Reality {
             active_interaction: false
         }
     }
-    /// Input tile coordinates are world aligned (+x right, +y up) starting in the logical bottom
-    /// left. Automatically flags the chunk to rerender.
+    /// Input tile coordinates are world aligned (+x right, +y up) starting in
+    /// the logical bottom left. Automatically flags the chunk to rerender.
     pub fn update_tile(&mut self, chunk: (isize, isize), tile: (usize, usize), state: usize) {
         let dta = self.chunk_data.get_mut(&chunk).unwrap();
         dta[tile.0 + ((CHUNK_HEIGHT - tile.1 - 1) * CHUNK_WIDTH)] = state;
