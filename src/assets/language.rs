@@ -1,12 +1,12 @@
 use crate::prelude::*;
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
-    reflect::TypeUuid,
+    reflect::{TypeUuid, TypePath},
     utils::{BoxedFuture, HashMap},
 };
 use serde_json::Value;
 
-#[derive(TypeUuid)]
+#[derive(TypeUuid, TypePath)]
 #[uuid = "fbf9ee66-3a2b-433d-9329-fc2681eb3a47"]
 pub struct LanguageKeys {
     keys: HashMap<String, LanguageValue>,

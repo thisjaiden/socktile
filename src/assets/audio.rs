@@ -1,12 +1,12 @@
 use crate::prelude::*;
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
-    reflect::TypeUuid,
+    reflect::{TypeUuid, TypePath},
     utils::{BoxedFuture, HashMap},
 };
 use bevy_kira_audio::AudioSource;
 
-#[derive(TypeUuid)]
+#[derive(TypeUuid, TypePath)]
 #[uuid = "184160fa-44b9-4ddb-a72d-3d945adc306d"]
 pub struct AudioSamples {
     keys: HashMap<String, Handle<AudioSource>>,

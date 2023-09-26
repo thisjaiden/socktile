@@ -36,6 +36,7 @@ pub fn settings_video(
                 ..default()
             },
             SettingsPageComp { type_: 0 },
+            RemoveOnStateChange,
         ));
         // Decrease scaling button/text
         man.add_ui(UIClickable {
@@ -57,12 +58,13 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 3 },
+            RemoveOnStateChange,
         ));
         // Increase scaling button/text
         man.add_ui(UIClickable {
@@ -84,12 +86,13 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(40.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 2 },
+            RemoveOnStateChange,
         ));
         // Show scaling amount text
         commands.spawn((
@@ -104,12 +107,13 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Center,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, -38.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 4 },
+            RemoveOnStateChange,
         ));
         // Leave button/text
         man.add_ui(UIClickable {
@@ -131,12 +135,13 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Left,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(-600.0, -300.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 0 },
+            RemoveOnStateChange,
         ));
         // Fullscreen button/text
         man.add_ui(UIClickable {
@@ -165,12 +170,13 @@ pub fn settings_video(
                         },
                     }],
                     alignment: TextAlignment::Left,
-                    linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                    linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
                 },
                 transform: Transform::from_xyz(0.0, 0.0, UI_TEXT + 105.0),
                 ..default()
             },
             SettingsPageComp { type_: 1 },
+            RemoveOnStateChange,
         ));
     }
 }

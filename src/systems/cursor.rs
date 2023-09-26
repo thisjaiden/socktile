@@ -14,12 +14,10 @@ pub fn cursor(
     let cursor_pos = p_window.cursor_position();
     let p_win_wid = p_window.width();
     let p_win_hei = p_window.height();
-    drop(p_window);
-    drop(q0);
     for mut transform in queries.p1().iter_mut() {
         if let Some(position) = cursor_pos {
             transform.translation.x = position.x - (p_win_wid / 2.0);
-            transform.translation.y = position.y - (p_win_hei / 2.0);
+            transform.translation.y = (p_win_hei - position.y) - (p_win_hei / 2.0);
             transform.translation.z = CURSOR;
             if UI_DEBUG {
                 let line_pos = Vec3::new(
@@ -54,7 +52,7 @@ pub fn spawn(mut commands: Commands, fonts: Res<FontAssets>) {
                     },
                 }],
                 alignment: TextAlignment::Right,
-                linebreak_behaviour: bevy::text::BreakLineOn::AnyCharacter
+                linebreak_behavior: bevy::text::BreakLineOn::AnyCharacter
             },
             transform: Transform::from_xyz(0.0, 0.0, CURSOR),
             ..Default::default()
