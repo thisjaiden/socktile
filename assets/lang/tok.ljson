@@ -1,0 +1,32 @@
+{
+    "core": {
+        "title_screen": {
+            "no_network": "󱤩󱤂",
+            "no_ggs": "󱥫󱤩󱤂",
+            "quit": "󱤪󱤂",
+            "splash": [
+                "󱥞󱥔󱤂"
+            ]
+        },
+        "settings": {
+            "leave": "󱥩󱤸",
+            "fullscreen": {
+                "on": "󱤪󱤄",
+                "off": "󱤪󱤄󱤂"
+            },
+            "scaling": {
+                "increase": "󱥣",
+                "decrease": "󱤨"
+            }
+        },
+        "create_user": {
+            "too_short": "\n󱥠󱤑󱥷󱥳󱥮"
+        },
+        "create_world": {
+            "cancel": "󱥩󱤸"
+        },
+        "join_world": {
+            "cancel": "󱥩󱤸"
+        }
+    }
+}

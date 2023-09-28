@@ -47,10 +47,10 @@ impl Npc {
     pub fn popup_e(&self) -> Entity {
         return self.popup.unwrap();
     }
-    pub fn start_player_conversation(&mut self, _player: User, strings: &LanguageKeys) -> Vec<String> {
+    pub fn start_player_conversation(&mut self, _player: User, strings: &Language) -> Vec<String> {
         self.current_task = Task::Talk;
         // TODO: This picks the text when a player first interacts with a given NPC.
-        return vec![strings.get("en_us.npc.dummy_test.test_interaction")]
+        return vec![strings.get_key(".npc.dummy_test.test_interaction")]
     }
 }
 

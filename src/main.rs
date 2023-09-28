@@ -134,6 +134,8 @@ fn main() {
         .add_systems(OnEnter(GameState::NetworkCheck), (
             resources::network::system_startup_checks,
             systems::cursor::spawn,
+            // Sighs loudly
+            assets::language::system_post_load,
         ))
         // [ORDERED] Spawn the titlescreen textures/text and clear any old stuff
         .add_systems(OnEnter(GameState::TitleScreen), (

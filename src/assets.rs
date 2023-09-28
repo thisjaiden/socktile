@@ -8,8 +8,8 @@ pub mod tiles;
 
 #[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
-    #[asset(path = "lang/en_us.ljson")]
-    pub lang: Handle<LanguageKeys>,
+    #[asset(path = "metadata/languages.bjson")]
+    pub lang: Handle<Language>,
     #[asset(path = "metadata/audio.sjson")]
     pub audio: Handle<AudioSamples>,
     #[asset(path = "metadata/terrain.tjson")]

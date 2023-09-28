@@ -395,17 +395,17 @@ pub fn ui_settings_text_updater(
     mut query: Query<(&mut Text, &SettingsPageComp)>,
     disk: Res<Disk>,
     core: Res<CoreAssets>,
-    lang_serve: Res<Assets<LanguageKeys>>,
+    lang_serve: Res<Assets<Language>>,
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
     query.for_each_mut(|(mut text, component)| {
         if component.type_ == 1 {
             let txtout;
             if disk.window_config().fullscreen {
-                txtout = lang.get("en_us.core.settings.fullscreen.on");
+                txtout = lang.get_key(".core.settings.fullscreen.on");
             }
             else {
-                txtout = lang.get("en_us.core.settings.fullscreen.off");
+                txtout = lang.get_key(".core.settings.fullscreen.off");
             }
             text.sections[0].value = txtout;
         }

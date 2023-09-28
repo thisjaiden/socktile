@@ -13,7 +13,8 @@ Maybe soon, maybe in a long time, maybe never.
 
 | Config Type                 | Extension |
 | --------------------------- | --------- |
-| Language                    | .ljson    |
+| Language Declarations       | .bjson    |
+| Language Data               | .ljson    |
 | Audio                       | .sjson    |
 | Terrain Variations          | .vjson    |
 | Terrain Variation Locations | .ujson    |

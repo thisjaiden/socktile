@@ -1,0 +1,13 @@
+{
+    "default": "en_us",
+    "languages": [
+        {
+            "name": "American English",
+            "file": "en_us.ljson"
+        },
+        {
+            "name": "Toki Pona",
+            "file": "tok.ljson"
+        }
+    ]
+}

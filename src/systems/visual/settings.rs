@@ -23,7 +23,7 @@ pub fn settings_video(
     disk: Res<Disk>,
     fonts: Res<FontAssets>,
     core: Res<CoreAssets>,
-    lang_serve: Res<Assets<LanguageKeys>>,
+    lang_serve: Res<Assets<Language>>,
 ) {
     if man.settings_page == SettingsPage::Video && !man.on_page {
         let lang = lang_serve.get(&core.lang).unwrap();
@@ -50,7 +50,7 @@ pub fn settings_video(
             Text2dBundle {
                 text: Text {
                     sections: vec![TextSection {
-                        value: lang.get("en_us.core.settings.scaling.decrease"),
+                        value: lang.get_key(".core.settings.scaling.decrease"),
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
@@ -78,7 +78,7 @@ pub fn settings_video(
             Text2dBundle {
                 text: Text {
                     sections: vec![TextSection {
-                        value: lang.get("en_us.core.settings.scaling.increase"),
+                        value: lang.get_key(".core.settings.scaling.increase"),
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
@@ -127,7 +127,7 @@ pub fn settings_video(
             Text2dBundle {
                 text: Text {
                     sections: vec![TextSection {
-                        value: lang.get("en_us.core.settings.leave"),
+                        value: lang.get_key(".core.settings.leave"),
                         style: TextStyle {
                             font: fonts.simvoni.clone(),
                             font_size: 36.0,
@@ -153,10 +153,10 @@ pub fn settings_video(
         });
         let txtout;
         if disk.window_config().fullscreen {
-            txtout = lang.get("en_us.core.settings.fullscreen.on");
+            txtout = lang.get_key(".core.settings.fullscreen.on");
         }
         else {
-            txtout = lang.get("en_us.core.settings.fullscreen.off");
+            txtout = lang.get_key(".core.settings.fullscreen.off");
         }
         commands.spawn((
             Text2dBundle {

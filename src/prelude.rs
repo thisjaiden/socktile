@@ -19,7 +19,7 @@ pub use serde::{Deserialize, Serialize};
 // Individual imports
 pub use crate::animated_sprite::AnimatedSprite;
 pub use crate::audio::AudioSamples;
-pub use crate::language::LanguageKeys;
+pub use crate::language::Language;
 pub use crate::resources::network::Netty;
 pub use crate::server::Globals;
 pub use crate::shared::network::Packet;

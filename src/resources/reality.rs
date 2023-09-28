@@ -899,7 +899,7 @@ impl Reality {
         keyboard: Res<Input<KeyCode>>,
         core: Res<CoreAssets>,
         fonts: Res<FontAssets>,
-        lang_serve: Res<Assets<LanguageKeys>>,
+        lang_serve: Res<Assets<Language>>,
         mut netty: ResMut<Netty>,
         mut all_objects: Query<(&mut Object, &Transform)>,
     ) {

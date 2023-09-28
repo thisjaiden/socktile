@@ -6,7 +6,7 @@ pub fn title_screen(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
     core: Res<CoreAssets>,
-    lang_serve: Res<Assets<LanguageKeys>>,
+    lang_serve: Res<Assets<Language>>,
     mut ui: ResMut<UIManager>,
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
@@ -23,7 +23,7 @@ pub fn title_screen(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.title_screen.new_game"),
+                    value: lang.get_key(".core.title_screen.new_game"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -49,7 +49,7 @@ pub fn title_screen(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.title_screen.join_game"),
+                    value: lang.get_key(".core.title_screen.join_game"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -77,7 +77,7 @@ pub fn title_screen(
             Text2dBundle {
                 text: Text {
                     sections: vec![TextSection {
-                        value: lang.get("en_us.core.title_screen.quit"),
+                        value: lang.get_key(".core.title_screen.quit"),
                         style: TextStyle {
                             font: font_assets.apple_tea.clone(),
                             font_size: 64.0,
@@ -110,7 +110,7 @@ pub fn title_screen(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.title_screen.settings"),
+                    value: lang.get_key(".core.title_screen.settings"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -136,7 +136,7 @@ pub fn title_screen(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.title_screen.splash"),
+                    value: lang.get_key(".core.title_screen.splash"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 40.0,

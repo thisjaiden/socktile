@@ -4,7 +4,7 @@ pub fn create_world(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
     core: Res<CoreAssets>,
-    lang_serve: Res<Assets<LanguageKeys>>,
+    lang_serve: Res<Assets<Language>>,
     mut ui: ResMut<UIManager>,
 ) {
     let lang = lang_serve.get(&core.lang).unwrap();
@@ -22,7 +22,7 @@ pub fn create_world(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.create_world.cancel"),
+                    value: lang.get_key(".core.create_world.cancel"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -48,7 +48,7 @@ pub fn create_world(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.create_world.confirm"),
+                    value: lang.get_key(".core.create_world.confirm"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 64.0,
@@ -75,7 +75,7 @@ pub fn create_world(
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
-                    value: lang.get("en_us.core.create_world.description"),
+                    value: lang.get_key(".core.create_world.description"),
                     style: TextStyle {
                         font: font_assets.apple_tea.clone(),
                         font_size: 54.0,
