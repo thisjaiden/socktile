@@ -67,10 +67,10 @@ pub fn rand_from_array<T: Any + Clone>(array: Vec<T>) -> T {
 pub fn safe_rand_from_array<T: Any + Clone>(array: Vec<T>) -> Option<T> {
     let a = array.choose(&mut rand::thread_rng());
     if let Some(a) = a {
-        return Some(a.clone());
+        Some(a.clone())
     }
     else {
-        return None;
+        None
     }
 }
 
@@ -85,5 +85,5 @@ pub fn _unique_values<T: PartialEq + Copy>(arr: &[T]) -> Vec<T> {
             uniques.push(*val);
         }
     }
-    return uniques;
+    uniques
 }

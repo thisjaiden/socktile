@@ -86,7 +86,7 @@ pub fn get_disk_savegames() -> Result<Vec<SaveGame>, anyhow::Error> {
         }
     }
     // Return everything we've collected!
-    return Ok(loaded_saves);
+    Ok(loaded_saves)
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]

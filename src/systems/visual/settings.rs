@@ -151,13 +151,12 @@ pub fn settings_video(
             removed_on_use: false,
             tag: Some(String::from("Settings")),
         });
-        let txtout;
-        if disk.window_config().fullscreen {
-            txtout = lang.get_key(".core.settings.fullscreen.on");
+        let txtout: String = if disk.window_config().fullscreen {
+            lang.get_key(".core.settings.fullscreen.on")
         }
         else {
-            txtout = lang.get_key(".core.settings.fullscreen.off");
-        }
+            lang.get_key(".core.settings.fullscreen.off")
+        };
         commands.spawn((
             Text2dBundle {
                 text: Text {

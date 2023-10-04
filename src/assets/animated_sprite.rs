@@ -107,7 +107,7 @@ impl AssetLoader for AnimatedSpriteLoader {
                     .path()
                     .parent()
                     .unwrap()
-                    .join(format!("{}", sample))
+                    .join(sample.clone())
                     .into();
                 partially_propigated
                     .images

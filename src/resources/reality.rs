@@ -243,7 +243,7 @@ impl Reality {
             if let Some(item) = slotted {
                 if item.action() == ItemAction::Blueprint {
                     // spawn a blueprint overlay!
-                    let cursor_transform = qs.p0().get_single().unwrap().clone();
+                    let cursor_transform = *qs.p0().get_single().unwrap();
                     let tile_x = ((cursor_transform.translation.x + CURSOR_OFFSET[0] + selfs.player_position.translation.x + 32.0) / 64.0).round();
                     let tile_y = ((cursor_transform.translation.y + CURSOR_OFFSET[1] + selfs.player_position.translation.y) / 64.0).round();
                     commands.spawn((
@@ -265,7 +265,7 @@ impl Reality {
             if let Some(item) = slotted {
                 if item.action() == ItemAction::Blueprint {
                     // update blueprint overlay
-                    let cursor_transform = qs.p0().get_single().unwrap().clone();
+                    let cursor_transform = *qs.p0().get_single().unwrap();
                     qs.p1().for_each_mut(|(_e, mut t)| {
                         let tile_x = ((cursor_transform.translation.x + CURSOR_OFFSET[0] + selfs.player_position.translation.x + 32.0) / 64.0).round();
                         let tile_y = ((cursor_transform.translation.y + CURSOR_OFFSET[1] + selfs.player_position.translation.y) / 64.0).round();
@@ -526,9 +526,7 @@ impl Reality {
                                 mainarr2.push(!elem);
                             }
                             mainarr = mainarr2;
-                            let stor = main;
-                            main = sub;
-                            sub = stor;
+                            std::mem::swap(&mut main, &mut sub);
                         }
                         tt = TransitionType::get_from_environment(mainarr);
                     }
@@ -543,7 +541,7 @@ impl Reality {
                         );
                     }
                     let handle = handle.unwrap();
-                    let transition = transition_serve.get(&handle).unwrap();
+                    let transition = transition_serve.get(handle).unwrap();
                     let mut appropriate_variants = vec![];
                     for variant in &transition.variants {
                         let m_variants = conjoin_styles(variant.clone());
@@ -935,7 +933,6 @@ impl Reality {
                         netty.send(Packet::UpdateObject(object.clone()));
                         // Don't start multiple NPC interactions!
                         selfs.active_interaction = true;
-                        return;
                     }
                 }
                 _ => {} // don't care!
@@ -985,7 +982,7 @@ impl Reality {
             // get a 3x3 matrix
             let mut needed_tiles: Vec<(isize, isize)> = get_matrix_nxn(-1..=1);
             // offset by centered_tile's location
-            run_matrix_nxn((-1 as isize)..=1, |x, y| {
+            run_matrix_nxn((-1_isize)..=1, |x, y| {
                 needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].0 += centered_tile.0;
                 needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].1 += centered_tile.1;
             });
@@ -1303,29 +1300,29 @@ impl Reality {
         )>,
     ) {
         queries.p0().for_each_mut(|mut campos| {
-            campos.translation.x = selfs.player_position.translation.x as f32;
-            campos.translation.y = selfs.player_position.translation.y as f32;
+            campos.translation.x = selfs.player_position.translation.x;
+            campos.translation.y = selfs.player_position.translation.y;
             if selfs.chunk_status.is_empty() {
                 campos.translation.x = 0.0;
                 campos.translation.y = 0.0;
             }
         });
         queries.p1().for_each_mut(|mut transform| {
-            transform.translation.x += selfs.player_position.translation.x as f32;
-            transform.translation.y += selfs.player_position.translation.y as f32;
+            transform.translation.x += selfs.player_position.translation.x;
+            transform.translation.y += selfs.player_position.translation.y;
         });
     }
     pub fn system_player_debug_lines(selfs: Res<Reality>, mut lines: ResMut<DebugLines>) {
         if PLAYER_DEBUG {
             lines.line_colored(
                 Vec3::new(
-                    (selfs.player_position.translation.x - (PLAYER_HITBOX.0 / 2.0)) as f32,
-                    (selfs.player_position.translation.y - (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    selfs.player_position.translation.x - (PLAYER_HITBOX.0 / 2.0),
+                    selfs.player_position.translation.y - (PLAYER_HITBOX.1 / 2.0),
                     DEBUG,
                 ),
                 Vec3::new(
-                    (selfs.player_position.translation.x + (PLAYER_HITBOX.0 / 2.0)) as f32,
-                    (selfs.player_position.translation.y + (PLAYER_HITBOX.1 / 2.0)) as f32,
+                    selfs.player_position.translation.x + (PLAYER_HITBOX.0 / 2.0),
+                    selfs.player_position.translation.y + (PLAYER_HITBOX.1 / 2.0),
                     DEBUG,
                 ),
                 0.0,
@@ -1341,32 +1338,32 @@ impl Reality {
                     let true_x = collider.0 + (tile.position.0 as f32 * 64.0) + (tile.chunk.0 as f32 * 1920.0) - (1920.0 / 2.0);
                     let true_y = collider.1 + (tile.position.1 as f32 * 64.0) + (tile.chunk.1 as f32 * 1088.0) - (1088.0 / 2.0) - 66.0;
                     lines.line_colored(
-                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                        Vec3::new(true_x, true_y, DEBUG),
+                        Vec3::new(true_x + collider.2, true_y, DEBUG),
                         0.0,
                         Color::RED,
                     );
                     lines.line_colored(
-                        Vec3::new(true_x as f32, true_y as f32, DEBUG),
-                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                        Vec3::new(true_x, true_y, DEBUG),
+                        Vec3::new(true_x, true_y + collider.3, DEBUG),
                         0.0,
                         Color::RED,
                     );
                     lines.line_colored(
-                        Vec3::new((true_x + collider.2) as f32, true_y as f32, DEBUG),
+                        Vec3::new(true_x + collider.2, true_y, DEBUG),
                         Vec3::new(
-                            (true_x + collider.2) as f32,
-                            (true_y + collider.3) as f32,
+                            true_x + collider.2,
+                            true_y + collider.3,
                             DEBUG,
                         ),
                         0.0,
                         Color::RED,
                     );
                     lines.line_colored(
-                        Vec3::new(true_x as f32, (true_y + collider.3) as f32, DEBUG),
+                        Vec3::new(true_x, true_y + collider.3, DEBUG),
                         Vec3::new(
-                            (true_x + collider.2) as f32,
-                            (true_y + collider.3) as f32,
+                            true_x + collider.2,
+                            true_y + collider.3,
                             DEBUG,
                         ),
                         0.0,
@@ -1383,13 +1380,13 @@ impl Reality {
     ) {
         player.for_each_mut(|(mut l, m)| {
             if m == &disk.user().unwrap() {
-                l.translation.x = selfs.player_position.translation.x as f32;
-                l.translation.y = selfs.player_position.translation.y as f32;
+                l.translation.x = selfs.player_position.translation.x;
+                l.translation.y = selfs.player_position.translation.y;
             }
             if selfs.players_to_move.contains_key(m) {
                 let which = selfs.players_to_move.get(m).unwrap();
-                l.translation.x = which.translation.x as f32;
-                l.translation.y = which.translation.y as f32;
+                l.translation.x = which.translation.x;
+                l.translation.y = which.translation.y;
             }
         });
         selfs.players_to_move.clear();

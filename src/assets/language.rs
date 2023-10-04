@@ -34,9 +34,6 @@ impl Language {
         }
         self.waiting_handles.clear();
     }
-    pub fn default_language(&self) -> String {
-        self.default_language.clone()
-    }
     pub fn set_language(&mut self, language: String) {
         self.current_language = language.clone();
     }
@@ -48,9 +45,9 @@ impl Language {
             if let Some(result) = lang_data.get(key) {
                 match result {
                     LanguageValue::Value(val) =>
-                        return val.clone(),
+                        val.clone(),
                     LanguageValue::RandomValue(vals) =>
-                        return rand_from_array(vals.to_vec()),
+                        rand_from_array(vals.to_vec()),
                 }
             }
             else {
@@ -142,7 +139,7 @@ pub struct SingleLanguage {
 
 impl SingleLanguage {
     fn get_all_data(&self) -> HashMap<String, LanguageValue> {
-        return self.data.clone();
+        self.data.clone()
     }
 }
 
@@ -156,7 +153,7 @@ impl AssetLoader for SingleLanguageLoader {
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             let mut keys: HashMap<String, LanguageValue> = default();
-            let language_data = serde_json::from_slice(&bytes)?;
+            let language_data = serde_json::from_slice(bytes)?;
             let fresh_keys = grab_keys_recursively("", language_data);
             for (key, value) in fresh_keys {
                 keys.insert(key, value);

@@ -400,13 +400,12 @@ pub fn ui_settings_text_updater(
     let lang = lang_serve.get(&core.lang).unwrap();
     query.for_each_mut(|(mut text, component)| {
         if component.type_ == 1 {
-            let txtout;
-            if disk.window_config().fullscreen {
-                txtout = lang.get_key(".core.settings.fullscreen.on");
+            let txtout = if disk.window_config().fullscreen {
+                lang.get_key(".core.settings.fullscreen.on")
             }
             else {
-                txtout = lang.get_key(".core.settings.fullscreen.off");
-            }
+                lang.get_key(".core.settings.fullscreen.off")
+            };
             text.sections[0].value = txtout;
         }
         else if component.type_ == 4 {

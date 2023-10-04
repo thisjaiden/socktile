@@ -95,8 +95,8 @@ impl World {
             panic!("{FATAL_ERROR}");
         }
         let mut final_data = vec![];
-        for i in 0..chunk_data.len() {
-            final_data.push(chunk_data[i]);
+        for chunk in chunk_data {
+            final_data.push(chunk);
         }
         // save data
         self.terrain.insert(chunk, final_data);

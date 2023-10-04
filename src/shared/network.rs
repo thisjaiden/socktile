@@ -125,7 +125,7 @@ impl netty::Packet for Packet {
         match maybe_pkt {
             Ok(pkt) => {
                 trace!("Got a packet {:?}!", pkt);
-                return pkt;
+                pkt
             }
             Err(e) => {
                 println!("Errored getting packet {:?}!", e);

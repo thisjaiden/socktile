@@ -69,17 +69,13 @@ pub fn handler(
             // I've also included  . and ' just in case
             let mut rname = name.clone();
             rname = rname
-                .replace('\\', "I")
-                .replace('/', "I")
-                .replace(':', "I")
-                .replace('*', "I")
-                .replace('?', "I")
-                .replace('"', "I")
-                .replace('<', "I")
-                .replace('>', "I")
-                .replace('|', "I")
-                .replace('.', "I")
-                .replace('\'', "I");
+                .replace([
+                        '\\', '/', ':', '*', '?',
+                        '"', '<', '>', '|', '.',
+                        '\'',
+                    ],
+                    "I"
+                );
             // Don't allow world names to be longer than 10 characters
             if rname.chars().count() > 10 {
                 // dirty code to grab the first 10 characters
@@ -152,7 +148,7 @@ pub fn handler(
                     break;
                 }
             }
-            if player_info == None {
+            if player_info.is_none() {
                 player_info = Some((
                     packet_user.clone(),
                     Transform::from_xyz(0.0, 0.0, 0.0),
@@ -240,11 +236,10 @@ pub fn handler(
                 .addr_to_user
                 .get(&source_addr)
                 .expect("No user found for an IP adress used with Packet::RequestChunk");
-            let server = globals
+            let server = *globals
                 .user_to_world
                 .get(owner)
-                .expect("Owner is not in a server for Packet::RequestChunk")
-                .clone();
+                .expect("Owner is not in a server for Packet::RequestChunk");
 
             let chunk_data = globals.worlds[server].data.get_or_gen(chunk);
             drop(globals);
@@ -261,11 +256,10 @@ pub fn handler(
                 )
                 .clone();
 
-            let server = globals
+            let server = *globals
                 .user_to_world
                 .get(&owner)
-                .expect("Owner is not in a server for Packet::RequestMove(GamePosition)")
-                .clone();
+                .expect("Owner is not in a server for Packet::RequestMove(GamePosition)");
 
             let mut self_index = None;
 
@@ -489,8 +483,7 @@ pub fn handler(
                 warn!("Unable to remove this object from a given world. Please Investigate!");
             }
             let object_position = globals.worlds[server].data.objects[object_index.unwrap()]
-                .pos
-                .clone();
+                .pos;
             let object_representation = globals.worlds[server].data.objects[object_index.unwrap()]
                 .rep
                 .clone();
