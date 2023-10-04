@@ -14,7 +14,7 @@ You can run a local gameserver by running the output executable with `server` as
 
 ## Quick Builds
 
-`build_quick_test.bat` / `build_quck_test.sh` are provided to quickly run a local game and server. `build_wasm_test.sh` is avalable to try experimental WASM support, which runs a local game on [http://localhost:8080]. There is no Windows script for this test. `build_ios_test.sh` is avalable to try experimental iOS support. iOS support is not 100% confirmed and probably poor.
+`build_quick_test.bat` / `build_quck_test.sh` are provided to quickly run a local game and server. `build_wasm_test.sh` is avalable to try experimental WASM support, which runs a local game on [http://localhost:4000]. Some library installation may be required to get WASM fully working. There is no Windows script for this test. `build_ios_test.sh` is avalable to try experimental iOS support. iOS support is not 100% confirmed and probably poor.
 
 ## Code Layout & Docs
 

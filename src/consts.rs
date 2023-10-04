@@ -41,7 +41,9 @@ pub const WS_PORT: u16 = 11112;
 #[cfg(debug_assertions)]
 pub const GGS: [u8; 4] = [127, 0, 0, 1];
 #[cfg(not(debug_assertions))]
-pub const GGS: [u8; 4] = [69, 180, 176, 49];
+/// TODO: This should be changed to the gameserver's "final" position when
+/// that's relevant. For now it's just localhost.
+pub const GGS: [u8; 4] = [127, 0, 0, 1];
 /// Time in seconds before a connection is considered unable to connect
 pub const TIMEOUT_DURATION: std::time::Duration = std::time::Duration::from_secs(3);
 /// Time between game saves on the server
