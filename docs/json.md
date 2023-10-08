@@ -16,7 +16,5 @@ Maybe soon, maybe in a long time, maybe never.
 | Language Declarations       | .bjson    |
 | Language Data               | .ljson    |
 | Audio                       | .sjson    |
-| Terrain Variations          | .vjson    |
-| Terrain Variation Locations | .ujson    |
 | Terrain Metadata            | .tjson    |
 | Animated Sprite             | .ajson    |

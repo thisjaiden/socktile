@@ -8,3 +8,4 @@ me.bic
 /testenv
 *.ini
 /dist
+/assets/world/project

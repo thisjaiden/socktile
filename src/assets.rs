@@ -5,6 +5,7 @@ pub mod animated_sprite;
 pub mod audio;
 pub mod language;
 pub mod tiles;
+pub mod ldtk;
 
 #[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
