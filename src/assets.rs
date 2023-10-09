@@ -13,10 +13,6 @@ pub struct CoreAssets {
     pub lang: Handle<Language>,
     #[asset(path = "metadata/audio.sjson")]
     pub audio: Handle<AudioSamples>,
-    #[asset(path = "metadata/terrain.tjson")]
-    pub tiles: Handle<TileTypeConfig>,
-    #[asset(path = "metadata/transitions.ujson")]
-    pub transitions: Handle<TileTransitionMasterConfig>,
     #[asset(path = "core/title_screen.png")]
     pub title_screen: Handle<Image>,
     #[asset(path = "core/create_user.png")]

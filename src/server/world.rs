@@ -34,7 +34,7 @@ impl World {
         }
     }
     fn generate_terrain(&mut self, chunk: (isize, isize)) {
-        let project: ldtk_rust::Project = serde_json::from_slice(include_bytes!("../../assets/core.ldtk"))
+        let project: ldtk_rust::Project = serde_json::from_slice(include_bytes!("../../assets/world/project.ldtk"))
             .expect("FATAL: Invalid LDTK map for server executable, this is an unrepairable error.");
 
         // find the level name from a chunk
@@ -106,7 +106,7 @@ impl World {
             // no chunk generation needed
             return vec![];
         }
-        let project: ldtk_rust::Project = serde_json::from_slice(include_bytes!("../../assets/core.ldtk"))
+        let project: ldtk_rust::Project = serde_json::from_slice(include_bytes!("../../assets/world/project.ldtk"))
             .expect("FATAL: Invalid LDTK map for server executable, this is an unrepairable error.");
         
         // find the level name from a chunk
