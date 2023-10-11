@@ -34,7 +34,7 @@ impl Language {
         }
         self.waiting_handles.clear();
     }
-    pub fn set_language(&mut self, language: String) {
+    pub fn _set_language(&mut self, language: String) {
         self.current_language = language.clone();
     }
     pub fn get_key(&self, key: &str) -> String {

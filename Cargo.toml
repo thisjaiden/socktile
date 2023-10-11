@@ -19,7 +19,6 @@ bevy_prototype_debug_lines = "0.11.1"
 bevy_easings = "0.11.1"
 bevy_embedded_assets = "0.8.0"
 iyes_progress = { version = "0.9.1", features = [ "assets" ]  }
-ldtk_rust = "0.6.0"
 anyhow = "1.0.75"
 tracing-subscriber = "0.3.17"
 tracing-log = "0.1.3"

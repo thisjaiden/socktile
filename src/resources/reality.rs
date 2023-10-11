@@ -1,9 +1,6 @@
 use super::{chat::ChatMessage, Animator, Chat};
 use crate::shared::{listing::GameListing, player::Inventory};
-use crate::{
-    modular_assets::{conjoin_styles, TransitionType},
-    prelude::{tiles::TileTransitionConfig, *},
-};
+use crate::prelude::*;
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
     render::camera::Camera,
@@ -443,9 +440,6 @@ impl Reality {
         mut commands: Commands,
         mut selfs: ResMut<Reality>,
         core: Res<CoreAssets>,
-        types_serve: Res<Assets<TileTypeConfig>>,
-        master_transition_serve: Res<Assets<TileTransitionMasterConfig>>,
-        transition_serve: Res<Assets<TileTransitionConfig>>,
         mut atlas_serve: ResMut<Assets<TextureAtlas>>,
     ) {
         todo!();
@@ -789,123 +783,16 @@ impl Reality {
         if selfs.active_interaction {
             return;
         }
-        if keyboard.any_pressed([ctrls.move_up, ctrls.move_down, ctrls.move_left, ctrls.move_right]) && selfs.pause_menu == MenuState::Closed && !chat.is_open() {
-            let centered_chunk = (
-                ((selfs.player_position.translation.x + (1920.0 / 2.0)) / 1920.0).floor() as isize,
-                ((selfs.player_position.translation.y + (1088.0 / 2.0)) / 1088.0).floor() as isize,
-            );
-            let centered_tile = (
-                ((selfs.player_position.translation.x - (1920 * centered_chunk.0) as f32 + (1920.0 / 2.0)) / 64.0) as isize,
-                ((selfs.player_position.translation.y - (1088 * centered_chunk.1) as f32 + (1088.0 / 2.0)) / 64.0) as isize + 1
-            );
-            // get a 3x3 matrix
-            let mut needed_tiles: Vec<(isize, isize)> = get_matrix_nxn(-1..=1);
-            // offset by centered_tile's location
-            run_matrix_nxn((-1_isize)..=1, |x, y| {
-                needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].0 += centered_tile.0;
-                needed_tiles[(x + 1) as usize + ((y + 1) as usize * 3)].1 += centered_tile.1;
-            });
-            let mut needed_pairs = vec![];
-            let mut needed_chunks = vec![];
-            let l_width = CHUNK_WIDTH as isize;
-            let l_height = CHUNK_HEIGHT as isize;
-            for tile in needed_tiles {
-                // location is right one chunk
-                if tile.0 >= l_width {
-                    if tile.1 < l_height && tile.1 >= 0 {
-                        // location is right one chunk
-                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1), (0, tile.1)));
-                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1)) {
-                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1));
-                        }
-                    }
-                    else if tile.1 >= l_height {
-                        // location is right and up one chunk
-                        needed_pairs.push(((centered_chunk.0 + 1, centered_chunk.1 + 1), (0, 0)));
-                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1 + 1)) {
-                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1 + 1));
-                        }
-                    }
-                    else {
-                        // location is right and down one chunk
-                        needed_pairs.push((
-                            (centered_chunk.0 + 1, centered_chunk.1 - 1),
-                            (0, l_height - 1),
-                        ));
-                        if !needed_chunks.contains(&(centered_chunk.0 + 1, centered_chunk.1 - 1)) {
-                            needed_chunks.push((centered_chunk.0 + 1, centered_chunk.1 - 1));
-                        }
-                    }
-                }
-                else if tile.0 < 0 {
-                    if tile.1 < l_height && tile.1 >= 0 {
-                        // location is left one chunk
-                        needed_pairs.push((
-                            (centered_chunk.0 - 1, centered_chunk.1),
-                            (l_width - 1, tile.1),
-                        ));
-                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1)) {
-                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1));
-                        }
-                    }
-                    else if tile.1 >= l_height {
-                        // location is left and up one chunk
-                        needed_pairs.push((
-                            (centered_chunk.0 - 1, centered_chunk.1 + 1),
-                            (l_width - 1, 0),
-                        ));
-                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 + 1)) {
-                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 + 1));
-                        }
-                    }
-                    else {
-                        // location is left and down one chunk
-                        needed_pairs.push((
-                            (centered_chunk.0 - 1, centered_chunk.1 - 1),
-                            (l_width - 1, l_height - 1),
-                        ));
-                        if !needed_chunks.contains(&(centered_chunk.0 - 1, centered_chunk.1 - 1)) {
-                            needed_chunks.push((centered_chunk.0 - 1, centered_chunk.1 - 1));
-                        }
-                    }
-                }
-                else if tile.1 < l_height && tile.1 >= 0 {
-                    // location is centered
-                    needed_pairs.push((centered_chunk, tile));
-                    if !needed_chunks.contains(&centered_chunk) {
-                        needed_chunks.push(centered_chunk);
-                    }
-                }
-                else if tile.1 >= l_height {
-                    // location is up one chunk
-                    needed_pairs.push(((centered_chunk.0, centered_chunk.1 + 1), (tile.0, 0)));
-                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 + 1)) {
-                        needed_chunks.push((centered_chunk.0, centered_chunk.1 + 1));
-                    }
-                }
-                else {
-                    // location is down one chunk
-                    needed_pairs.push((
-                        (centered_chunk.0, centered_chunk.1 - 1),
-                        (tile.0, l_height - 1),
-                    ));
-                    if !needed_chunks.contains(&(centered_chunk.0, centered_chunk.1 - 1)) {
-                        needed_chunks.push((centered_chunk.0, centered_chunk.1 - 1));
-                    }
-                }
-            }
-            let mut pulled_tiles = vec![];
-            queries.p0().for_each(|tile| {
-                if needed_chunks.contains(&tile.chunk) {
-                    for (chunk, n_tile) in &needed_pairs {
-                        if tile.chunk == *chunk
-                            && tile.position == (n_tile.0 as usize, n_tile.1 as usize)
-                        {
-                            pulled_tiles.push(*tile);
-                        }
-                    }
-                }
-            });
+        if 
+            keyboard.any_pressed([
+                ctrls.move_up,
+                ctrls.move_down,
+                ctrls.move_left,
+                ctrls.move_right
+            ]) &&
+            selfs.pause_menu == MenuState::Closed &&
+            !chat.is_open()
+        {
             let mut objects = vec![];
             queries.p1().for_each(|object| {
                 objects.push(object.clone());
@@ -916,8 +803,7 @@ impl Reality {
             // move
             if keyboard.pressed(ctrls.move_up) {
                 new_pos.translation.y += 4.0 * mul;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
+                if !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
@@ -926,8 +812,7 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_down) {
                 new_pos.translation.y -= 4.0 * mul;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)){
+                if !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
@@ -936,8 +821,7 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_left) {
                 new_pos.translation.x -= 4.0 * mul;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
+                if !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
@@ -946,8 +830,7 @@ impl Reality {
             }
             if keyboard.pressed(ctrls.move_right) {
                 new_pos.translation.x += 4.0 * mul;
-                if  !calc_player_against_tiles(pulled_tiles.as_slice(), (new_pos.translation.x, new_pos.translation.y)) &&
-                    !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
+                if !calc_player_against_objects(objects.as_slice(), (new_pos.translation.x, new_pos.translation.y)) {
                     had_movement = true;
                 }
                 else {
@@ -1149,49 +1032,6 @@ impl Reality {
             );
         }
     }
-    pub fn system_hitbox_debug_lines(mut lines: ResMut<DebugLines>, tiles: Query<&Tile>) {
-        if TERRAIN_DEBUG {
-            tiles.for_each(|tile| {
-                let dta = tile.transition_type.collider_dimensions();
-                for collider in dta {
-                    let true_x = collider.0 + (tile.position.0 as f32 * 64.0) + (tile.chunk.0 as f32 * 1920.0) - (1920.0 / 2.0);
-                    let true_y = collider.1 + (tile.position.1 as f32 * 64.0) + (tile.chunk.1 as f32 * 1088.0) - (1088.0 / 2.0) - 66.0;
-                    lines.line_colored(
-                        Vec3::new(true_x, true_y, DEBUG),
-                        Vec3::new(true_x + collider.2, true_y, DEBUG),
-                        0.0,
-                        Color::RED,
-                    );
-                    lines.line_colored(
-                        Vec3::new(true_x, true_y, DEBUG),
-                        Vec3::new(true_x, true_y + collider.3, DEBUG),
-                        0.0,
-                        Color::RED,
-                    );
-                    lines.line_colored(
-                        Vec3::new(true_x + collider.2, true_y, DEBUG),
-                        Vec3::new(
-                            true_x + collider.2,
-                            true_y + collider.3,
-                            DEBUG,
-                        ),
-                        0.0,
-                        Color::RED,
-                    );
-                    lines.line_colored(
-                        Vec3::new(true_x, true_y + collider.3, DEBUG),
-                        Vec3::new(
-                            true_x + collider.2,
-                            true_y + collider.3,
-                            DEBUG,
-                        ),
-                        0.0,
-                        Color::RED,
-                    );
-                }
-            });
-        }
-    }
     pub fn system_player_locator(
         mut selfs: ResMut<Reality>,
         disk: Res<Disk>,
@@ -1265,14 +1105,7 @@ pub enum MenuState {
 
 /// true if collided, false otherwise
 fn calc_player_against_tiles(tiles: &[Tile], player: (f32, f32)) -> bool {
-    for tile in tiles {
-        let offset_x = (-1920.0 / 2.0) + (tile.chunk.0 as f32 * 1920.0) + ((tile.position.0 as f32) * 64.0);
-        let offset_y = (-1088.0 / 2.0) + (tile.chunk.1 as f32 * 1088.0) + ((tile.position.1 as f32 - 1.0) * 64.0);
-        if tile.transition_type.collides(player, offset_x, offset_y) {
-            return true;
-        }
-    }
-    false
+    todo!();
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
@@ -1304,166 +1137,4 @@ fn calc_player_against_objects(objects: &[Object], player: (f32, f32)) -> bool {
         }
     }
     false
-}
-
-// TODO: issues with chunk left materials (inverted offscreen chunk?)
-fn get_9fold_layout(
-    tile_x: usize,
-    tile_y: usize,
-    all_chunks: &HashMap<(isize, isize), Vec<usize>>,
-    chunk: &(isize, isize),
-) -> Option<[usize; 9]> {
-    let chunk_up_left = all_chunks.get(&(chunk.0 - 1, chunk.1 + 1))?;
-    let chunk_up = all_chunks.get(&(chunk.0, chunk.1 + 1))?;
-    let chunk_up_right = all_chunks.get(&(chunk.0 + 1, chunk.1 + 1))?;
-    let chunk_left = all_chunks.get(&(chunk.0 - 1, chunk.1))?;
-    let this_chunk = all_chunks.get(&(chunk.0, chunk.1))?;
-    let chunk_right = all_chunks.get(&(chunk.0 + 1, chunk.1))?;
-    let chunk_down_left = all_chunks.get(&(chunk.0 - 1, chunk.1 - 1))?;
-    let chunk_down = all_chunks.get(&(chunk.0, chunk.1 - 1))?;
-    let chunk_down_right = all_chunks.get(&(chunk.0 + 1, chunk.1 - 1))?;
-    if tile_x > 0 {
-        if tile_x < CHUNK_WIDTH - 1 {
-            if tile_y > 0 {
-                if tile_y < CHUNK_HEIGHT - 1 {
-                    // all tiles are within this chunk
-                    return Some([
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x, tile_y)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
-                    ]);
-                }
-                else {
-                    // some tiles are up
-                    return Some([
-                        chunk_up[find_chunk_index(tile_x - 1, 0)],
-                        chunk_up[find_chunk_index(tile_x, 0)],
-                        chunk_up[find_chunk_index(tile_x + 1, 0)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x, tile_y)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
-                    ]);
-                }
-            }
-            else {
-                // some tiles are down
-                return Some([
-                    this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                    this_chunk[find_chunk_index(tile_x, tile_y)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                    chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
-                    chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)],
-                ]);
-            }
-        }
-        else {
-            if tile_y > 0 {
-                if tile_y < CHUNK_HEIGHT - 1 {
-                    // some tiles are right
-                    return Some([
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                        chunk_right[find_chunk_index(0, tile_y + 1)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x, tile_y)],
-                        chunk_right[find_chunk_index(0, tile_y)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        chunk_right[find_chunk_index(0, tile_y - 1)],
-                    ]);
-                }
-                else {
-                    // some tiles are up and right
-                    return Some([
-                        chunk_up[find_chunk_index(tile_x - 1, 0)],
-                        chunk_up[find_chunk_index(tile_x, 0)],
-                        chunk_up_right[find_chunk_index(0, 0)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                        this_chunk[find_chunk_index(tile_x, tile_y)],
-                        chunk_right[find_chunk_index(0, tile_y)],
-                        this_chunk[find_chunk_index(tile_x - 1, tile_y - 1)],
-                        this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                        chunk_right[find_chunk_index(0, tile_y - 1)],
-                    ]);
-                }
-            }
-            else {
-                // some tiles are down and right
-                return Some([
-                    this_chunk[find_chunk_index(tile_x - 1, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                    chunk_right[find_chunk_index(0, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x - 1, tile_y)],
-                    this_chunk[find_chunk_index(tile_x, tile_y)],
-                    chunk_right[find_chunk_index(0, tile_y)],
-                    chunk_down[find_chunk_index(tile_x - 1, CHUNK_HEIGHT - 1)],
-                    chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                    chunk_down_right[find_chunk_index(0, CHUNK_HEIGHT - 1)],
-                ]);
-            }
-        }
-    }
-    else {
-        if tile_y > 0 {
-            if tile_y < CHUNK_HEIGHT - 1 {
-                // some tiles are left
-                return Some([
-                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
-                    this_chunk[find_chunk_index(tile_x, tile_y)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
-                ]);
-            }
-            else {
-                // some tiles are up and left
-                return Some([
-                    chunk_up_left[find_chunk_index(CHUNK_WIDTH - 1, 0)],
-                    chunk_up[find_chunk_index(tile_x, 0)],
-                    chunk_up[find_chunk_index(tile_x + 1, 0)],
-                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
-                    this_chunk[find_chunk_index(tile_x, tile_y)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                    chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x, tile_y - 1)],
-                    this_chunk[find_chunk_index(tile_x + 1, tile_y - 1)],
-                ]);
-            }
-        }
-        else {
-            // some tiles are down and left
-            return Some([
-                chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y + 1)],
-                this_chunk[find_chunk_index(tile_x, tile_y + 1)],
-                this_chunk[find_chunk_index(tile_x + 1, tile_y + 1)],
-                chunk_left[find_chunk_index(CHUNK_WIDTH - 1, tile_y)],
-                this_chunk[find_chunk_index(tile_x, tile_y)],
-                this_chunk[find_chunk_index(tile_x + 1, tile_y)],
-                chunk_down_left[find_chunk_index(CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1)],
-                chunk_down[find_chunk_index(tile_x, CHUNK_HEIGHT - 1)],
-                chunk_down[find_chunk_index(tile_x + 1, CHUNK_HEIGHT - 1)],
-            ]);
-        }
-    }
-}
-
-fn find_chunk_index(target_x: usize, target_y: usize) -> usize {
-    target_x + target_y * CHUNK_WIDTH
 }

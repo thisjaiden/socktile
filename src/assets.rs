@@ -4,11 +4,12 @@ use bevy_asset_loader::prelude::*;
 pub mod animated_sprite;
 pub mod audio;
 pub mod language;
-pub mod tiles;
 pub mod ldtk;
 
 #[derive(AssetCollection, Resource)]
 pub struct CoreAssets {
+    #[asset(path = "world/project.ldtk")]
+    pub project: Handle<EngineProject>,
     #[asset(path = "metadata/languages.bjson")]
     pub lang: Handle<Language>,
     #[asset(path = "metadata/audio.sjson")]

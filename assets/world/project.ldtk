@@ -13047,7 +13047,31 @@
 					"seed": 2593025,
 					"overrideTilesetUid": null,
 					"gridTiles": [],
-					"entityInstances": []
+					"entityInstances": [
+						{
+							"__identifier": "Text",
+							"__grid": [9,9],
+							"__pivot": [0,0],
+							"__tags": ["UI"],
+							"__tile": { "tilesetUid": 97, "x": 160, "y": 16, "w": 16, "h": 16 },
+							"__smartColor": "#EFC0F3",
+							"__worldX": 10304,
+							"__worldY": -2048,
+							"iid": "8a1f1380-6280-11ee-a106-07a66ad62f04",
+							"width": 640,
+							"height": 64,
+							"defUid": 10,
+							"px": [576,576],
+							"fieldInstances": [
+								{ "__identifier": "Text", "__type": "String", "__value": "Loading...", "__tile": null, "defUid": 14, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["Loading..."]
+								}] },
+								{ "__identifier": "FontSize", "__type": "Float", "__value": 20, "__tile": null, "defUid": 23, "realEditorValues": [] },
+								{ "__identifier": "Alignment", "__type": "LocalEnum.TEXT_ALIGNMENT", "__value": "Center", "__tile": null, "defUid": 181, "realEditorValues": [] }
+							]
+						}
+					]
 				},
 				{
 					"__identifier": "Entities",

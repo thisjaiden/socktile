@@ -58,9 +58,10 @@ pub struct SettingsPageComp {
     pub type_: u8,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Component)]
+#[derive(Clone, Debug, Eq, PartialEq, Component)]
 pub struct Tile {
     pub chunk: (isize, isize),
     pub position: (usize, usize),
-    pub transition_type: crate::modular_assets::TransitionType,
+    pub sprite_sheet: Handle<Image>,
+    pub sprite_index: usize,
 }

@@ -19,6 +19,9 @@ mod shared;
 mod systems;
 mod utils;
 mod window_setup;
+// This file generated and managed by the [LDtk Project](https://ldtk.io/) using
+// [QuickType](https://quicktype.io/).
+mod ldtk_quicktype;
 
 /// Represents the state the game is currently in. Used to decide which systems
 /// to run.
@@ -238,7 +241,6 @@ fn main() {
             resources::Reality::system_update_objects,
             resources::Reality::system_remove_objects,
             resources::Reality::system_update_hotbar,
-            resources::Reality::system_hitbox_debug_lines,
             resources::Reality::system_player_debug_lines,
             resources::Reality::system_action_none,
             resources::Reality::system_action_chop,
@@ -249,12 +251,12 @@ fn main() {
             resources::Chat::system_display_chat,
             resources::Chat::system_pull_messages,
             resources::Chat::system_open_chat,
+            resources::Chat::system_type_chat,
             
         ).run_if(in_state(GameState::Play)))
         // TODO: FIXME: numerical limit of 20 systems in one .add_systems call
         // keep an eye on if bevy increases/fixes this. Used to be 15!
         .add_systems(Update, (
-            resources::Chat::system_type_chat,
             resources::Chat::system_send_chat,
             resources::ui::ui_forward,
             resources::ui::ui_disconnect_game,
